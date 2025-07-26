@@ -336,7 +336,7 @@ const Orders = () => {
               <form onSubmit={handleCreateOrder} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">عنوان الطلب</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('orders.form.title.label')}</label>
                   <input
                     type="text"
                       required
@@ -347,14 +347,14 @@ const Orders = () => {
                 </div>
                 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">العميل</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('orders.form.client.label')}</label>
                     <select
                       required
                       value={newOrder.client_id}
                       onChange={(e) => setNewOrder({ ...newOrder, client_id: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">اختر العميل</option>
+                      <option value="">{t('orders.form.client.placeholder')}</option>
                       {clients.map((client: any) => (
                         <option key={client.id} value={client.id}>{client.name}</option>
                       ))}
@@ -362,13 +362,13 @@ const Orders = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">التصنيف</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('orders.form.category.label')}</label>
                     <select
                       value={newOrder.category_id}
                       onChange={(e) => setNewOrder({ ...newOrder, category_id: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">اختر التصنيف</option>
+                      <option value="">{t('orders.form.category.placeholder')}</option>
                       {categories.map((category: any) => (
                         <option key={category.id} value={category.id}>{category.name}</option>
                       ))}
@@ -376,13 +376,13 @@ const Orders = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">العامل المسؤول</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('orders.form.worker.label')}</label>
                     <select
                       value={newOrder.assigned_worker_id}
                       onChange={(e) => setNewOrder({ ...newOrder, assigned_worker_id: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">اختر العامل</option>
+                      <option value="">{t('orders.form.worker.placeholder')}</option>
                       {workers.map((worker: any) => (
                         <option key={worker.id} value={worker.id}>{worker.name}</option>
                       ))}
@@ -390,21 +390,21 @@ const Orders = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">الأولوية</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('orders.form.priority.label')}</label>
                     <select
                       value={newOrder.priority}
                       onChange={(e) => setNewOrder({ ...newOrder, priority: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="low">منخفض</option>
-                      <option value="medium">متوسط</option>
-                      <option value="high">عالي</option>
-                      <option value="urgent">عاجل</option>
+                      <option value="low">{t('orders.form.priority.low')}</option>
+                      <option value="medium">{t('orders.form.priority.medium')}</option>
+                      <option value="high">{t('orders.form.priority.high')}</option>
+                      <option value="urgent">{t('orders.form.priority.urgent')}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">التكلفة</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('orders.form.cost.label')}</label>
                     <input
                       type="number"
                       step="0.01"
@@ -415,7 +415,7 @@ const Orders = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">تاريخ البداية</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('orders.form.startDate.label')}</label>
                     <input
                       type="date"
                       value={newOrder.start_date}
@@ -425,7 +425,7 @@ const Orders = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">تاريخ التسليم</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('orders.form.dueDate.label')}</label>
                     <input
                       type="date"
                       value={newOrder.due_date}
@@ -436,7 +436,7 @@ const Orders = () => {
               </div>
               
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('orders.form.description.label')}</label>
                   <textarea
                     rows={3}
                     value={newOrder.description}
@@ -450,14 +450,14 @@ const Orders = () => {
                     type="submit"
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    إنشاء الطلب
+                    {t('orders.form.createButton')}
                   </button>
                             <button 
                     type="button"
                     onClick={() => setShowCreateModal(false)}
                     className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
                             >
-                    إلغاء
+                    {t('orders.form.cancelButton')}
                             </button>
                 </div>
               </form>
