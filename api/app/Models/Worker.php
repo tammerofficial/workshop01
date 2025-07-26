@@ -38,4 +38,34 @@ class Worker extends Model
     {
         return $this->hasMany(Order::class, 'assigned_worker_id');
     }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+    }
+
+    public function payroll()
+    {
+        return $this->hasMany(Payroll::class);
+    }
+
+    public function attendance()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function stations()
+    {
+        return $this->hasMany(Station::class, 'assigned_worker_id');
+    }
+
+    public function productionTracking()
+    {
+        return $this->hasMany(OrderProductionTracking::class);
+    }
+
+    public function materialTransactions()
+    {
+        return $this->hasMany(MaterialTransaction::class);
+    }
 }

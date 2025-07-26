@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Users, Clock, CheckCircle, AlertTriangle, Loader } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
-import { mockWorkers, mockOrders, mockTasks } from '../data/mockData';
+import { workerService, orderService, taskService } from '../api/laravel';
 import { Task, Worker, Order } from '../types';
+import toast from 'react-hot-toast';
 
 const AssignTask: React.FC = () => {
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);

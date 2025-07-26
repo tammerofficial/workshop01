@@ -1,23 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   User, Phone, Mail, Award, Calendar, Clock, 
-  CheckCircle, AlertTriangle, BarChart 
+  CheckCircle, AlertTriangle, BarChart, Loader
 } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
-import { mockWorkers, mockTasks } from '../data/mockData';
+import { workerService, taskService } from '../api/laravel';
 import { Worker, Task } from '../types';
+import toast from 'react-hot-toast';
 
 const WorkerDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'performance'>('overview');
+  const [worker, setWorker] = useState<any>(null);
+  const [workerTasks, setWorkerTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Find worker details from mock data
-  const worker = mockWorkers.find(w => w.id === id);
+  useEffect(() => {
+    const fetchWorkerData = async () => {
+      setLoading(true);
+      try {
+        const workerRes = await workerService.getById(parseInt(id!));
+        const tasksRes = await taskService.getAll();
+        setWorker(workerRes.data);
+        setWorkerTasks(tasksRes.data.filter((task: any) => task.worker_id === parseInt(id!)));
+      } catch (error) {
+        toast.error('Failed to load worker details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchWorkerData();
+    }
+  }, [id]);
   
-  // Get worker's tasks
-  const workerTasks = mockTasks.filter(task => task.workerId === id);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-16rem)]">
+        <Loader className="animate-spin text-blue-500" size={40} />
+        <span className="ml-4 text-lg text-gray-600">Loading Worker Details...</span>
+      </div>
+    );
+  }
   
   if (!worker) {
     return (

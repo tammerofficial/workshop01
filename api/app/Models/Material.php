@@ -47,4 +47,20 @@ class Material extends Model
     {
         return $this->quantity <= $this->reorder_level;
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(MaterialTransaction::class);
+    }
+
+    // Update quantity based on transaction
+    public function updateQuantity($quantity, $type = 'out')
+    {
+        if ($type === 'out') {
+            $this->quantity -= $quantity;
+        } else {
+            $this->quantity += $quantity;
+        }
+        $this->save();
+    }
 }

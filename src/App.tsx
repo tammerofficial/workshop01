@@ -31,6 +31,10 @@ import Analytics from './pages/Analytics';
 import AdvancedFeatures from './pages/AdvancedFeatures';
 import Invoices from './pages/Invoices';
 import CreateInvoice from './pages/CreateInvoice';
+import Sales from './pages/Sales';
+import Payroll from './pages/Payroll';
+import Attendance from './pages/Attendance';
+import ProductionTracking from './pages/ProductionTracking';
 
 // Admin pages
 import Profile from './pages/admin/Profile';
@@ -48,7 +52,7 @@ import Unauthorized from './pages/auth/Unauthorized';
 function App() {
   return (
     <ThemeProvider>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <LanguageProvider>
           <AuthProvider>
             <DepartmentProvider>
@@ -89,6 +93,10 @@ function App() {
                   <Route path="settings" element={<Settings />} />
                   <Route path="invoices" element={<Invoices />} />
                   <Route path="invoices/create" element={<CreateInvoice />} />
+                  <Route path="sales" element={<Sales />} />
+                  <Route path="payroll" element={<Payroll />} />
+                  <Route path="attendance" element={<Attendance />} />
+                  <Route path="production-tracking" element={<ProductionTracking />} />
                   
                   {/* Admin Routes - with role-based protection */}
                   <Route path="admin/profile" element={<Profile />} />

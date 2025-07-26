@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\MeasurementController;
+use App\Http\Controllers\Api\ProductionController;
 use App\Http\Controllers\DashboardController;
 use App\Services\WooCommerceService;
 
@@ -55,6 +56,18 @@ Route::get('measurements/client/{clientId}', [MeasurementController::class, 'get
 Route::apiResource('invoices', InvoiceController::class);
 Route::patch('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markAsPaid']);
 Route::patch('invoices/{invoice}/status', [InvoiceController::class, 'updateStatus']);
+
+// Production Routes
+Route::prefix('production')->group(function () {
+    Route::post('orders/{order}/start', [ProductionController::class, 'startProduction']);
+    Route::post('stages/{trackingId}/start', [ProductionController::class, 'startStage']);
+    Route::post('stages/{trackingId}/complete', [ProductionController::class, 'completeStage']);
+    Route::post('orders/{order}/materials', [ProductionController::class, 'recordMaterialUsage']);
+    Route::post('orders/{order}/sales', [ProductionController::class, 'recordSale']);
+    Route::post('attendance', [ProductionController::class, 'recordAttendance']);
+    Route::get('orders/{order}/progress', [ProductionController::class, 'getOrderProgress']);
+    Route::get('dashboard', [ProductionController::class, 'getDashboard']);
+});
 
 // WooCommerce Import Routes
 Route::prefix('woocommerce')->group(function () {

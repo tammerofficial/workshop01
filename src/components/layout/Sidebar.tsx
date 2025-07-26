@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { 
   LayoutDashboard, ShoppingBag, Package, Users, Calendar, 
   LineChart, Bell, Settings, Monitor, Workflow, Activity, Zap,
-  FileText
+  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -28,6 +28,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     { path: '/suit-production', label: t('nav.production'), icon: <Workflow size={20} /> },
     { path: '/station-display', label: t('nav.stations'), icon: <Monitor size={20} /> },
     { path: '/invoices', label: 'Invoices', icon: <FileText size={20} /> },
+    { path: '/sales', label: 'Sales', icon: <DollarSign size={20} />, badge: 'HOT' },
+    { path: '/payroll', label: 'Payroll', icon: <TrendingUp size={20} /> },
+    { path: '/attendance', label: 'Attendance', icon: <Clock size={20} /> },
+    { path: '/production-tracking', label: 'Production Tracking', icon: <Factory size={20} />, badge: 'NEW' },
     { path: '/analytics', label: t('nav.analytics'), icon: <LineChart size={20} /> },
     { path: '/advanced-features', label: t('nav.advanced'), icon: <Zap size={20} />, badge: 'NEW' },
     { path: '/notifications', label: t('nav.notifications'), icon: <Bell size={20} />, badge: 3 },

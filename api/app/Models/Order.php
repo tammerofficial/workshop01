@@ -69,4 +69,27 @@ class Order extends Model
     {
         return $this->hasMany(Invoice::class);
     }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+    }
+
+    public function productionTracking()
+    {
+        return $this->hasMany(OrderProductionTracking::class);
+    }
+
+    public function materialTransactions()
+    {
+        return $this->hasMany(MaterialTransaction::class);
+    }
+
+    // Generate order number
+    public static function generateOrderNumber()
+    {
+        $lastOrder = self::latest()->first();
+        $lastNumber = $lastOrder ? intval(substr($lastOrder->title, 4)) : 0;
+        return 'ODR-' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+    }
 }
