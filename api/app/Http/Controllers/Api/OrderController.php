@@ -89,4 +89,14 @@ class OrderController extends Controller
 
         return response()->json($order);
     }
+
+    public function getByClient($client_id): JsonResponse
+    {
+        $orders = Order::where('client_id', $client_id)
+            ->with(['client', 'worker', 'materials'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($orders);
+    }
 } 

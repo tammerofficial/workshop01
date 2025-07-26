@@ -18,6 +18,7 @@ import ViewBarcode from './pages/ViewBarcode';
 import EditInventoryItem from './pages/EditInventoryItem';
 import OrderMoreInventory from './pages/OrderMoreInventory';
 import Workers from './pages/Workers';
+import Clients from './pages/Clients';
 import AddWorker from './pages/AddWorker';
 import EditWorker from './pages/EditWorker';
 import WorkerDetails from './pages/WorkerDetails';
@@ -79,6 +80,7 @@ function App() {
                   <Route path="inventory/:id/barcode" element={<ViewBarcode />} />
                   <Route path="inventory/:id/edit" element={<EditInventoryItem />} />
                   <Route path="inventory/:id/order" element={<OrderMoreInventory />} />
+                  <Route path="clients" element={<Clients />} />
                   <Route path="workers" element={<Workers />} />
                   <Route path="workers/add" element={<AddWorker />} />
                   <Route path="workers/:id/edit" element={<EditWorker />} />

@@ -22,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const workshopItems = [
     { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { path: '/orders', label: 'Orders', icon: <ShoppingBag size={20} />, badge: 5 },
+    { path: '/clients', label: 'Clients', icon: <UserCheck size={20} /> },
     { path: '/inventory', label: 'Inventory', icon: <Package size={20} /> },
     { path: '/workers', label: 'Workers', icon: <Users size={20} /> },
     { path: '/suit-production', label: 'Production Flow', icon: <Workflow size={20} /> },

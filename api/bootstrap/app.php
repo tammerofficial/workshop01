@@ -20,10 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         ]);
 
-        // Enable CORS for API routes
-        $middleware->api(append: [
-            \Fruitcake\Cors\HandleCors::class,
-        ]);
+        // Enable CORS for API routes - Laravel 11 has built-in CORS support
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

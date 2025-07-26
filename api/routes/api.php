@@ -43,6 +43,7 @@ Route::apiResource('clients', ClientController::class);
 Route::apiResource('orders', OrderController::class);
 Route::patch('orders/{order}/assign-worker', [OrderController::class, 'assignWorker']);
 Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus']);
+Route::get('orders/client/{client_id}', [OrderController::class, 'getByClient']);
 
 // Tasks Routes
 Route::apiResource('tasks', TaskController::class);

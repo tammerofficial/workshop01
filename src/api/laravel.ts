@@ -60,10 +60,13 @@ export const orderService = {
     api.patch(`/orders/${id}/assign-worker`, { worker_id: workerId }),
   updateStatus: (id: number, status: string) => 
     api.patch(`/orders/${id}/status`, { status }),
+  getOrdersByClient: (clientId: number) => 
+    api.get(`/orders?client_id=${clientId}`).then(response => response.data),
 };
 
 export const clientService = {
   getAll: () => api.get('/clients'),
+  getClients: () => api.get('/clients').then(response => response.data),
   getById: (id: number) => api.get(`/clients/${id}`),
   create: (data: any) => api.post('/clients', data),
   update: (id: number, data: any) => api.put(`/clients/${id}`, data),
