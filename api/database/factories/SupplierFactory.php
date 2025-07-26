@@ -24,18 +24,20 @@ class SupplierFactory extends Factory
      */
     public function definition(): array
     {
-
+        $types = ['fabric', 'thread', 'buttons', 'zippers', 'accessories'];
+        $statuses = ['active', 'inactive', 'suspended'];
+        
         return [
-            'name' => factory(\App\Models\Business)->sequence(['name' => function () {
-                return Str::random(10);
-            }])->make()->name,
-            'email' => factory(\App\Models\Email)->sequence(['email' => function () {
-                return Str::random(10) . '@example.com';
-            })->make()->email,
-            'phone' => factory(\App\Models\Phone)->sequence(['phone' => function () {
-                return Str::random(3) . '-' . Str::random(3) . '-' . Str::random(4);
-            })->make()->phone,
-        ];
+            'name' => fake()->company(),
+            'email' => fake()->companyEmail(),
+            'phone' => fake()->phoneNumber(),
+            'address' => fake()->address(),
+            'contact_person' => fake()->name(),
+            'supplier_type' => fake()->randomElement($types),
+            'status' => fake()->randomElement($statuses),
+            'payment_terms' => fake()->randomElement(['net 30', 'net 60', 'immediate']),
+            'rating' => fake()->numberBetween(1, 5),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

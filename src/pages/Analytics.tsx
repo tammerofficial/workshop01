@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { 
   BarChart3, 
@@ -7,14 +7,11 @@ import {
   Package, 
   DollarSign, 
   Clock,
-  Calendar,
-  Filter,
   Download,
-  Eye,
-  PieChart,
   Activity
 } from 'lucide-react';
 import { orderService, workerService, invoiceService, taskService } from '../api/laravel';
+import { LanguageContext } from '../contexts/LanguageContext';
 
 interface AnalyticsData {
   orders: {
@@ -53,6 +50,7 @@ interface AnalyticsData {
 }
 
 const Analytics: React.FC = () => {
+  const { t } = useContext(LanguageContext)!;
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
@@ -105,8 +103,8 @@ const Analytics: React.FC = () => {
           pending: tasks.filter((t: any) => t.status === 'pending').length,
           overdue: tasks.filter((t: any) => new Date(t.due_date) < new Date() && t.status !== 'completed').length,
         },
-        monthlyOrders: generateMonthlyData(orders, timeRange),
-        departmentPerformance: generateDepartmentPerformance(orders, workers)
+        monthlyOrders: generateMonthlyData(orders),
+        departmentPerformance: generateDepartmentPerformance(orders)
       };
 
       setData(analyticsData);
@@ -117,7 +115,7 @@ const Analytics: React.FC = () => {
     }
   };
 
-  const generateMonthlyData = (orders: any[], range: string) => {
+  const generateMonthlyData = (orders: any[]) => {
     const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
     const data = [];
     
@@ -137,7 +135,7 @@ const Analytics: React.FC = () => {
     return data;
   };
 
-  const generateDepartmentPerformance = (orders: any[], workers: any[]) => {
+  const generateDepartmentPerformance = (orders: any[]) => {
     const departments = ['design', 'cutting', 'sewing', 'fitting', 'finishing'];
     return departments.map(dept => ({
       department: dept,
@@ -166,7 +164,7 @@ const Analytics: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل البيانات التحليلية...</p>
+          <p className="mt-4 text-gray-600">{t('analytics.loading')}</p>
         </div>
       </div>
     );
@@ -177,7 +175,7 @@ const Analytics: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-600">لا توجد بيانات متاحة</p>
+          <p className="text-gray-600">{t('analytics.noData')}</p>
         </div>
       </div>
     );
@@ -196,272 +194,195 @@ const Analytics: React.FC = () => {
             <div className="p-2 bg-blue-100 rounded-lg">
               <BarChart3 className="h-6 w-6 text-blue-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">التحليلات</h1>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">{t('analytics.header.title')}</h1>
+              <p className="text-gray-500">{t('analytics.header.subtitle')}</p>
+            </div>
           </div>
-          <p className="text-gray-600">تحليل شامل لأداء الورشة والإنتاجية</p>
         </motion.div>
 
         {/* Controls */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
+          className="mb-6 flex flex-wrap items-center justify-between gap-4"
         >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value as any)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          <div className="flex items-center gap-2 bg-white p-1 rounded-lg shadow-sm">
+            {(['week', 'month', 'quarter', 'year'] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                  timeRange === range
+                    ? 'bg-blue-600 text-white shadow'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
               >
-                <option value="week">الأسبوع</option>
-                <option value="month">الشهر</option>
-                <option value="quarter">الربع</option>
-                <option value="year">السنة</option>
-              </select>
+                {t(`analytics.controls.${range}`)}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 bg-white p-1 rounded-lg shadow-sm">
+            {(['orders', 'revenue', 'workers', 'tasks'] as const).map((metric) => (
+              <button
+                key={metric}
+                onClick={() => setSelectedMetric(metric)}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                  selectedMetric === metric
+                    ? `${getMetricColor(metric)} shadow`
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {metric === 'orders' && <Package size={16} />}
+                {metric === 'revenue' && <DollarSign size={16} />}
+                {metric === 'workers' && <Users size={16} />}
+                {metric === 'tasks' && <Activity size={16} />}
+                {t(`analytics.controls.${metric}`)}
+              </button>
+            ))}
+          </div>
+          <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow-sm hover:bg-green-700 transition-colors">
+            <Download size={18} />
+            {t('analytics.controls.export')}
+          </button>
+        </motion.div>
 
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                {(['orders', 'revenue', 'workers', 'tasks'] as const).map(metric => (
-                  <button
-                    key={metric}
-                    onClick={() => setSelectedMetric(metric)}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      selectedMetric === metric 
-                        ? 'bg-white text-gray-900 shadow-sm' 
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    {metric === 'orders' ? 'الطلبات' : 
-                     metric === 'revenue' ? 'الإيرادات' : 
-                     metric === 'workers' ? 'العمال' : 'المهام'}
-                  </button>
+        {/* Metrics */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        >
+          <MetricCard icon={Package} title={t('analytics.metrics.totalOrders')} value={data.orders.total} change="+5.2%" changeType="increase" />
+          <MetricCard icon={DollarSign} title={t('analytics.metrics.totalRevenue')} value={`$${data.revenue.total.toLocaleString()}`} change="+12.5%" changeType="increase" />
+          <MetricCard icon={Users} title={t('analytics.metrics.activeWorkers')} value={data.workers.active} change="-1.2%" changeType="decrease" />
+          <MetricCard icon={Clock} title={t('analytics.metrics.completedTasks')} value={data.tasks.completed} change="+8.0%" changeType="increase" />
+        </motion.div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartCard title={t('analytics.charts.monthlyOrders')}>
+            <div className="h-80">
+              {/* Replace with actual chart component */}
+              <div className="flex items-end h-full gap-2">
+                {data.monthlyOrders.map(d => (
+                  <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
+                    <div 
+                      className="w-full bg-blue-500 rounded-t-md hover:bg-blue-600 transition-colors"
+                      style={{ height: `${(d.orders / Math.max(...data.monthlyOrders.map(m => m.orders))) * 100}%` }}
+                      title={`${d.month}: ${d.orders} ${t('analytics.charts.ordersUnit')}`}
+                    ></div>
+                    <span className="text-xs text-gray-500">{d.month}</span>
+                  </div>
                 ))}
               </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                <Download className="h-4 w-4" />
-                تصدير التقرير
-              </button>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Key Metrics */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"
-        >
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">إجمالي الطلبات</p>
-                <p className="text-2xl font-bold text-gray-900">{data.orders.total}</p>
-                <p className="text-sm text-green-600">+12% من الشهر الماضي</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Package className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">إجمالي الإيرادات</p>
-                <p className="text-2xl font-bold text-gray-900">${data.revenue.total.toLocaleString()}</p>
-                <p className="text-sm text-green-600">+8% من الشهر الماضي</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <DollarSign className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">العمال النشطين</p>
-                <p className="text-2xl font-bold text-gray-900">{data.workers.active}</p>
-                <p className="text-sm text-blue-600">من أصل {data.workers.total}</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Users className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">المهام المكتملة</p>
-                <p className="text-2xl font-bold text-gray-900">{data.tasks.completed}</p>
-                <p className="text-sm text-orange-600">من أصل {data.tasks.total}</p>
-              </div>
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <Activity className="h-6 w-6 text-orange-600" />
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Monthly Trends */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">الطلبات الشهرية</h3>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-600">+15%</span>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              {data.monthlyOrders.slice(0, 6).map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{item.month}</span>
-                  <div className="flex items-center gap-4">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${(item.orders / Math.max(...data.monthlyOrders.map(m => m.orders))) * 100}%` }}
-                      ></div>
+          </ChartCard>
+          <ChartCard title={t('analytics.charts.departmentPerformance')}>
+            <div className="h-80">
+              {/* Replace with actual chart component */}
+              <div className="space-y-4">
+                {data.departmentPerformance.map(d => (
+                  <div key={d.department}>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-sm font-medium text-gray-700 capitalize">{d.department}</span>
+                      <span className="text-sm font-medium text-gray-700">{d.efficiency.toFixed(1)}%</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">{item.orders}</span>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: `${d.efficiency}%` }}></div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </motion.div>
-
-          {/* Department Performance */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">أداء الأقسام</h3>
-              <PieChart className="h-5 w-5 text-gray-600" />
+          </ChartCard>
+          <ChartCard title={t('analytics.charts.orderStatus')}>
+            <div className="h-80 flex items-center justify-center">
+              {/* Replace with actual chart component */}
+              <div className="w-64 h-64 relative">
+                <div className="absolute inset-0 rounded-full bg-green-400" style={{ clipPath: `circle(50% at 50% 50%)` }}></div>
+                <div className="absolute inset-0 rounded-full bg-yellow-400" style={{ clipPath: `polygon(50% 0, 50% 50%, 100% 50%, 100% 0)` }}></div>
+                <div className="absolute inset-0 rounded-full bg-blue-400" style={{ clipPath: `polygon(50% 50%, 100% 100%, 0 100%)` }}></div>
+                <div className="absolute inset-1/4 rounded-full bg-gray-50"></div>
+              </div>
             </div>
-            
-            <div className="space-y-4">
-              {data.departmentPerformance.map((dept, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      index === 0 ? 'bg-blue-500' :
-                      index === 1 ? 'bg-green-500' :
-                      index === 2 ? 'bg-purple-500' :
-                      index === 3 ? 'bg-orange-500' : 'bg-red-500'
-                    }`}></div>
-                    <span className="text-sm text-gray-900">{dept.department}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm text-gray-600">{dept.orders} طلب</span>
-                    <span className="text-sm font-medium text-gray-900">{dept.efficiency.toFixed(0)}%</span>
-                  </div>
-                </div>
-              ))}
+          </ChartCard>
+          <ChartCard title={t('analytics.charts.taskStatus')}>
+            <div className="h-80 flex flex-col justify-center gap-4">
+              <StatusItem color="bg-green-500" label={t('analytics.charts.completed')} value={data.tasks.completed} total={data.tasks.total} />
+              <StatusItem color="bg-blue-500" label={t('analytics.charts.inProgress')} value={data.tasks.total - data.tasks.completed - data.tasks.pending - data.tasks.overdue} total={data.tasks.total} />
+              <StatusItem color="bg-yellow-500" label={t('analytics.charts.pending')} value={data.tasks.pending} total={data.tasks.total} />
+              <StatusItem color="bg-red-500" label={t('analytics.charts.overdue')} value={data.tasks.overdue} total={data.tasks.total} />
             </div>
-          </motion.div>
+          </ChartCard>
         </div>
+      </div>
+    </div>
+  );
+};
 
-        {/* Detailed Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-        >
-          {/* Order Status Breakdown */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">حالة الطلبات</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-gray-700">مكتمل</span>
-                </div>
-                <span className="text-sm font-medium text-gray-900">{data.orders.completed}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm text-gray-700">قيد التنفيذ</span>
-                </div>
-                <span className="text-sm font-medium text-gray-900">{data.orders.inProgress}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <span className="text-sm text-gray-700">قيد الانتظار</span>
-                </div>
-                <span className="text-sm font-medium text-gray-900">{data.orders.pending}</span>
-              </div>
-            </div>
-          </div>
+interface MetricCardProps {
+  icon: React.ElementType;
+  title: string;
+  value: string | number;
+  change: string;
+  changeType: 'increase' | 'decrease';
+}
 
-          {/* Task Status */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">حالة المهام</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-gray-700">مكتملة</span>
-                </div>
-                <span className="text-sm font-medium text-gray-900">{data.tasks.completed}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <span className="text-sm text-gray-700">قيد الانتظار</span>
-                </div>
-                <span className="text-sm font-medium text-gray-900">{data.tasks.pending}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-sm text-gray-700">متأخرة</span>
-                </div>
-                <span className="text-sm font-medium text-gray-900">{data.tasks.overdue}</span>
-              </div>
-            </div>
-          </div>
+const MetricCard: React.FC<MetricCardProps> = ({ icon: Icon, title, value, change, changeType }) => {
+  const { t } = useContext(LanguageContext)!;
+  return (
+    <div className="bg-white p-5 rounded-xl shadow-sm flex items-start justify-between">
+      <div>
+        <p className="text-sm text-gray-500 mb-1">{title}</p>
+        <p className="text-3xl font-bold text-gray-800">{value}</p>
+        <div className="flex items-center text-xs mt-2">
+          <span className={`flex items-center gap-1 ${changeType === 'increase' ? 'text-green-600' : 'text-red-600'}`}>
+            <TrendingUp size={14} className={changeType === 'increase' ? '' : 'transform -scale-y-100'} />
+            {change}
+          </span>
+          <span className="text-gray-400 ml-1">{t('analytics.metrics.fromLastMonth')}</span>
+        </div>
+      </div>
+      <div className="p-3 bg-blue-100 rounded-lg">
+        <Icon className="h-6 w-6 text-blue-600" />
+      </div>
+    </div>
+  );
+};
 
-          {/* Worker Distribution */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">توزيع العمال</h3>
-            <div className="space-y-4">
-              {Object.entries(data.workers.byDepartment).map(([dept, count], index) => (
-                <div key={dept} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${
-                      index === 0 ? 'bg-blue-500' :
-                      index === 1 ? 'bg-green-500' :
-                      index === 2 ? 'bg-purple-500' :
-                      index === 3 ? 'bg-orange-500' : 'bg-red-500'
-                    }`}></div>
-                    <span className="text-sm text-gray-700">{dept}</span>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">{count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
+interface ChartCardProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+const ChartCard: React.FC<ChartCardProps> = ({ title, children }) => (
+  <div className="bg-white p-6 rounded-xl shadow-sm">
+    <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
+    {children}
+  </div>
+);
+
+interface StatusItemProps {
+  color: string;
+  label: string;
+  value: number;
+  total: number;
+}
+
+const StatusItem: React.FC<StatusItemProps> = ({ color, label, value, total }) => {
+  const { t } = useContext(LanguageContext)!;
+  const percentage = total > 0 ? (value / total) * 100 : 0;
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-sm font-medium text-gray-700">{label}</span>
+        <span className="text-sm text-gray-500">{value} / {total} ({percentage.toFixed(1)}%)</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className={`${color} h-2 rounded-full`} style={{ width: `${percentage}%` }}></div>
       </div>
     </div>
   );

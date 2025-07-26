@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { Factory, Clock, CheckCircle, Play, Users, TrendingUp } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { LanguageContext } from '../contexts/LanguageContext';
 
 interface ProductionStage {
   id: number;
@@ -33,6 +34,7 @@ interface Order {
 
 const ProductionTracking: React.FC = () => {
   const { isDark } = useTheme();
+  const { t } = useContext(LanguageContext)!;
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [productionStages, setProductionStages] = useState<ProductionStage[]>([]);
@@ -175,10 +177,10 @@ const ProductionTracking: React.FC = () => {
       >
         <div>
           <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            Production Tracking 🏭
+            {t('tracking.title')} 🏭
           </h1>
           <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Monitor production stages and progress
+            {t('tracking.subtitle')}
           </p>
         </div>
         <motion.button
@@ -187,7 +189,7 @@ const ProductionTracking: React.FC = () => {
           className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2"
         >
           <Factory size={20} />
-          <span>Start Production</span>
+          <span>{t('tracking.liveUpdates')}</span>
         </motion.button>
       </motion.div>
 
@@ -197,7 +199,7 @@ const ProductionTracking: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         className={`p-6 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
       >
-        <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Select Order</h2>
+        <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('tracking.orderProgress')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {orders.map((order) => (
             <motion.div
@@ -241,20 +243,20 @@ const ProductionTracking: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                Production Progress - {selectedOrder.title}
+                {t('tracking.productionProgress')} - {selectedOrder.title}
               </h2>
               <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Overall Progress: {calculateProgress()}%
+                {t('tracking.overallProgress')}: {calculateProgress()}%
               </p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-center">
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Client</p>
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('tracking.client')}</p>
                 <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{selectedOrder.client.name}</p>
               </div>
               {selectedOrder.worker && (
                 <div className="text-center">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Worker</p>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('tracking.worker')}</p>
                   <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{selectedOrder.worker.name}</p>
                 </div>
               )}
@@ -292,25 +294,25 @@ const ProductionTracking: React.FC = () => {
                     <div>
                       <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stage.name}</h3>
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Estimated: {stage.estimated_hours}h
-                        {stage.actual_hours && ` | Actual: ${stage.actual_hours}h`}
+                        {t('tracking.estimated')}: {stage.estimated_hours}h
+                        {stage.actual_hours && ` | ${t('tracking.actual')}: ${stage.actual_hours}h`}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     {stage.worker && (
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Worker: {stage.worker.name}
+                        {t('tracking.worker')}: {stage.worker.name}
                       </p>
                     )}
                     {stage.station && (
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Station: {stage.station.name}
+                        {t('tracking.station')}: {stage.station.name}
                       </p>
                     )}
                     {stage.started_at && (
                       <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                        Started: {stage.started_at}
+                        {t('tracking.started')}: {stage.started_at}
                       </p>
                     )}
                   </div>
@@ -324,4 +326,4 @@ const ProductionTracking: React.FC = () => {
   );
 };
 
-export default ProductionTracking; 
+export default ProductionTracking;

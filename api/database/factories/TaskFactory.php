@@ -26,8 +26,24 @@ class TaskFactory extends Factory
      */
     public function definition(): array
     {
+        $statuses = ['pending', 'in_progress', 'completed', 'cancelled'];
+        $priorities = ['low', 'medium', 'high', 'urgent'];
+        $types = ['Cutting', 'Sewing', 'Fitting', 'Finishing', 'Quality Check'];
+        
         return [
-            // TODO: Add task factory data
+            'title' => fake()->sentence(3),
+            'description' => fake()->paragraph(),
+            'order_id' => fake()->numberBetween(1, 20),
+            'assigned_worker_id' => fake()->optional()->numberBetween(1, 20),
+            'status' => fake()->randomElement($statuses),
+            'priority' => fake()->randomElement($priorities),
+            'type' => fake()->randomElement($types),
+            'estimated_hours' => fake()->numberBetween(1, 8),
+            'actual_hours' => fake()->optional()->numberBetween(1, 10),
+            'start_date' => fake()->dateTimeBetween('-7 days', 'now'),
+            'due_date' => fake()->dateTimeBetween('now', '+7 days'),
+            'completed_date' => fake()->optional()->dateTimeBetween('-7 days', 'now'),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

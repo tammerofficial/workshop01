@@ -26,8 +26,20 @@ class ReportFactory extends Factory
      */
     public function definition(): array
     {
+        $types = ['sales', 'production', 'inventory', 'financial', 'quality'];
+        $formats = ['pdf', 'excel', 'csv'];
+        
         return [
-            // TODO: Add report factory data
+            'order_id' => fake()->numberBetween(1, 20),
+            'user_id' => fake()->numberBetween(1, 20),
+            'report_type' => fake()->randomElement($types),
+            'title' => fake()->sentence(3),
+            'description' => fake()->paragraph(),
+            'generated_date' => fake()->dateTimeBetween('-30 days', 'now'),
+            'file_path' => 'reports/' . fake()->uuid() . '.pdf',
+            'format' => fake()->randomElement($formats),
+            'is_scheduled' => fake()->boolean(30),
+            'schedule_frequency' => fake()->optional()->randomElement(['daily', 'weekly', 'monthly']),
         ];
     }
 }

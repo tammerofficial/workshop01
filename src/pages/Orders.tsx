@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Edit, Trash2, User, Calendar, DollarSign } from 'lucide-react';
 import { orderService, clientService, workerService, categoryService } from '../api/laravel';
+import { useLanguage } from '../contexts/LanguageContext';
 import toast from 'react-hot-toast';
 
 interface Order {
@@ -28,6 +29,7 @@ interface Order {
 }
 
 const Orders = () => {
+  const { t } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [clients, setClients] = useState([]);
   const [workers, setWorkers] = useState([]);
@@ -69,7 +71,7 @@ const Orders = () => {
       setCategories(categoriesRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
-      toast.error('فشل في تحميل البيانات');
+      toast.error(t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -86,7 +88,7 @@ const Orders = () => {
       };
 
       await orderService.create(orderData);
-      toast.success('تم إنشاء الطلب بنجاح');
+      toast.success(t('orders.createSuccess'));
       setShowCreateModal(false);
       setNewOrder({
         title: '',
@@ -102,7 +104,7 @@ const Orders = () => {
       loadData();
     } catch (error) {
       console.error('Error creating order:', error);
-      toast.error('فشل في إنشاء الطلب');
+      toast.error(t('orders.createError'));
     }
   };
 
@@ -112,36 +114,36 @@ const Orders = () => {
 
     try {
       await orderService.update(editingOrder.id, editingOrder);
-      toast.success('تم تحديث الطلب بنجاح');
+      toast.success(t('orders.updateSuccess'));
       setEditingOrder(null);
       loadData();
     } catch (error) {
       console.error('Error updating order:', error);
-      toast.error('فشل في تحديث الطلب');
+      toast.error(t('orders.updateError'));
     }
   };
 
   const handleDeleteOrder = async (id: number) => {
-    if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
+    if (!confirm(t('orders.deleteConfirm'))) return;
 
     try {
       await orderService.delete(id);
-      toast.success('تم حذف الطلب بنجاح');
+      toast.success(t('orders.deleteSuccess'));
       loadData();
     } catch (error) {
       console.error('Error deleting order:', error);
-      toast.error('فشل في حذف الطلب');
+      toast.error(t('orders.deleteError'));
     }
   };
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     try {
       await orderService.updateStatus(orderId, newStatus);
-      toast.success('تم تحديث حالة الطلب');
+      toast.success(t('orders.statusUpdateSuccess'));
       loadData();
     } catch (error) {
       console.error('Error updating status:', error);
-      toast.error('فشل في تحديث حالة الطلب');
+      toast.error(t('orders.statusUpdateError'));
     }
   };
 

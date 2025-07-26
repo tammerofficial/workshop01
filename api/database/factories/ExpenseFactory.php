@@ -25,8 +25,21 @@ class ExpenseFactory extends Factory
      */
     public function definition(): array
     {
+        $categories = ['materials', 'utilities', 'rent', 'salary', 'equipment', 'maintenance'];
+        $paymentMethods = ['cash', 'card', 'bank_transfer', 'check'];
+        
         return [
-            // TODO: Add expense factory data
+            'user_id' => fake()->numberBetween(1, 20),
+            'title' => fake()->sentence(3),
+            'description' => fake()->paragraph(),
+            'amount' => fake()->randomFloat(2, 10, 1000),
+            'category' => fake()->randomElement($categories),
+            'payment_method' => fake()->randomElement($paymentMethods),
+            'expense_date' => fake()->dateTimeBetween('-30 days', 'now'),
+            'receipt_url' => fake()->optional()->url(),
+            'is_approved' => fake()->boolean(80),
+            'approved_by' => fake()->optional()->numberBetween(1, 20),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

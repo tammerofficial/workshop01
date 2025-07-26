@@ -25,8 +25,16 @@ class WorkerSkillFactory extends Factory
      */
     public function definition(): array
     {
+        $skills = ['Sewing', 'Cutting', 'Ironing', 'Quality Control', 'Pattern Making', 'Embroidery', 'Button Making', 'Zipper Installation'];
+        $levels = ['beginner', 'intermediate', 'advanced', 'expert'];
+        
         return [
-            // TODO: Add worker skill factory data
+            'worker_id' => fake()->numberBetween(1, 20),
+            'skill_name' => fake()->randomElement($skills),
+            'skill_level' => fake()->randomElement($levels),
+            'years_experience' => fake()->numberBetween(1, 15),
+            'certification' => fake()->optional()->sentence(),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

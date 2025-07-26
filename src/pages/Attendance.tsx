@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Users, CheckCircle, XCircle, Calendar, TrendingUp } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { LanguageContext } from '../contexts/LanguageContext';
 
 interface Attendance {
   id: number;
@@ -19,6 +20,7 @@ interface Attendance {
 
 const Attendance: React.FC = () => {
   const { isDark } = useTheme();
+  const { t } = useContext(LanguageContext)!;
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({

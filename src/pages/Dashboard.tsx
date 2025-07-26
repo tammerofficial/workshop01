@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, ShoppingBag, DollarSign, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Users, ShoppingBag, DollarSign, AlertTriangle, TrendingUp } from 'lucide-react';
 import ModernStatCard from '../components/dashboard/ModernStatCard';
 import ModernOrdersChart from '../components/dashboard/ModernOrdersChart';
 import ModernWorkerChart from '../components/dashboard/ModernWorkerChart';
 import ModernRecentActivity from '../components/dashboard/ModernRecentActivity';
-import { dashboardService, orderService, wooCommerceService } from '../api/laravel';
+import { dashboardService, wooCommerceService } from '../api/laravel';
+import { useLanguage } from '../contexts/LanguageContext';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
+  const { t, isRTL } = useLanguage();
   const [stats, setStats] = useState({
     workers_count: 0,
     orders_count: 0,
@@ -22,7 +24,6 @@ const Dashboard = () => {
   });
   
   const [recentOrders, setRecentOrders] = useState([]);
-  const [recentTasks, setRecentTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
 
@@ -32,18 +33,16 @@ const Dashboard = () => {
 
   const loadDashboardData = async () => {
     try {
-      const [statsResponse, ordersResponse, tasksResponse] = await Promise.all([
+      const [statsResponse, ordersResponse] = await Promise.all([
         dashboardService.getStats(),
         dashboardService.getRecentOrders(),
-        dashboardService.getRecentTasks()
       ]);
 
       setStats(statsResponse.data);
       setRecentOrders(ordersResponse.data);
-      setRecentTasks(tasksResponse.data);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
-      toast.error('فشل في تحميل بيانات لوحة القيادة');
+      toast.error(t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -51,19 +50,22 @@ const Dashboard = () => {
 
   const handleImportFromWooCommerce = async () => {
     setImporting(true);
+    toast.loading(t('dashboard.importing'), { id: 'import-toast' });
     try {
       const response = await wooCommerceService.importAll();
-      toast.success('تم استيراد البيانات من WooCommerce بنجاح!');
+      toast.success(t('dashboard.importSuccess'), { id: 'import-toast' });
       
-      // Refresh dashboard data
       await loadDashboardData();
       
-      // Show import results
       const imported = response.data.imported;
-      toast.success(`تم استيراد: ${imported.customers} عميل، ${imported.products} منتج، ${imported.orders} طلب`);
+      toast.success(t('dashboard.importResults', {
+        customers: imported.customers,
+        products: imported.products,
+        orders: imported.orders
+      }), { duration: 6000 });
     } catch (error) {
       console.error('Error importing from WooCommerce:', error);
-      toast.error('فشل في استيراد البيانات من WooCommerce');
+      toast.error(t('dashboard.importFailed'), { id: 'import-toast' });
     } finally {
       setImporting(false);
     }
@@ -71,36 +73,36 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 dark:border-blue-400"></div>
       </div>
     );
   }
 
   const statCards = [
     {
-      title: 'إجمالي الطلبات',
+      title: t('dashboard.totalOrders'),
       value: stats.orders_count.toString(),
       icon: <ShoppingBag className="h-6 w-6" />,
       change: { value: 12, positive: true },
       color: 'blue' as const
     },
     {
-      title: 'العمال النشطين',
+      title: t('dashboard.activeWorkers'),
       value: stats.workers_count.toString(),
       icon: <Users className="h-6 w-6" />,
       change: { value: 3, positive: true },
       color: 'green' as const
     },
     {
-      title: 'إجمالي الإيرادات',
+      title: t('dashboard.revenue'),
       value: `$${stats.total_revenue.toLocaleString()}`,
       icon: <DollarSign className="h-6 w-6" />,
       change: { value: 18, positive: true },
       color: 'purple' as const
     },
     {
-      title: 'المخزون المنخفض',
+      title: t('inventory.lowStock'),
       value: stats.low_stock_materials.toString(),
       icon: <AlertTriangle className="h-6 w-6" />,
       change: { value: 8, positive: false },
@@ -108,42 +110,34 @@ const Dashboard = () => {
     }
   ];
 
-  const orderChartData = [
-    { name: 'قيد الانتظار', value: stats.pending_orders, color: '#fbbf24' },
-    { name: 'قيد التنفيذ', value: stats.in_progress_orders, color: '#3b82f6' },
-    { name: 'مكتملة', value: stats.completed_orders, color: '#10b981' }
-  ];
-
   return (
-    <div className="space-y-6">
-      {/* Header with Import Button */}
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">لوحة القيادة</h1>
-          <p className="text-gray-600 mt-2">نظرة عامة على إدارة ورشة الخياطة</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('dashboard.header.title')}</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">{t('dashboard.header.subtitle')}</p>
         </div>
         
         <button
           onClick={handleImportFromWooCommerce}
           disabled={importing}
-          className={`px-6 py-3 rounded-lg text-white font-medium transition-colors ${
+          className={`inline-flex items-center px-6 py-3 rounded-lg text-white font-medium transition-colors ${
             importing 
               ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700'
+              : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
           }`}
         >
           {importing ? (
             <div className="flex items-center gap-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              جاري الاستيراد...
+              {t('dashboard.importing')}
             </div>
           ) : (
-            '🛒 استيراد من WooCommerce'
+            `🛒 ${t('dashboard.importFromWooCommerce')}`
           )}
         </button>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
           <ModernStatCard
@@ -157,39 +151,36 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ModernOrdersChart />
         <ModernWorkerChart />
       </div>
 
-      {/* Recent Activity */}
       <ModernRecentActivity orders={recentOrders} loading={loading} />
 
-      {/* Additional Stats */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-purple-600" />
-          إحصائيات إضافية
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+          {t('dashboard.additionalStats')}
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">{stats.clients_count}</div>
-            <div className="text-sm text-gray-600">العملاء</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.clients_count}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">{t('dashboard.clients')}</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">{stats.materials_count}</div>
-            <div className="text-sm text-gray-600">المواد</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.materials_count}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">{t('dashboard.materials')}</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">{stats.unpaid_invoices}</div>
-            <div className="text-sm text-gray-600">فواتير غير مدفوعة</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.unpaid_invoices}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">{t('dashboard.unpaidInvoices')}</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {Math.round((stats.completed_orders / stats.orders_count) * 100) || 0}%
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              {Math.round((stats.completed_orders / (stats.orders_count || 1)) * 100)}%
             </div>
-            <div className="text-sm text-gray-600">معدل الإنجاز</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">{t('dashboard.completionRate')}</div>
           </div>
         </div>
       </div>

@@ -24,8 +24,23 @@ class MaterialFactory extends Factory
      */
     public function definition(): array
     {
+        $materials = ['Wool', 'Cotton', 'Silk', 'Linen', 'Polyester', 'Velvet', 'Denim', 'Satin'];
+        $units = ['meters', 'yards', 'pieces', 'rolls'];
+        $suppliers = ['Textile Co.', 'Fabric World', 'Premium Materials', 'Global Textiles'];
+        
         return [
-            // TODO: Add material factory data
+            'name' => fake()->randomElement($materials),
+            'description' => fake()->sentence(),
+            'category_id' => fake()->numberBetween(1, 5),
+            'sku' => 'MAT-' . fake()->unique()->numberBetween(1000, 9999),
+            'quantity' => fake()->numberBetween(10, 500),
+            'unit' => fake()->randomElement($units),
+            'cost_per_unit' => fake()->randomFloat(2, 5, 50),
+            'supplier' => fake()->randomElement($suppliers),
+            'reorder_level' => fake()->numberBetween(5, 50),
+            'location' => fake()->randomElement(['Warehouse A', 'Warehouse B', 'Storage Room']),
+            'image_url' => fake()->optional()->imageUrl(),
+            'is_active' => fake()->boolean(90),
         ];
     }
 }

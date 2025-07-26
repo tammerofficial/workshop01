@@ -24,8 +24,15 @@ class SettingFactory extends Factory
      */
     public function definition(): array
     {
+        $categories = ['general', 'production', 'financial', 'notification', 'security'];
+        
         return [
-            // TODO: Add setting factory data
+            'key' => fake()->unique()->word(),
+            'value' => fake()->sentence(),
+            'category' => fake()->randomElement($categories),
+            'description' => fake()->sentence(),
+            'is_public' => fake()->boolean(70),
+            'data_type' => fake()->randomElement(['string', 'integer', 'boolean', 'json']),
         ];
     }
 }

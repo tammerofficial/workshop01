@@ -25,8 +25,23 @@ class OrderFactory extends Factory
      */
     public function definition(): array
     {
+        $statuses = ['pending', 'in_progress', 'completed', 'cancelled'];
+        $types = ['Suit', 'Shirt', 'Pants', 'Jacket', 'Dress', 'Coat'];
+        $priorities = ['low', 'medium', 'high', 'urgent'];
+        
         return [
-            // TODO: Add order factory data
+            'title' => 'ODR-' . fake()->unique()->numberBetween(1000, 9999),
+            'description' => fake()->sentence(),
+            'client_id' => fake()->numberBetween(1, 20),
+            'assigned_worker_id' => fake()->optional()->numberBetween(1, 20),
+            'status' => fake()->randomElement($statuses),
+            'type' => fake()->randomElement($types),
+            'priority' => fake()->randomElement($priorities),
+            'estimated_completion_date' => fake()->dateTimeBetween('now', '+30 days'),
+            'actual_completion_date' => fake()->optional()->dateTimeBetween('-30 days', 'now'),
+            'total_cost' => fake()->randomFloat(2, 50, 500),
+            'deposit_amount' => fake()->optional()->randomFloat(2, 10, 100),
+            'notes' => fake()->optional()->paragraph(),
         ];
     }
 }

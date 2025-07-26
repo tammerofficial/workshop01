@@ -24,8 +24,15 @@ class DepartmentFactory extends Factory
      */
     public function definition(): array
     {
+        $departments = ['Production', 'Quality Control', 'Sales', 'Finance', 'HR', 'IT', 'Maintenance'];
+        
         return [
-            // TODO: Add department factory data
+            'name' => fake()->randomElement($departments),
+            'description' => fake()->sentence(),
+            'manager_id' => fake()->optional()->numberBetween(1, 20),
+            'budget' => fake()->randomFloat(2, 1000, 50000),
+            'is_active' => fake()->boolean(90),
+            'created_at' => fake()->dateTimeBetween('-1 year', 'now'),
         ];
     }
 }

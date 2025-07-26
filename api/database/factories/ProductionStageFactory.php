@@ -25,8 +25,14 @@ class ProductionStageFactory extends Factory
      */
     public function definition(): array
     {
+        $stages = ['Design & Planning', 'Cutting', 'Sewing', 'Fitting', 'Finishing', 'Quality Check'];
+        
         return [
-            // TODO: Add production stage factory data
+            'name' => fake()->randomElement($stages),
+            'description' => fake()->sentence(),
+            'order_sequence' => fake()->numberBetween(1, 6),
+            'estimated_hours' => fake()->numberBetween(1, 8),
+            'is_active' => fake()->boolean(90),
         ];
     }
 }

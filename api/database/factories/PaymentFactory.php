@@ -25,8 +25,17 @@ class PaymentFactory extends Factory
      */
     public function definition(): array
     {
+        $methods = ['cash', 'card', 'bank_transfer', 'check'];
+        $statuses = ['pending', 'completed', 'failed', 'refunded'];
+        
         return [
-            // TODO: Add payment factory data
+            'invoice_id' => fake()->numberBetween(1, 20),
+            'amount' => fake()->randomFloat(2, 50, 1000),
+            'payment_method' => fake()->randomElement($methods),
+            'payment_date' => fake()->dateTimeBetween('-30 days', 'now'),
+            'reference_number' => 'PAY-' . fake()->unique()->numberBetween(1000, 9999),
+            'status' => fake()->randomElement($statuses),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

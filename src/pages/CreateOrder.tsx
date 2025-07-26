@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Plus, User, Phone, Shirt, Ruler, Save, ArrowLeft,
-  Calendar, FileText, Scissors, Package
+  User, Save, ArrowLeft,
+  Shirt, Ruler, FileText
 } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import { useDepartment } from '../contexts/DepartmentContext';
 import toast from 'react-hot-toast';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface OrderFormData {
   clientName: string;
@@ -34,6 +35,7 @@ interface OrderFormData {
 const CreateOrder: React.FC = () => {
   const navigate = useNavigate();
   const { departmentInfo } = useDepartment();
+  const { t, isRTL } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<OrderFormData>({
     clientName: '',
@@ -82,51 +84,72 @@ const CreateOrder: React.FC = () => {
     setLoading(true);
 
     try {
-      // Generate unique order code
+      if (!formData.clientName || !formData.clientPhone || !formData.productType || !formData.deadline) {
+        toast.error(t('createOrder.error.requiredFields'));
+        setLoading(false);
+        return;
+      }
+
       const orderCode = `${departmentInfo.id.toUpperCase()}-${Date.now()}`;
       
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Here you would typically make an API call to create the order
       console.log('Creating order:', {
         ...formData,
         orderCode,
         departmentId: departmentInfo.id
       });
 
-      toast.success(`Order ${orderCode} created successfully!`, {
-        icon: departmentInfo.icon,
+      toast.success(t('createOrder.success.created', { orderCode }), {
+        icon: '📄',
         duration: 4000
       });
 
-      // Navigate back to orders page
       navigate('/orders');
     } catch (error) {
-      toast.error('Failed to create order. Please try again.');
+      toast.error(t('createOrder.error.failed'));
     } finally {
       setLoading(false);
     }
   };
 
-  const productTypes = {
-    wedding: ['Wedding Dress', 'Bridal Gown', 'Evening Dress', 'Bridesmaid Dress'],
-    'ready-to-wear': ['Casual Dress', 'Formal Dress', 'Cocktail Dress', 'Business Dress'],
-    'custom-made': ['Custom Dress', 'Bespoke Gown', 'Tailored Outfit', 'Special Occasion Dress']
+  const productTypes: { [key: string]: { key: string; value: string }[] } = {
+    wedding: [
+      { key: 'createOrder.productTypes.wedding.dress', value: 'Wedding Dress' },
+      { key: 'createOrder.productTypes.wedding.gown', value: 'Bridal Gown' },
+      { key: 'createOrder.productTypes.wedding.evening', value: 'Evening Dress' },
+      { key: 'createOrder.productTypes.wedding.bridesmaid', value: 'Bridesmaid Dress' },
+    ],
+    'ready-to-wear': [
+      { key: 'createOrder.productTypes.ready-to-wear.casual', value: 'Casual Dress' },
+      { key: 'createOrder.productTypes.ready-to-wear.formal', value: 'Formal Dress' },
+      { key: 'createOrder.productTypes.ready-to-wear.cocktail', value: 'Cocktail Dress' },
+      { key: 'createOrder.productTypes.ready-to-wear.business', value: 'Business Dress' },
+    ],
+    'custom-made': [
+      { key: 'createOrder.productTypes.custom-made.custom', value: 'Custom Dress' },
+      { key: 'createOrder.productTypes.custom-made.bespoke', value: 'Bespoke Gown' },
+      { key: 'createOrder.productTypes.custom-made.tailored', value: 'Tailored Outfit' },
+      { key: 'createOrder.productTypes.custom-made.special', value: 'Special Occasion Dress' },
+    ]
   };
 
+  const measurementFields = [
+    'chest', 'waist', 'hips', 'shoulders', 'sleeves', 'inseam', 'length'
+  ];
+
   return (
-    <div>
+    <div dir={isRTL ? 'rtl' : 'ltr'}>
       <PageHeader 
-        title={`Create New ${departmentInfo.name} Order`}
-        subtitle={`Add a new order for ${departmentInfo.description.toLowerCase()}`}
+        title={t('createOrder.title', { departmentName: departmentInfo.name })}
+        subtitle={t('createOrder.subtitle', { departmentDescription: departmentInfo.description.toLowerCase() })}
         action={
           <button
             onClick={() => navigate('/orders')}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
           >
-            <ArrowLeft size={16} className="mr-2" />
-            Back to Orders
+            <ArrowLeft size={16} className={isRTL ? "ml-2" : "mr-2"} />
+            {t('createOrder.backToOrders')}
           </button>
         }
       />
@@ -138,128 +161,126 @@ const CreateOrder: React.FC = () => {
         transition={{ duration: 0.3 }}
       >
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Client Information */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
             <div className="flex items-center mb-6">
-              <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
+              <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white ${isRTL ? 'ml-3' : 'mr-3'}`}>
                 <User size={20} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Client Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('createOrder.clientInfo')}</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Client Name *
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('createOrder.clientName')}
                 </label>
                 <input
                   type="text"
                   name="clientName"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={formData.clientName}
                   onChange={handleInputChange}
-                  placeholder="Enter client's full name"
+                  placeholder={t('createOrder.clientNamePlaceholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number *
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('createOrder.phone')}
                 </label>
                 <input
                   type="tel"
                   name="clientPhone"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={formData.clientPhone}
                   onChange={handleInputChange}
-                  placeholder="+971 50 123 4567"
+                  placeholder={t('createOrder.phonePlaceholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('createOrder.email')}
                 </label>
                 <input
                   type="email"
                   name="clientEmail"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={formData.clientEmail}
                   onChange={handleInputChange}
-                  placeholder="client@email.com"
+                  placeholder={t('createOrder.emailPlaceholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Priority Level
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('createOrder.priority')}
                 </label>
                 <select
                   name="priority"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={formData.priority}
                   onChange={handleInputChange}
                 >
-                  <option value="normal">Normal</option>
-                  <option value="urgent">Urgent</option>
-                  <option value="express">Express</option>
+                  <option value="normal">{t('createOrder.priority.normal')}</option>
+                  <option value="urgent">{t('createOrder.priority.urgent')}</option>
+                  <option value="express">{t('createOrder.priority.express')}</option>
                 </select>
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('createOrder.address')}
                 </label>
                 <textarea
                   name="clientAddress"
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={formData.clientAddress}
                   onChange={handleInputChange}
-                  placeholder="Enter client's address"
+                  placeholder={t('createOrder.addressPlaceholder')}
                 />
               </div>
             </div>
           </div>
 
-          {/* Product Details */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
             <div className="flex items-center mb-6">
-              <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
+              <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white ${isRTL ? 'ml-3' : 'mr-3'}`}>
                 <Shirt size={20} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Product Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('createOrder.productDetails')}</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Type *
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('createOrder.productType')}
                 </label>
                 <select
                   name="productType"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={formData.productType}
                   onChange={handleInputChange}
                 >
-                  {productTypes[departmentInfo.id as keyof typeof productTypes].map(type => (
-                    <option key={type} value={type}>{type}</option>
+                  {(productTypes[departmentInfo.id as keyof typeof productTypes] || []).map(type => (
+                    <option key={type.key} value={type.value}>{t(type.key)}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Deadline *
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('createOrder.deadline')}
                 </label>
                 <input
                   type="date"
                   name="deadline"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={formData.deadline}
                   onChange={handleInputChange}
                   min={new Date().toISOString().split('T')[0]}
@@ -267,55 +288,54 @@ const CreateOrder: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fabric Type
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('createOrder.fabricType')}
                 </label>
                 <input
                   type="text"
                   name="fabric"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={formData.fabric}
                   onChange={handleInputChange}
-                  placeholder="e.g., Silk, Cotton, Chiffon"
+                  placeholder={t('createOrder.fabricTypePlaceholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Color
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {t('createOrder.color')}
                 </label>
                 <input
                   type="text"
                   name="color"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={formData.color}
                   onChange={handleInputChange}
-                  placeholder="e.g., White, Ivory, Blush"
+                  placeholder={t('createOrder.colorPlaceholder')}
                 />
               </div>
             </div>
           </div>
 
-          {/* Measurements */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
             <div className="flex items-center mb-6">
-              <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
+              <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white ${isRTL ? 'ml-3' : 'mr-3'}`}>
                 <Ruler size={20} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Measurements (inches)</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('createOrder.measurements')}</h3>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Object.entries(formData.measurements).map(([key, value]) => (
+              {measurementFields.map((key) => (
                 <div key={key}>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
-                    {key}
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
+                    {t(`createOrder.measurements.${key}`)}
                   </label>
                   <input
                     type="number"
                     step="0.5"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={value}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    value={formData.measurements[key as keyof typeof formData.measurements]}
                     onChange={(e) => handleMeasurementChange(key, e.target.value)}
                     placeholder="0"
                   />
@@ -324,33 +344,31 @@ const CreateOrder: React.FC = () => {
             </div>
           </div>
 
-          {/* Additional Notes */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
             <div className="flex items-center mb-6">
-              <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
+              <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white ${isRTL ? 'ml-3' : 'mr-3'}`}>
                 <FileText size={20} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Additional Notes</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('createOrder.notes')}</h3>
             </div>
             
             <textarea
               name="notes"
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               value={formData.notes}
               onChange={handleInputChange}
-              placeholder="Any special requirements, design preferences, or additional notes..."
+              placeholder={t('createOrder.notesPlaceholder')}
             />
           </div>
 
-          {/* Submit Button */}
           <div className="flex justify-end space-x-4">
             <button
               type="button"
               onClick={() => navigate('/orders')}
-              className="px-6 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="px-6 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
             >
-              Cancel
+              {t('orders.cancel')}
             </button>
             <button
               type="submit"
@@ -358,18 +376,18 @@ const CreateOrder: React.FC = () => {
               className={`inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
                 loading 
                   ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900'
+                  : 'bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:bg-blue-600 dark:hover:bg-blue-700'
               }`}
             >
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creating Order...
+                  {t('createOrder.creatingButton')}
                 </>
               ) : (
                 <>
-                  <Save size={16} className="mr-2" />
-                  Create Order
+                  <Save size={16} className={isRTL ? "ml-2" : "mr-2"} />
+                  {t('createOrder.createButton')}
                 </>
               )}
             </button>

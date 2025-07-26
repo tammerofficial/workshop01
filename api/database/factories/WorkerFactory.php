@@ -24,8 +24,20 @@ class WorkerFactory extends Factory
      */
     public function definition(): array
     {
+        $roles = ['Tailor', 'Cutter', 'Finisher', 'Quality Inspector', 'Supervisor'];
+        $departments = ['Production', 'Quality Control', 'Management'];
+        
         return [
-            // TODO: Add worker factory data
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'phone' => fake()->phoneNumber(),
+            'role' => fake()->randomElement($roles),
+            'department' => fake()->randomElement($departments),
+            'salary' => fake()->randomFloat(2, 300, 800),
+            'hire_date' => fake()->dateTimeBetween('-2 years', 'now'),
+            'is_active' => fake()->boolean(80),
+            'skills' => fake()->randomElements(['Sewing', 'Cutting', 'Ironing', 'Quality Control', 'Pattern Making'], fake()->numberBetween(1, 3)),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

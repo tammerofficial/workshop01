@@ -26,8 +26,18 @@ class QualityCheckFactory extends Factory
      */
     public function definition(): array
     {
+        $results = ['passed', 'failed', 'needs_rework'];
+        $inspectors = ['Quality Inspector 1', 'Quality Inspector 2', 'Senior Inspector'];
+        
         return [
-            // TODO: Add quality check factory data
+            'production_id' => fake()->numberBetween(1, 20),
+            'inspector_id' => fake()->numberBetween(1, 20),
+            'inspection_date' => fake()->dateTimeBetween('-7 days', 'now'),
+            'result' => fake()->randomElement($results),
+            'inspector_name' => fake()->randomElement($inspectors),
+            'notes' => fake()->optional()->sentence(),
+            'rework_required' => fake()->boolean(20),
+            'rework_notes' => fake()->optional()->sentence(),
         ];
     }
 }

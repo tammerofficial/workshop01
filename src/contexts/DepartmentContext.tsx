@@ -42,7 +42,7 @@ interface DepartmentContextType {
   isLoading: boolean;
 }
 
-const DepartmentContext = createContext<DepartmentContextType | undefined>(undefined);
+export const DepartmentContext = createContext<DepartmentContextType | undefined>(undefined);
 
 interface DepartmentProviderProps {
   children: ReactNode;

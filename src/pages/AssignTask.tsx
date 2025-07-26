@@ -1,21 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Clock, CheckCircle, AlertTriangle, Loader } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import { workerService, orderService, taskService } from '../api/laravel';
 import { Task, Worker, Order } from '../types';
 import toast from 'react-hot-toast';
+import { LanguageContext } from '../contexts/LanguageContext';
 
 const AssignTask: React.FC = () => {
+  const { t } = useContext(LanguageContext)!;
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [notes, setNotes] = useState('');
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [workersRes, ordersRes] = await Promise.all([
+        workerService.getAll(),
+        orderService.getAll()
+      ]);
+      setWorkers(workersRes.data);
+      setOrders(ordersRes.data);
+    } catch (error) {
+      toast.error(t('common.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter available workers (status: active)
-  const availableWorkers = mockWorkers.filter(worker => worker.status === 'active');
+  const availableWorkers = workers.filter(worker => worker.is_active);
 
   // Filter orders that need assignment (status: in progress)
-  const pendingOrders = mockOrders.filter(order => order.status === 'in progress');
+  const pendingOrders = orders.filter(order => order.status === 'in_progress');
 
   const handleAssignTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +61,8 @@ const AssignTask: React.FC = () => {
   return (
     <div>
       <PageHeader 
-        title="Assign Task" 
-        subtitle="Assign production tasks to available workers" 
+        title={t('assignTask.title')} 
+        subtitle={t('assignTask.subtitle')} 
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -51,7 +75,7 @@ const AssignTask: React.FC = () => {
         >
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-lg font-medium text-gray-900">Available Workers</h3>
+              <h3 className="text-lg font-medium text-gray-900">{t('assignTask.availableWorkers')}</h3>
             </div>
             
             <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
@@ -76,7 +100,7 @@ const AssignTask: React.FC = () => {
                     <div className="ml-auto">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800">
                         <CheckCircle size={12} className="mr-1" />
-                        Available
+                        {t('assignTask.available')}
                       </span>
                     </div>
                   </div>
@@ -108,7 +132,7 @@ const AssignTask: React.FC = () => {
         >
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-lg font-medium text-gray-900">Pending Orders</h3>
+              <h3 className="text-lg font-medium text-gray-900">{t('assignTask.pendingOrders')}</h3>
             </div>
             
             <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
@@ -132,9 +156,9 @@ const AssignTask: React.FC = () => {
                   </div>
                   
                   <div className="mt-2">
-                    <p className="text-sm text-gray-500">Suit Type: {order.suitType}</p>
+                    <p className="text-sm text-gray-500">{t('assignTask.suitType')}: {order.suitType}</p>
                     <p className="text-sm text-gray-500">
-                      Deadline: {new Date(order.deadline).toLocaleDateString()}
+                      {t('assignTask.deadline')}: {new Date(order.deadline).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
@@ -152,14 +176,14 @@ const AssignTask: React.FC = () => {
         >
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-lg font-medium text-gray-900">Task Assignment</h3>
+              <h3 className="text-lg font-medium text-gray-900">{t('assignTask.taskAssignment')}</h3>
             </div>
             
             <form onSubmit={handleAssignTask} className="p-4">
               {selectedWorker && selectedOrder ? (
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Worker</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">{t('assignTask.selectedWorker')}</h4>
                     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                       <img
                         src={selectedWorker.imageUrl}
@@ -174,25 +198,25 @@ const AssignTask: React.FC = () => {
                   </div>
                   
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Order</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">{t('assignTask.selectedOrder')}</h4>
                     <div className="p-3 bg-gray-50 rounded-lg">
                       <p className="text-sm font-medium text-gray-900">{selectedOrder.id}</p>
                       <p className="text-sm text-gray-500">{selectedOrder.clientName}</p>
                       <p className="text-sm text-gray-500 mt-1">
-                        Stage: {selectedOrder.currentStage.replace(/_/g, ' ')}
+                        {t('assignTask.stage')}: {selectedOrder.currentStage.replace(/_/g, ' ')}
                       </p>
                     </div>
                   </div>
                   
                   <div>
                     <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
-                      Notes
+                      {t('assignTask.notes')}
                     </label>
                     <textarea
                       id="notes"
                       rows={3}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-secondary focus:ring-secondary sm:text-sm"
-                      placeholder="Add any special instructions..."
+                      placeholder={t('assignTask.notesPlaceholder')}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                     />
@@ -202,14 +226,14 @@ const AssignTask: React.FC = () => {
                     type="submit"
                     className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-secondary hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary"
                   >
-                    Assign Task
+                    {t('assignTask.assignTask')}
                   </button>
                 </div>
               ) : (
                 <div className="text-center py-6">
                   <AlertTriangle size={24} className="mx-auto text-warning mb-2" />
                   <p className="text-sm text-gray-500">
-                    Please select both a worker and an order to assign a task
+                    {t('assignTask.selectWorkerOrder')}
                   </p>
                 </div>
               )}

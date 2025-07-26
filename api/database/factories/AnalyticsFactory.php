@@ -24,8 +24,17 @@ class AnalyticsFactory extends Factory
      */
     public function definition(): array
     {
+        $metrics = ['sales', 'production', 'inventory', 'quality', 'efficiency'];
+        $periods = ['daily', 'weekly', 'monthly', 'quarterly'];
+        
         return [
-            // TODO: Add analytics factory data
+            'metric_name' => fake()->randomElement($metrics),
+            'metric_value' => fake()->randomFloat(2, 0, 1000),
+            'period' => fake()->randomElement($periods),
+            'period_date' => fake()->dateTimeBetween('-1 year', 'now'),
+            'target_value' => fake()->randomFloat(2, 0, 1000),
+            'is_achieved' => fake()->boolean(70),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

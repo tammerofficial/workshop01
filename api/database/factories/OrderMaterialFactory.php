@@ -27,7 +27,12 @@ class OrderMaterialFactory extends Factory
     public function definition(): array
     {
         return [
-            // TODO: Add order material factory data
+            'order_id' => fake()->numberBetween(1, 20),
+            'material_id' => fake()->numberBetween(1, 20),
+            'quantity' => fake()->numberBetween(1, 10),
+            'unit_cost' => fake()->randomFloat(2, 5, 50),
+            'total_cost' => fake()->randomFloat(2, 10, 500),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

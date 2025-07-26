@@ -25,8 +25,21 @@ class CalendarFactory extends Factory
      */
     public function definition(): array
     {
+        $types = ['appointment', 'fitting', 'delivery', 'meeting', 'maintenance'];
+        $statuses = ['scheduled', 'confirmed', 'completed', 'cancelled'];
+        
         return [
-            // TODO: Add calendar factory data
+            'user_id' => fake()->numberBetween(1, 20),
+            'title' => fake()->sentence(3),
+            'description' => fake()->paragraph(),
+            'type' => fake()->randomElement($types),
+            'status' => fake()->randomElement($statuses),
+            'start_date' => fake()->dateTimeBetween('now', '+30 days'),
+            'end_date' => fake()->dateTimeBetween('now', '+30 days'),
+            'client_id' => fake()->optional()->numberBetween(1, 20),
+            'order_id' => fake()->optional()->numberBetween(1, 20),
+            'location' => fake()->optional()->address(),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

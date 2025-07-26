@@ -77,6 +77,20 @@ export const mockWorkers: Worker[] = Array.from({ length: 12 }, (_, i) => ({
   },
 }));
 
+// Roles and Skills specific to departments
+export const roles = {
+  'wedding': ['Bridal Consultant', 'Seamstress', 'Pattern Maker', 'Beading Specialist', 'Cutter'],
+  'ready-to-wear': ['Sales Associate', 'Stock Manager', 'Visual Merchandiser', 'Tailor'],
+  'custom-made': ['Master Tailor', 'Designer', 'Cutter', 'Client Advisor', 'Fitter']
+};
+
+export const commonSkills = {
+    'wedding': ['Lace Application', 'Veil Making', 'Corsetry', 'Hand Beading', 'Alterations'],
+    'ready-to-wear': ['Customer Service', 'Inventory Management', 'POS Systems', 'Styling', 'Basic Alterations'],
+    'custom-made': ['Bespoke Tailoring', 'Pattern Drafting', 'Fabric Consultation', 'Draping', 'Fitting Expertise']
+};
+
+
 // Mock Tasks
 export const mockTasks: Task[] = Array.from({ length: 20 }, (_, i) => {
   const isCompleted = Math.random() > 0.5;
@@ -90,7 +104,7 @@ export const mockTasks: Task[] = Array.from({ length: 20 }, (_, i) => {
     ][Math.floor(Math.random() * 7)] as ProductionStage,
     startTime: randomPastDate(10),
     endTime: isCompleted ? randomPastDate(5) : null,
-    status: isCompleted ? 'completed' : ['assigned', 'in progress'][Math.floor(Math.random() * 2)],
+    status: isCompleted ? 'completed' : (['assigned', 'in progress'] as const)[Math.floor(Math.random() * 2)],
     notes: ['Urgent order', 'Special fabric handling required', 'Client requested adjustments', '', ''][Math.floor(Math.random() * 5)],
   };
 });

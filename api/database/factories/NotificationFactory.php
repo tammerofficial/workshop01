@@ -25,8 +25,18 @@ class NotificationFactory extends Factory
      */
     public function definition(): array
     {
+        $types = ['order', 'production', 'inventory', 'payment', 'system'];
+        $priorities = ['low', 'medium', 'high', 'urgent'];
+        
         return [
-            // TODO: Add notification factory data
+            'user_id' => fake()->numberBetween(1, 20),
+            'title' => fake()->sentence(3),
+            'message' => fake()->paragraph(),
+            'type' => fake()->randomElement($types),
+            'priority' => fake()->randomElement($priorities),
+            'is_read' => fake()->boolean(30),
+            'read_at' => fake()->optional()->dateTimeBetween('-7 days', 'now'),
+            'data' => json_encode(['order_id' => fake()->numberBetween(1, 20)]),
         ];
     }
 }

@@ -25,8 +25,19 @@ class ProductionFactory extends Factory
      */
     public function definition(): array
     {
+        $statuses = ['pending', 'in_progress', 'completed', 'cancelled'];
+        $stages = ['Design', 'Cutting', 'Sewing', 'Fitting', 'Finishing', 'Quality Check'];
+        
         return [
-            // TODO: Add production factory data
+            'order_id' => fake()->numberBetween(1, 20),
+            'stage' => fake()->randomElement($stages),
+            'status' => fake()->randomElement($statuses),
+            'start_date' => fake()->dateTimeBetween('-7 days', 'now'),
+            'end_date' => fake()->optional()->dateTimeBetween('now', '+7 days'),
+            'estimated_hours' => fake()->numberBetween(2, 12),
+            'actual_hours' => fake()->optional()->numberBetween(1, 15),
+            'worker_id' => fake()->optional()->numberBetween(1, 20),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

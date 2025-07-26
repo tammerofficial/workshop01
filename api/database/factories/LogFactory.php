@@ -25,8 +25,16 @@ class LogFactory extends Factory
      */
     public function definition(): array
     {
+        $levels = ['info', 'warning', 'error', 'debug'];
+        $categories = ['auth', 'order', 'production', 'payment', 'system'];
+        
         return [
-            // TODO: Add log factory data
+            'user_id' => fake()->optional()->numberBetween(1, 20),
+            'level' => fake()->randomElement($levels),
+            'category' => fake()->randomElement($categories),
+            'message' => fake()->sentence(),
+            'context' => json_encode(['ip' => fake()->ipv4(), 'user_agent' => fake()->userAgent()]),
+            'created_at' => fake()->dateTimeBetween('-30 days', 'now'),
         ];
     }
 }

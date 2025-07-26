@@ -25,7 +25,11 @@ class ClientFactory extends Factory
     public function definition(): array
     {
         return [
-            // TODO: Add client factory data
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'phone' => fake()->phoneNumber(),
+            'address' => fake()->address(),
+            'notes' => fake()->optional()->sentence(),
         ];
     }
 }

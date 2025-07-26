@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, Save, User, Phone, Mail, MapPin, 
+  ArrowLeft, Save, User,
   Award, Calendar, Upload, X, Plus, Camera,
   AlertTriangle, Briefcase, Shield
 } from 'lucide-react';
@@ -10,6 +10,7 @@ import PageHeader from '../components/common/PageHeader';
 import DepartmentAwareComponent from '../components/common/DepartmentAwareComponent';
 import { useDepartment } from '../contexts/DepartmentContext';
 import toast from 'react-hot-toast';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface WorkerFormData {
   firstName: string;
@@ -37,6 +38,7 @@ const EditWorker: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { departmentInfo } = useDepartment();
+  const { t, isRTL } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [newSkill, setNewSkill] = useState('');
@@ -125,7 +127,7 @@ const EditWorker: React.FC = () => {
     const employeeId = `${prefix}-EMP-${timestamp}-${random}`;
     
     setFormData(prev => ({ ...prev, employeeId }));
-    toast.success('Employee ID generated automatically');
+    toast.success(t('Employee ID generated automatically'));
   };
 
   const addSkill = () => {
@@ -161,14 +163,14 @@ const EditWorker: React.FC = () => {
     try {
       // Validate required fields
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.role) {
-        toast.error('Please fill in all required fields');
+        toast.error(t('Please fill in all required fields'));
         return;
       }
 
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        toast.error('Please enter a valid email address');
+        toast.error(t('Please enter a valid email address'));
         return;
       }
 
@@ -186,7 +188,7 @@ const EditWorker: React.FC = () => {
 
       console.log('Updating worker:', updatedWorker);
 
-      toast.success(`${formData.firstName} ${formData.lastName} updated successfully!`, {
+      toast.success(t('{firstName} {lastName} updated successfully!', { firstName: formData.firstName, lastName: formData.lastName }), {
         icon: departmentInfo.icon,
         duration: 4000
       });
@@ -194,7 +196,7 @@ const EditWorker: React.FC = () => {
       // Navigate back to workers page
       navigate('/workers');
     } catch (error) {
-      toast.error('Failed to update worker. Please try again.');
+      toast.error(t('Failed to update worker. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -239,7 +241,7 @@ const EditWorker: React.FC = () => {
         if (workersLoading) {
           return (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 dark:border-blue-400"></div>
             </div>
           );
         }
@@ -249,14 +251,14 @@ const EditWorker: React.FC = () => {
             <div className="flex items-center justify-center h-[calc(100vh-16rem)]">
               <div className="text-center">
                 <User size={48} className="mx-auto text-orange-500 mb-4" />
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Worker Not Found</h2>
-                <p className="text-gray-500 mb-4">The worker you're looking for doesn't exist or has been removed.</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('Worker Not Found')}</h2>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">{t("The worker you're looking for doesn't exist or has been removed.")}</p>
                 <button
                   onClick={() => navigate('/workers')}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                 >
-                  <ArrowLeft size={16} className="mr-2" />
-                  Back to Workers
+                  <ArrowLeft size={16} className={isRTL ? "ml-2" : "mr-2"} />
+                  {t('Back to Workers')}
                 </button>
               </div>
             </div>
@@ -264,17 +266,17 @@ const EditWorker: React.FC = () => {
         }
 
         return (
-          <div>
+          <div className="dark:bg-gray-900">
             <PageHeader 
-              title={`Edit Worker - ${worker.name}`}
-              subtitle={`${departmentInfo.name} • Update team member information`}
+              title={t('Edit Worker - {workerName}', { workerName: worker.name })}
+              subtitle={`${departmentInfo.name} • ${t('Update team member information')}`}
               action={
                 <button
                   onClick={() => navigate('/workers')}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
-                  <ArrowLeft size={16} className="mr-2" />
-                  Back to Workers
+                  <ArrowLeft size={16} className={isRTL ? "ml-2" : "mr-2"} />
+                  {t('Back to Workers')}
                 </button>
               }
             />
@@ -287,113 +289,113 @@ const EditWorker: React.FC = () => {
             >
               <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Personal Information */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                   <div className="flex items-center mb-6">
-                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
+                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white ${isRTL ? 'ml-3' : 'mr-3'}`}>
                       <User size={20} />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('Personal Information')}</h3>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        First Name *
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('First Name')} *
                       </label>
                       <input
                         type="text"
                         name="firstName"
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        placeholder="Enter first name"
+                        placeholder={t('Enter first name')}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Last Name *
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Last Name')} *
                       </label>
                       <input
                         type="text"
                         name="lastName"
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        placeholder="Enter last name"
+                        placeholder={t('Enter last name')}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address *
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Email Address')} *
                       </label>
                       <input
                         type="email"
                         name="email"
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={formData.email}
                         onChange={handleInputChange}
-                        placeholder="worker@email.com"
+                        placeholder={t('worker@email.com')}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number *
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Phone Number')} *
                       </label>
                       <input
                         type="tel"
                         name="phone"
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        placeholder="+971 50 123 4567"
+                        placeholder={t('+971 50 123 4567')}
                       />
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Address
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Address')}
                       </label>
                       <textarea
                         name="address"
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={formData.address}
                         onChange={handleInputChange}
-                        placeholder="Enter full address"
+                        placeholder={t('Enter full address')}
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Employment Information */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                   <div className="flex items-center mb-6">
-                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
+                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white ${isRTL ? 'ml-3' : 'mr-3'}`}>
                       <Briefcase size={20} />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Employment Information</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('Employment Information')}</h3>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Role/Position *
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Role/Position')} *
                       </label>
                       <select
                         name="role"
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={formData.role}
                         onChange={handleInputChange}
                       >
-                        <option value="">Select a role</option>
+                        <option value="">{t('Select a role')}</option>
                         {roles[departmentInfo.id as keyof typeof roles].map(role => (
                           <option key={role} value={role}>{role}</option>
                         ))}
@@ -401,36 +403,36 @@ const EditWorker: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Department
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Department')}
                       </label>
                       <input
                         type="text"
                         name="department"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-300"
                         value={formData.department}
                         readOnly
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Employee ID
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Employee ID')}
                       </label>
                       <div className="flex">
                         <input
                           type="text"
                           name="employeeId"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className={`flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 ${isRTL ? 'rounded-r-md' : 'rounded-l-md'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
                           value={formData.employeeId}
                           onChange={handleInputChange}
-                          placeholder="Enter ID or generate automatically"
+                          placeholder={t('Enter ID or generate automatically')}
                         />
                         <button
                           type="button"
                           onClick={generateEmployeeId}
-                          className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          title="Generate Employee ID"
+                          className={`px-3 py-2 bg-gray-100 dark:bg-gray-600 border border-l-0 dark:border-l-0 border-gray-300 dark:border-gray-500 ${isRTL ? 'rounded-l-md' : 'rounded-r-md'} hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                          title={t('Generate Employee ID')}
                         >
                           <Shield size={16} />
                         </button>
@@ -438,13 +440,13 @@ const EditWorker: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Date of Joining
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Date of Joining')}
                       </label>
                       <input
                         type="date"
                         name="dateOfJoining"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={formData.dateOfJoining}
                         onChange={handleInputChange}
                         max={new Date().toISOString().split('T')[0]}
@@ -452,17 +454,17 @@ const EditWorker: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Monthly Salary
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Monthly Salary')}
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-2 text-gray-500">$</span>
+                        <span className={`absolute top-2 text-gray-500 dark:text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`}>$</span>
                         <input
                           type="number"
                           name="salary"
                           step="0.01"
                           min="0"
-                          className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className={`w-full border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${isRTL ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2`}
                           value={formData.salary}
                           onChange={handleInputChange}
                           placeholder="0.00"
@@ -471,51 +473,51 @@ const EditWorker: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Status
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Status')}
                       </label>
                       <select
                         name="status"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={formData.status}
                         onChange={handleInputChange}
                       >
-                        <option value="active">Active</option>
-                        <option value="on leave">On Leave</option>
-                        <option value="unavailable">Unavailable</option>
+                        <option value="active">{t('Active')}</option>
+                        <option value="on leave">{t('On Leave')}</option>
+                        <option value="unavailable">{t('Unavailable')}</option>
                       </select>
                     </div>
                   </div>
                 </div>
 
                 {/* Skills */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                   <div className="flex items-center mb-6">
-                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
+                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white ${isRTL ? 'ml-3' : 'mr-3'}`}>
                       <Award size={20} />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Skills & Expertise</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('Skills & Expertise')}</h3>
                   </div>
                   
                   <div className="space-y-4">
                     {/* Add Custom Skill */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Add Skills
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Add Skills')}
                       </label>
                       <div className="flex">
                         <input
                           type="text"
                           value={newSkill}
                           onChange={(e) => setNewSkill(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter a skill"
+                          className={`flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 ${isRTL ? 'rounded-r-md' : 'rounded-l-md'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100`}
+                          placeholder={t('Enter a skill')}
                           onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
                         />
                         <button
                           type="button"
                           onClick={addSkill}
-                          className="px-3 py-2 bg-blue-600 text-white border border-blue-600 rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className={`px-3 py-2 bg-blue-600 text-white border border-blue-600 ${isRTL ? 'rounded-l-md' : 'rounded-r-md'} hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                         >
                           <Plus size={16} />
                         </button>
@@ -524,8 +526,8 @@ const EditWorker: React.FC = () => {
 
                     {/* Common Skills */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Common Skills for {departmentInfo.name}
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Common Skills for {departmentName}', { departmentName: departmentInfo.name })}
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {commonSkills[departmentInfo.id as keyof typeof commonSkills].map(skill => (
@@ -536,8 +538,8 @@ const EditWorker: React.FC = () => {
                             disabled={formData.skills.includes(skill)}
                             className={`px-3 py-1 text-sm rounded-full border transition-colors ${
                               formData.skills.includes(skill)
-                                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600 cursor-not-allowed'
+                                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                             }`}
                           >
                             {skill}
@@ -549,20 +551,20 @@ const EditWorker: React.FC = () => {
                     {/* Selected Skills */}
                     {formData.skills.length > 0 && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Selected Skills
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          {t('Selected Skills')}
                         </label>
                         <div className="flex flex-wrap gap-2">
                           {formData.skills.map(skill => (
                             <span
                               key={skill}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
                             >
                               {skill}
                               <button
                                 type="button"
                                 onClick={() => removeSkill(skill)}
-                                className="ml-2 text-blue-600 hover:text-blue-800"
+                                className={`${isRTL ? 'mr-2' : 'ml-2'} text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200`}
                               >
                                 <X size={14} />
                               </button>
@@ -575,72 +577,72 @@ const EditWorker: React.FC = () => {
                 </div>
 
                 {/* Emergency Contact */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                   <div className="flex items-center mb-6">
-                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
+                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white ${isRTL ? 'ml-3' : 'mr-3'}`}>
                       <AlertTriangle size={20} />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Emergency Contact</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('Emergency Contact')}</h3>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Contact Name
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Contact Name')}
                       </label>
                       <input
                         type="text"
                         name="emergencyContact.name"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={formData.emergencyContact.name}
                         onChange={handleInputChange}
-                        placeholder="Full name"
+                        placeholder={t('Full name')}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Phone Number')}
                       </label>
                       <input
                         type="tel"
                         name="emergencyContact.phone"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={formData.emergencyContact.phone}
                         onChange={handleInputChange}
-                        placeholder="+971 50 123 4567"
+                        placeholder={t('+971 50 123 4567')}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Relationship
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Relationship')}
                       </label>
                       <select
                         name="emergencyContact.relationship"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         value={formData.emergencyContact.relationship}
                         onChange={handleInputChange}
                       >
-                        <option value="">Select relationship</option>
-                        <option value="spouse">Spouse</option>
-                        <option value="parent">Parent</option>
-                        <option value="sibling">Sibling</option>
-                        <option value="child">Child</option>
-                        <option value="friend">Friend</option>
-                        <option value="other">Other</option>
+                        <option value="">{t('Select relationship')}</option>
+                        <option value="spouse">{t('Spouse')}</option>
+                        <option value="parent">{t('Parent')}</option>
+                        <option value="sibling">{t('Sibling')}</option>
+                        <option value="child">{t('Child')}</option>
+                        <option value="friend">{t('Friend')}</option>
+                        <option value="other">{t('Other')}</option>
                       </select>
                     </div>
                   </div>
                 </div>
 
                 {/* Profile Photo */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                   <div className="flex items-center mb-6">
-                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
+                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white ${isRTL ? 'ml-3' : 'mr-3'}`}>
                       <Camera size={20} />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Profile Photo</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('Profile Photo')}</h3>
                   </div>
                   
                   <div className="space-y-4">
@@ -649,21 +651,21 @@ const EditWorker: React.FC = () => {
                         <img
                           src={imagePreview}
                           alt="Preview"
-                          className="w-32 h-32 object-cover rounded-full border border-gray-300"
+                          className="w-32 h-32 object-cover rounded-full border border-gray-300 dark:border-gray-600"
                         />
                         <button
                           type="button"
                           onClick={removeImage}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                          className={`absolute -top-2 ${isRTL ? '-left-2' : '-right-2'} w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600`}
                         >
                           <X size={14} />
                         </button>
                       </div>
                     ) : (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                        <Upload size={48} className="mx-auto text-gray-400 mb-4" />
-                        <p className="text-gray-600 mb-2">Upload profile photo</p>
-                        <p className="text-sm text-gray-500 mb-4">PNG, JPG up to 5MB</p>
+                      <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
+                        <Upload size={48} className="mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+                        <p className="text-gray-600 dark:text-gray-300 mb-2">{t('Upload profile photo')}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{t('PNG, JPG up to 5MB')}</p>
                         <input
                           type="file"
                           accept="image/*"
@@ -675,8 +677,8 @@ const EditWorker: React.FC = () => {
                           htmlFor="image-upload"
                           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
                         >
-                          <Plus size={16} className="mr-2" />
-                          Choose Photo
+                          <Plus size={16} className={isRTL ? "ml-2" : "mr-2"} />
+                          {t('Choose Photo')}
                         </label>
                       </div>
                     )}
@@ -684,21 +686,21 @@ const EditWorker: React.FC = () => {
                 </div>
 
                 {/* Additional Notes */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                   <div className="flex items-center mb-6">
-                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
+                    <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white ${isRTL ? 'ml-3' : 'mr-3'}`}>
                       <Calendar size={20} />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">Additional Notes</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('Additional Notes')}</h3>
                   </div>
                   
                   <textarea
                     name="notes"
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     value={formData.notes}
                     onChange={handleInputChange}
-                    placeholder="Any additional notes about the worker, special requirements, certifications, etc..."
+                    placeholder={t('Any additional notes about the worker, special requirements, certifications, etc...')}
                   />
                 </div>
 
@@ -707,28 +709,28 @@ const EditWorker: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/workers')}
-                    className="px-6 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
-                    Cancel
+                    {t('Cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
                     className={`inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
                       loading 
-                        ? 'bg-gray-400 cursor-not-allowed' 
-                        : 'bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900'
+                        ? 'bg-gray-400 dark:bg-gray-500 cursor-not-allowed' 
+                        : 'bg-black dark:bg-gray-200 dark:text-black hover:bg-gray-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-gray-300'
                     }`}
                   >
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Updating Worker...
+                        {t('Updating Worker...')}
                       </>
                     ) : (
                       <>
-                        <Save size={16} className="mr-2" />
-                        Update Worker
+                        <Save size={16} className={isRTL ? "ml-2" : "mr-2"} />
+                        {t('Update Worker')}
                       </>
                     )}
                   </button>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -8,6 +8,7 @@ import {
 import PageHeader from '../components/common/PageHeader';
 import { useDepartment } from '../contexts/DepartmentContext';
 import toast from 'react-hot-toast';
+import { LanguageContext } from '../contexts/LanguageContext';
 
 interface InventoryFormData {
   name: string;
@@ -26,6 +27,7 @@ interface InventoryFormData {
 const AddInventoryItem: React.FC = () => {
   const navigate = useNavigate();
   const { departmentInfo } = useDepartment();
+  const { t } = useContext(LanguageContext)!;
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState<InventoryFormData>({
@@ -62,7 +64,7 @@ const AddInventoryItem: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.error('Image size should be less than 5MB');
+        toast.error(t('addInventory.imageSizeError'));
         return;
       }
 
@@ -89,7 +91,7 @@ const AddInventoryItem: React.FC = () => {
     const sku = `${prefix}-${timestamp}-${random}`;
     
     setFormData(prev => ({ ...prev, sku }));
-    toast.success('SKU generated automatically');
+    toast.success(t('addInventory.skuGenerated'));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,7 +101,7 @@ const AddInventoryItem: React.FC = () => {
     try {
       // Validate required fields
       if (!formData.name || !formData.currentStock || !formData.minStockLevel) {
-        toast.error('Please fill in all required fields');
+        toast.error(t('addInventory.requiredFieldsError'));
         return;
       }
 
@@ -119,7 +121,7 @@ const AddInventoryItem: React.FC = () => {
 
       console.log('Creating inventory item:', newItem);
 
-      toast.success(`${formData.name} added to ${departmentInfo.name} inventory successfully!`, {
+      toast.success(`${formData.name} ${t('addInventory.addedTo')} ${departmentInfo.name} ${t('addInventory.successfully')}!`, {
         icon: departmentInfo.icon,
         duration: 4000
       });
@@ -127,7 +129,7 @@ const AddInventoryItem: React.FC = () => {
       // Navigate back to inventory page
       navigate('/inventory');
     } catch (error) {
-      toast.error('Failed to add inventory item. Please try again.');
+      toast.error(t('addInventory.failedError'));
     } finally {
       setLoading(false);
     }
@@ -136,15 +138,15 @@ const AddInventoryItem: React.FC = () => {
   return (
     <div>
       <PageHeader 
-        title={`Add New Item - ${departmentInfo.name}`}
-        subtitle={`Add inventory item to ${departmentInfo.description.toLowerCase()}`}
+        title={`${t('addInventory.title')} - ${departmentInfo.name}`}
+        subtitle={`${t('addInventory.subtitle')} ${departmentInfo.description.toLowerCase()}`}
         action={
           <button
             onClick={() => navigate('/inventory')}
             className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
           >
             <ArrowLeft size={16} className="mr-2" />
-            Back to Inventory
+            {t('addInventory.backToInventory')}
           </button>
         }
       />
@@ -162,13 +164,13 @@ const AddInventoryItem: React.FC = () => {
               <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
                 <Package size={20} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('addInventory.basicInfo')}</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Item Name *
+                  {t('addInventory.itemName')} *
                 </label>
                 <input
                   type="text"
@@ -177,13 +179,13 @@ const AddInventoryItem: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="Enter item name"
+                  placeholder={t('addInventory.itemNamePlaceholder')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category *
+                  {t('addInventory.category')} *
                 </label>
                 <select
                   name="category"
@@ -200,7 +202,7 @@ const AddInventoryItem: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Current Stock *
+                  {t('addInventory.currentStock')} *
                 </label>
                 <input
                   type="number"
@@ -216,7 +218,7 @@ const AddInventoryItem: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Minimum Stock Level *
+                  {t('addInventory.minStockLevel')} *
                 </label>
                 <input
                   type="number"
@@ -232,7 +234,7 @@ const AddInventoryItem: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Unit of Measurement
+                  {t('addInventory.unit')}
                 </label>
                 <select
                   name="unit"
@@ -248,7 +250,7 @@ const AddInventoryItem: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SKU / Product Code
+                  {t('addInventory.sku')} / {t('addInventory.productCode')}
                 </label>
                 <div className="flex">
                   <input
@@ -257,13 +259,13 @@ const AddInventoryItem: React.FC = () => {
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     value={formData.sku}
                     onChange={handleInputChange}
-                    placeholder="Enter SKU or generate automatically"
+                    placeholder={t('addInventory.skuPlaceholder')}
                   />
                   <button
                     type="button"
                     onClick={generateSKU}
                     className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    title="Generate SKU"
+                    title={t('addInventory.generateSku')}
                   >
                     <Barcode size={16} />
                   </button>
@@ -273,7 +275,7 @@ const AddInventoryItem: React.FC = () => {
 
             <div className="mt-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
+                {t('addInventory.description')}
               </label>
               <textarea
                 name="description"
@@ -281,7 +283,7 @@ const AddInventoryItem: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={formData.description}
                 onChange={handleInputChange}
-                placeholder="Enter item description, specifications, or notes..."
+                placeholder={t('addInventory.descriptionPlaceholder')}
               />
             </div>
           </div>
@@ -292,13 +294,13 @@ const AddInventoryItem: React.FC = () => {
               <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
                 <AlertTriangle size={20} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Additional Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('addInventory.additionalDetails')}</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Supplier
+                  {t('addInventory.supplier')}
                 </label>
                 <input
                   type="text"
@@ -306,13 +308,13 @@ const AddInventoryItem: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.supplier}
                   onChange={handleInputChange}
-                  placeholder="Supplier name"
+                  placeholder={t('addInventory.supplierPlaceholder')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cost Price
+                  {t('addInventory.costPrice')}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-2 text-gray-500">$</span>
@@ -331,7 +333,7 @@ const AddInventoryItem: React.FC = () => {
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Storage Location
+                  {t('addInventory.storageLocation')}
                 </label>
                 <input
                   type="text"
@@ -339,7 +341,7 @@ const AddInventoryItem: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={formData.location}
                   onChange={handleInputChange}
-                  placeholder="e.g., Warehouse A, Shelf 3, Room 101"
+                  placeholder={t('addInventory.storageLocationPlaceholder')}
                 />
               </div>
             </div>
@@ -351,7 +353,7 @@ const AddInventoryItem: React.FC = () => {
               <div className={`w-10 h-10 rounded-lg ${departmentInfo.color} flex items-center justify-center text-white mr-3`}>
                 <Camera size={20} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Product Image</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('addInventory.productImage')}</h3>
             </div>
             
             <div className="space-y-4">
@@ -373,8 +375,8 @@ const AddInventoryItem: React.FC = () => {
               ) : (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                   <Upload size={48} className="mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600 mb-2">Upload product image</p>
-                  <p className="text-sm text-gray-500 mb-4">PNG, JPG up to 5MB</p>
+                  <p className="text-gray-600 mb-2">{t('addInventory.uploadImage')}</p>
+                  <p className="text-sm text-gray-500 mb-4">{t('addInventory.imageFormats')}</p>
                   <input
                     type="file"
                     accept="image/*"
@@ -387,7 +389,7 @@ const AddInventoryItem: React.FC = () => {
                     className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
                   >
                     <Plus size={16} className="mr-2" />
-                    Choose Image
+                    {t('addInventory.chooseImage')}
                   </label>
                 </div>
               )}
@@ -401,7 +403,7 @@ const AddInventoryItem: React.FC = () => {
               onClick={() => navigate('/inventory')}
               className="px-6 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              Cancel
+              {t('addInventory.cancel')}
             </button>
             <button
               type="submit"
@@ -415,12 +417,12 @@ const AddInventoryItem: React.FC = () => {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Adding Item...
+                  {t('addInventory.addingItem')}
                 </>
               ) : (
                 <>
                   <Save size={16} className="mr-2" />
-                  Add to Inventory
+                  {t('addInventory.addToInventory')}
                 </>
               )}
             </button>
