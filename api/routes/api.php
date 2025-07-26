@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\MeasurementController;
 use App\Http\Controllers\Api\ProductionController;
 use App\Http\Controllers\DashboardController;
 use App\Services\WooCommerceService;
+use App\Http\Controllers\Api\WooCommerceController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -138,4 +139,13 @@ Route::get('dashboard/recent-tasks', function () {
             ->limit(10)
             ->get()
     );
+});
+
+// WooCommerce Integration Routes
+Route::prefix('woocommerce')->group(function () {
+    Route::post('test-connection', [WooCommerceController::class, 'testConnection']);
+    Route::post('sync-products', [WooCommerceController::class, 'syncProducts']);
+    Route::post('sync-orders', [WooCommerceController::class, 'syncOrders']);
+    Route::post('sync-customers', [WooCommerceController::class, 'syncCustomers']);
+    Route::post('sync-all', [WooCommerceController::class, 'syncAll']);
 }); 

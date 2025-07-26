@@ -3,10 +3,11 @@ import { motion } from 'framer-motion';
 import { 
   Settings as SettingsIcon, Bell, Mail, Smartphone, Globe, Shield, 
   Eye, Palette, Clock, Lock, Download, RotateCcw,
-  CheckCircle, AlertCircle, Info
+  CheckCircle, AlertCircle, Info, Package
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import WooCommerceIntegration from './admin/WooCommerceIntegration';
 
 interface SettingsTab {
   id: string;
@@ -52,6 +53,12 @@ const Settings: React.FC = () => {
       label: t('settings.appearance.title'),
       icon: <Palette size={20} />,
       description: t('settings.appearance.description')
+    },
+    {
+      id: 'woocommerce',
+      label: t('woocommerce.title'),
+      icon: <Package size={20} />,
+      description: t('woocommerce.subtitle')
     }
   ];
 
@@ -414,6 +421,10 @@ const Settings: React.FC = () => {
     </div>
   );
 
+  const renderWooCommerceTab = () => (
+    <WooCommerceIntegration />
+  );
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'notifications':
@@ -424,6 +435,8 @@ const Settings: React.FC = () => {
         return renderSecurityTab();
       case 'appearance':
         return renderAppearanceTab();
+      case 'woocommerce':
+        return renderWooCommerceTab();
       default:
         return renderNotificationsTab();
     }

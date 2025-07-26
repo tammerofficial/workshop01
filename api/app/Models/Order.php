@@ -23,6 +23,7 @@ class Order extends Model
         'total_cost',
         'notes',
         'specifications',
+        'woocommerce_id',
     ];
 
     protected $casts = [

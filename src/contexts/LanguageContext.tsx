@@ -542,6 +542,32 @@ const translations = {
     // Dashboard Translations
     'dashboard.header.title': 'Dashboard',
     'dashboard.header.subtitle': 'Welcome to your workshop management system',
+    
+    // WooCommerce Integration Translations
+    'woocommerce.title': 'WooCommerce Integration',
+    'woocommerce.subtitle': 'Sync products, orders, and customers from your WordPress site',
+    'woocommerce.config.title': 'WooCommerce Configuration',
+    'woocommerce.config.url': 'Store URL',
+    'woocommerce.config.consumerKey': 'Consumer Key',
+    'woocommerce.config.consumerSecret': 'Consumer Secret',
+    'woocommerce.config.save': 'Save Configuration',
+    'woocommerce.config.test': 'Test Connection',
+    'woocommerce.sync.title': 'Data Synchronization',
+    'woocommerce.sync.products': 'Sync Products',
+    'woocommerce.sync.orders': 'Sync Orders',
+    'woocommerce.sync.customers': 'Sync Customers',
+    'woocommerce.sync.all': 'Sync All Data',
+    'woocommerce.status.connected': 'Connected',
+    'woocommerce.status.disconnected': 'Disconnected',
+    'woocommerce.status.testing': 'Testing connection...',
+    'woocommerce.status.syncing': 'Syncing data...',
+    'woocommerce.success.saved': 'Configuration saved successfully',
+    'woocommerce.success.connected': 'Successfully connected to WooCommerce',
+    'woocommerce.success.synced': 'Data synchronized successfully',
+    'woocommerce.error.connection': 'Failed to connect to WooCommerce',
+    'woocommerce.error.sync': 'Failed to synchronize data',
+    'woocommerce.lastSync': 'Last Sync',
+    'woocommerce.never': 'Never',
   },
   ar: {
     // Navigation
@@ -1066,6 +1092,32 @@ const translations = {
     // Dashboard Translations
     'dashboard.header.title': 'لوحة القيادة',
     'dashboard.header.subtitle': 'مرحباً بك في نظام إدارة الورشة',
+    
+    // WooCommerce Integration Translations
+    'woocommerce.title': 'تكامل ووكومرس',
+    'woocommerce.subtitle': 'مزامنة المنتجات والطلبات والعملاء من موقع WordPress',
+    'woocommerce.config.title': 'إعدادات ووكومرس',
+    'woocommerce.config.url': 'رابط المتجر',
+    'woocommerce.config.consumerKey': 'مفتاح المستهلك',
+    'woocommerce.config.consumerSecret': 'سر المستهلك',
+    'woocommerce.config.save': 'حفظ الإعدادات',
+    'woocommerce.config.test': 'اختبار الاتصال',
+    'woocommerce.sync.title': 'مزامنة البيانات',
+    'woocommerce.sync.products': 'مزامنة المنتجات',
+    'woocommerce.sync.orders': 'مزامنة الطلبات',
+    'woocommerce.sync.customers': 'مزامنة العملاء',
+    'woocommerce.sync.all': 'مزامنة جميع البيانات',
+    'woocommerce.status.connected': 'متصل',
+    'woocommerce.status.disconnected': 'غير متصل',
+    'woocommerce.status.testing': 'جاري اختبار الاتصال...',
+    'woocommerce.status.syncing': 'جاري مزامنة البيانات...',
+    'woocommerce.success.saved': 'تم حفظ الإعدادات بنجاح',
+    'woocommerce.success.connected': 'تم الاتصال بووكومرس بنجاح',
+    'woocommerce.success.synced': 'تم مزامنة البيانات بنجاح',
+    'woocommerce.error.connection': 'فشل في الاتصال بووكومرس',
+    'woocommerce.error.sync': 'فشل في مزامنة البيانات',
+    'woocommerce.lastSync': 'آخر مزامنة',
+    'woocommerce.never': 'لم يتم',
   }
 };
 

@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Enable CORS for API routes
-        $middleware->web(append: [
+        $middleware->api(append: [
             \Fruitcake\Cors\HandleCors::class,
         ]);
     })

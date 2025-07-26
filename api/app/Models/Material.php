@@ -22,6 +22,9 @@ class Material extends Model
         'location',
         'image_url',
         'is_active',
+        'price',
+        'stock_quantity',
+        'woocommerce_id',
     ];
 
     protected $casts = [

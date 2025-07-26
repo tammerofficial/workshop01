@@ -15,6 +15,7 @@ class Client extends Model
         'phone',
         'address',
         'notes',
+        'woocommerce_id',
     ];
 
     public function orders()

@@ -11,6 +11,54 @@ const api = axios.create({
   params: AUTH_PARAMS
 });
 
+// WooCommerce Service Class for Configuration
+class WooCommerceService {
+  private baseURL: string = '';
+  private consumerKey: string = '';
+  private consumerSecret: string = '';
+  private api: any = null;
+
+  init(url: string, key: string, secret: string) {
+    this.baseURL = `${url.replace(/\/$/, '')}/wp-json/wc/v3`;
+    this.consumerKey = key;
+    this.consumerSecret = secret;
+    
+    this.api = axios.create({
+      baseURL: this.baseURL,
+      params: {
+        consumer_key: this.consumerKey,
+        consumer_secret: this.consumerSecret
+      }
+    });
+  }
+
+  async getProducts(page: number = 1, perPage: number = 100) {
+    if (!this.api) throw new Error('WooCommerce service not initialized');
+    const response = await this.api.get('/products', {
+      params: { page, per_page: perPage }
+    });
+    return response.data;
+  }
+
+  async getOrders(page: number = 1, perPage: number = 100) {
+    if (!this.api) throw new Error('WooCommerce service not initialized');
+    const response = await this.api.get('/orders', {
+      params: { page, per_page: perPage }
+    });
+    return response.data;
+  }
+
+  async getCustomers(page: number = 1, perPage: number = 100) {
+    if (!this.api) throw new Error('WooCommerce service not initialized');
+    const response = await this.api.get('/customers', {
+      params: { page, per_page: perPage }
+    });
+    return response.data;
+  }
+}
+
+export const wooCommerceService = new WooCommerceService();
+
 export const wooCommerceApi = {
   // Generic GET request
   get: (endpoint: string) => api.get(endpoint),
