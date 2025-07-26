@@ -197,15 +197,15 @@ const Orders = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">إدارة الطلبات</h1>
-          <p className="text-gray-600 mt-2">عرض وإدارة جميع طلبات العملاء</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('orders.title')}</h1>
+          <p className="text-gray-600 mt-2">{t('orders.subtitle')}</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
           className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
           <Plus className="h-5 w-5" />
-          طلب جديد
+          {t('orders.newOrder')}
         </button>
       </div>
 
@@ -217,7 +217,7 @@ const Orders = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder="البحث في الطلبات..."
+                placeholder={t('orders.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -231,11 +231,11 @@ const Orders = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="all">جميع الحالات</option>
-              <option value="pending">قيد الانتظار</option>
-              <option value="in_progress">قيد التنفيذ</option>
-              <option value="completed">مكتمل</option>
-              <option value="cancelled">ملغي</option>
+              <option value="all">{t('orders.filter.all')}</option>
+              <option value="pending">{t('orders.filter.pending')}</option>
+              <option value="in_progress">{t('orders.filter.in_progress')}</option>
+              <option value="completed">{t('orders.filter.completed')}</option>
+              <option value="cancelled">{t('orders.filter.cancelled')}</option>
             </select>
           </div>
         </div>
@@ -275,7 +275,7 @@ const Orders = () => {
               {order.worker && (
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-600">العامل: {order.worker.name}</span>
+                  <span className="text-sm text-gray-600">{t('orders.card.worker', { workerName: order.worker.name })}</span>
                 </div>
               )}
 
@@ -322,9 +322,9 @@ const Orders = () => {
       {filteredOrders.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-400 text-xl mb-4">📋</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">لا توجد طلبات</h3>
-          <p className="text-gray-600">ابدأ بإنشاء طلب جديد</p>
-                  </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('orders.empty.title')}</h3>
+          <p className="text-gray-600">{t('orders.empty.subtitle')}</p>
+        </div>
       )}
 
       {/* Create Order Modal */}
@@ -332,7 +332,7 @@ const Orders = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">إنشاء طلب جديد</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t('orders.createModal.title')}</h2>
               <form onSubmit={handleCreateOrder} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
