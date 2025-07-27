@@ -12,17 +12,21 @@ const Notifications: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   
   const getNotificationIcon = (type: string) => {
+    const iconStyle = { color: 'var(--primary-color)' };
+    const secondaryStyle = { color: 'var(--secondary-color)' };
+    const accentStyle = { color: 'var(--accent-color)' };
+    
     switch (type) {
       case 'order':
-        return <Clock size={20} className="text-blue-500" />;
+        return <Clock size={20} style={iconStyle} />;
       case 'inventory':
-        return <Package size={20} className="text-yellow-500" />;
+        return <Package size={20} style={accentStyle} />;
       case 'worker':
-        return <User size={20} className="text-green-500" />;
+        return <User size={20} style={{ color: '#22c55e' }} />;
       case 'system':
-        return <AlertTriangle size={20} className="text-red-500" />;
+        return <AlertTriangle size={20} style={{ color: '#ef4444' }} />;
       default:
-        return <Bell size={20} className="text-gray-400" />;
+        return <Bell size={20} style={secondaryStyle} />;
     }
   };
 
@@ -46,8 +50,8 @@ const Notifications: React.FC = () => {
         return (
           <div className="dark:bg-gray-900 min-h-screen">
             <PageHeader 
-              title={t('notifications.title', { departmentName: departmentInfo.name })}
-              subtitle={t('notifications.subtitle', { departmentDescription: departmentInfo.description.toLowerCase() })}
+              title={`${departmentInfo.name} Notifications`}
+              subtitle={`Manage notifications and alerts for ${departmentInfo.description.toLowerCase()}`}
             />
             
             <motion.div 
@@ -60,27 +64,57 @@ const Notifications: React.FC = () => {
                 <div className="flex space-x-4">
                   <button
                     onClick={() => setFilter('all')}
-                    className={`px-4 py-2 text-sm font-medium rounded-md ${
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                       filter === 'all'
-                        ? 'bg-black text-white dark:bg-blue-500 dark:text-white'
+                        ? 'active'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
+                    style={filter === 'all' ? {
+                      backgroundColor: 'var(--primary-color)',
+                      color: 'white',
+                      borderRadius: 'var(--border-radius)',
+                      fontFamily: 'var(--font-family)',
+                      fontSize: 'var(--font-size)',
+                      fontWeight: 'var(--font-weight)'
+                    } : {
+                      fontFamily: 'var(--font-family)',
+                      fontSize: 'var(--font-size)',
+                      fontWeight: 'var(--font-weight)'
+                    }}
                   >
-                    {t('notifications.all')}
+                    All
                   </button>
                   <button
                     onClick={() => setFilter('unread')}
-                    className={`px-4 py-2 text-sm font-medium rounded-md ${
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                       filter === 'unread'
-                        ? 'bg-black text-white dark:bg-blue-500 dark:text-white'
+                        ? 'active'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
+                    style={filter === 'unread' ? {
+                      backgroundColor: 'var(--primary-color)',
+                      color: 'white',
+                      borderRadius: 'var(--border-radius)',
+                      fontFamily: 'var(--font-family)',
+                      fontSize: 'var(--font-size)',
+                      fontWeight: 'var(--font-weight)'
+                    } : {
+                      fontFamily: 'var(--font-family)',
+                      fontSize: 'var(--font-size)',
+                      fontWeight: 'var(--font-weight)'
+                    }}
                   >
-                    {t('notifications.unread')}
+                    Unread
                   </button>
                 </div>
                 
-                <button className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+                <button 
+                  className="text-sm hover:underline transition-colors"
+                  style={{ 
+                    color: 'var(--primary-color)',
+                    transition: 'color var(--transition-duration) var(--transition-easing)'
+                  }}
+                >
                   {t('notifications.markAllAsRead')}
                 </button>
               </div>
@@ -105,14 +139,38 @@ const Notifications: React.FC = () => {
                       
                       <div className={`flex-1 ${isRTL ? 'mr-4' : 'ml-4'}`}>
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <p 
+                            className="text-sm font-medium text-gray-900 dark:text-gray-100"
+                            style={{
+                              fontFamily: 'var(--font-family)',
+                              fontSize: 'var(--font-size)',
+                              fontWeight: 'var(--font-weight)',
+                              lineHeight: 'var(--line-height)',
+                              color: 'var(--text-color)'
+                            }}
+                          >
                             {notification.title}
                           </p>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                          <span 
+                            className="text-sm text-gray-500 dark:text-gray-400"
+                            style={{
+                              fontFamily: 'var(--font-family)',
+                              fontSize: 'calc(var(--font-size) * 0.875)',
+                              color: 'var(--secondary-color)'
+                            }}
+                          >
                             {formatDate(notification.createdAt)}
                           </span>
                         </div>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        <p 
+                          className="mt-1 text-sm text-gray-500 dark:text-gray-400"
+                          style={{
+                            fontFamily: 'var(--font-family)',
+                            fontSize: 'calc(var(--font-size) * 0.875)',
+                            lineHeight: 'var(--line-height)',
+                            color: 'var(--secondary-color)'
+                          }}
+                        >
                           {notification.message}
                         </p>
                         

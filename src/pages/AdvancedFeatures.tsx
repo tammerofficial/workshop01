@@ -144,9 +144,25 @@ const AdvancedFeatures: React.FC = () => {
       onClick={() => setActiveTab(tab as any)}
       className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
         activeTab === tab
-          ? 'bg-blue-600 text-white'
-          : 'text-gray-600 hover:bg-gray-200'
+          ? 'active'
+          : ''
       }`}
+      style={{
+        backgroundColor: activeTab === tab ? 'var(--primary-color)' : 'transparent',
+        color: activeTab === tab ? 'white' : 'var(--secondary-color)',
+        borderRadius: 'var(--border-radius)',
+        transition: 'all var(--transition-duration) var(--transition-easing)'
+      }}
+      onMouseEnter={(e) => {
+        if (activeTab !== tab) {
+          e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--primary-color) 10%, transparent)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (activeTab !== tab) {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }
+      }}
     >
       {icon}
       <span className="ml-2">{label}</span>
@@ -319,11 +335,31 @@ const AdvancedFeatures: React.FC = () => {
         className="max-w-7xl mx-auto"
       >
         <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 flex items-center">
+          <h1 
+            className="text-4xl font-bold text-gray-900 flex items-center"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 2)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--text-color)'
+            }}
+          >
             <Zap className="w-8 h-8 mr-3 text-blue-600" />
-            {t('advanced.title')}
+            Advanced Features
           </h1>
-          <p className="mt-2 text-lg text-gray-600">{t('advanced.subtitle')}</p>
+          <p 
+            className="mt-2 text-lg text-gray-600"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 1.125)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--secondary-color)'
+            }}
+          >
+            AI, IoT integration, and smart automation tools
+          </p>
         </header>
 
         <div className="bg-white rounded-lg shadow-lg p-6">
@@ -358,7 +394,14 @@ const FeatureCard = ({ title, description, enabled, onToggle, icon }: { title: s
         <span className={`text-sm font-medium ${enabled ? 'text-green-600' : 'text-red-600'}`}>
           {enabled ? t('common.enabled') : t('common.disabled')}
         </span>
-        <button onClick={onToggle} className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${enabled ? 'bg-blue-600' : 'bg-gray-300'}`}>
+        <button 
+          onClick={onToggle} 
+          className="relative inline-flex items-center h-6 rounded-full w-11 transition-colors"
+          style={{
+            backgroundColor: enabled ? 'var(--primary-color)' : 'var(--border-color)',
+            transition: 'background-color var(--transition-duration) var(--transition-easing)'
+          }}
+        >
           <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
         </button>
       </div>

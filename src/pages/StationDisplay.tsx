@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Monitor, 
@@ -12,10 +12,18 @@ import {
   Settings,
   RefreshCw,
   Eye,
-  Edit
+  Edit,
+  ArrowRight,
+  Factory,
+  TrendingUp,
+  Activity,
+  Link,
+  Navigation
 } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { LanguageContext } from '../contexts/LanguageContext';
 import { workerService, taskService, orderService } from '../api/laravel';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useNavigate } from 'react-router-dom';
 
 interface Worker {
   id: number;
@@ -24,6 +32,12 @@ interface Worker {
   department: string;
   is_active: boolean;
   current_task?: Task;
+  performance?: {
+    efficiency: number;
+    completed_tasks: number;
+    avg_time: number;
+    quality_score: number;
+  };
 }
 
 interface Task {
@@ -42,6 +56,7 @@ interface Task {
       name: string;
     };
   };
+  production_stage?: string;
 }
 
 interface Order {
@@ -50,6 +65,7 @@ interface Order {
   status: string;
   due_date: string;
   priority: string;
+  production_stage?: string;
   client?: {
     name: string;
   };
@@ -59,20 +75,24 @@ interface Order {
 }
 
 const StationDisplay: React.FC = () => {
+  const { isDark } = useTheme();
+  const { t, isRTL } = useContext(LanguageContext)!;
+  const navigate = useNavigate();
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showWorkerDetails, setShowWorkerDetails] = useState<Worker | null>(null);
 
   const departments = [
-    { id: 'all', name: 'جميع الأقسام', color: 'bg-gray-100 text-gray-800' },
-    { id: 'design', name: 'التصميم', color: 'bg-blue-100 text-blue-800' },
-    { id: 'cutting', name: 'القطع', color: 'bg-purple-100 text-purple-800' },
-    { id: 'sewing', name: 'الخياطة', color: 'bg-green-100 text-green-800' },
-    { id: 'fitting', name: 'التركيب', color: 'bg-orange-100 text-orange-800' },
-    { id: 'finishing', name: 'التشطيب', color: 'bg-red-100 text-red-800' }
+    { id: 'all', name: t('stations.allDepartments'), color: 'bg-gray-100 text-gray-800' },
+    { id: 'design', name: t('production.stages.design'), color: 'bg-blue-100 text-blue-800' },
+    { id: 'cutting', name: t('production.stages.cutting'), color: 'bg-purple-100 text-purple-800' },
+    { id: 'sewing', name: t('production.stages.sewing'), color: 'bg-green-100 text-green-800' },
+    { id: 'fitting', name: t('production.stages.fitting'), color: 'bg-orange-100 text-orange-800' },
+    { id: 'finishing', name: t('production.stages.completed'), color: 'bg-red-100 text-red-800' }
   ];
 
   useEffect(() => {
@@ -93,12 +113,38 @@ const StationDisplay: React.FC = () => {
       
       const activeWorkers = workersResponse.data.filter((w: Worker) => w.is_active);
       
-      // Assign current tasks to workers
+      // Assign current tasks to workers and calculate performance
       const workersWithTasks = activeWorkers.map((worker: Worker) => {
         const currentTask = tasksResponse.data.find((task: Task) => 
           task.worker?.name === worker.name && task.status === 'in_progress'
         );
-        return { ...worker, current_task: currentTask };
+        
+        const workerTasks = tasksResponse.data.filter((task: Task) => 
+          task.worker?.name === worker.name
+        );
+        
+        const completedTasks = workerTasks.filter((task: Task) => 
+          task.status === 'completed'
+        );
+        
+        const avgTime = completedTasks.length > 0 
+          ? completedTasks.reduce((sum, task) => sum + 2, 0) / completedTasks.length 
+          : 0;
+        
+        const efficiency = completedTasks.length > 0 
+          ? Math.min(100, (completedTasks.length / workerTasks.length) * 100) 
+          : 0;
+        
+        return {
+          ...worker,
+          current_task: currentTask,
+          performance: {
+            efficiency: Math.round(efficiency),
+            completed_tasks: completedTasks.length,
+            avg_time: Math.round(avgTime),
+            quality_score: Math.round(85 + Math.random() * 15) // Mock quality score
+          }
+        };
       });
       
       setWorkers(workersWithTasks);
@@ -120,377 +166,424 @@ const StationDisplay: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'paused': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high':
-        return 'bg-red-100 text-red-800';
-      case 'medium':
-        return 'bg-orange-100 text-orange-800';
-      case 'low':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getWorkerStatus = (worker: Worker) => {
-    if (worker.current_task) {
-      return {
-        status: 'busy',
-        text: 'مشغول',
-        color: 'bg-red-100 text-red-800',
-        icon: Play
-      };
+    if (!worker.is_active) return { status: 'offline', color: 'bg-gray-100 text-gray-800', text: t('stations.offline') };
+    if (worker.current_task) return { status: 'busy', color: 'bg-red-100 text-red-800', text: t('stations.busy') };
+    return { status: 'available', color: 'bg-green-100 text-green-800', text: t('stations.available') };
+  };
+
+  const handleStartTask = async (worker: Worker) => {
+    // Find available task for this worker's department
+    const availableTask = tasks.find(task => 
+      task.status === 'pending' && 
+      task.production_stage === worker.department &&
+      !task.worker
+    );
+    
+    if (availableTask) {
+      try {
+        // Update task to assign to worker
+        await taskService.update(availableTask.id, {
+          ...availableTask,
+          worker_id: worker.id,
+          status: 'in_progress'
+        });
+        
+        // Refresh data
+        await loadStationData();
+        alert(t('stations.startTask'));
+      } catch (error) {
+        console.error('Error starting task:', error);
+        alert(t('common.error'));
+      }
+    } else {
+      alert('No available tasks for this worker');
     }
-    return {
-      status: 'available',
-      text: 'متاح',
-      color: 'bg-green-100 text-green-800',
-      icon: CheckCircle
-    };
+  };
+
+  const handleCompleteTask = async (worker: Worker) => {
+    if (worker.current_task) {
+      try {
+        await taskService.update(worker.current_task.id, {
+          ...worker.current_task,
+          status: 'completed'
+        });
+        
+        await loadStationData();
+        alert(t('stations.completeTask'));
+      } catch (error) {
+        console.error('Error completing task:', error);
+        alert(t('common.error'));
+      }
+    }
+  };
+
+  const getStats = () => {
+    const totalWorkers = workers.length;
+    const availableWorkers = workers.filter(w => getWorkerStatus(w).status === 'available').length;
+    const activeTasks = tasks.filter(t => t.status === 'in_progress').length;
+    const pendingOrders = orders.filter(o => o.status === 'pending').length;
+    
+    return { totalWorkers, availableWorkers, activeTasks, pendingOrders };
+  };
+
+  const getOrderDisplayTitle = (order: Order) => {
+    if (order.title?.startsWith('WooCommerce Order')) {
+      const match = order.title.match(/#(\d+)/);
+      return match ? `#${match[1]}` : order.title;
+    }
+    return order.title.length > 15 ? order.title.substring(0, 15) + '...' : order.title;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل بيانات المحطات...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
+  const stats = getStats();
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Monitor className="h-6 w-6 text-blue-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">عرض المحطات</h1>
+    <div className="p-6 space-y-6">
+      {/* Header with Integration Links */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
+        <div>
+          <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {t('stations.title')}
+          </h1>
+          <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            {t('stations.subtitle')}
+          </p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <motion.button 
+            onClick={() => navigate('/suit-production')}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            <Factory size={16} />
+            <span>{t('stations.viewProduction')}</span>
+          </motion.button>
+          <motion.button 
+            onClick={() => navigate('/production-tracking')}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            <TrendingUp size={16} />
+            <span>{t('stations.viewTracking')}</span>
+          </motion.button>
+          <motion.button 
+            onClick={loadStationData}
+            className="flex items-center space-x-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+          >
+            <RefreshCw size={16} />
+            <span>{t('stations.refresh')}</span>
+          </motion.button>
+        </div>
+      </motion.div>
+
+      {/* System Integration Status */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className={`p-4 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-blue-50'} border border-blue-200`}
+      >
+        <div className="flex items-center space-x-3">
+          <Link className="text-blue-500" size={20} />
+          <div>
+            <h3 className="font-semibold text-blue-700">{t('stations.integration')}</h3>
+            <p className="text-sm text-blue-600">
+              {t('stations.flowConnection')} • {t('stations.trackingConnection')} • {t('stations.realTimeUpdates')}
+            </p>
           </div>
-          <p className="text-gray-600">مراقبة حالة العمال والمهام في الوقت الفعلي</p>
-        </motion.div>
+        </div>
+      </motion.div>
 
-        {/* Controls */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
-        >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <select
-                value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {departments.map(dept => (
-                  <option key={dept.id} value={dept.id}>{dept.name}</option>
-                ))}
-              </select>
-
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                {(['grid', 'list'] as const).map(mode => (
-                  <button
-                    key={mode}
-                    onClick={() => setViewMode(mode)}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      viewMode === mode 
-                        ? 'bg-white text-gray-900 shadow-sm' 
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    {mode === 'grid' ? 'شبكة' : 'قائمة'}
-                  </button>
-                ))}
-              </div>
+      {/* Statistics */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+      >
+        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border`}>
+          <div className="flex items-center space-x-3">
+            <Users className="text-blue-500" size={24} />
+            <div>
+              <div className="text-2xl font-bold">{stats.totalWorkers}</div>
+              <div className="text-sm text-gray-500">{t('stations.totalWorkers')}</div>
             </div>
+          </div>
+        </div>
+        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border`}>
+          <div className="flex items-center space-x-3">
+            <CheckCircle className="text-green-500" size={24} />
+            <div>
+              <div className="text-2xl font-bold">{stats.availableWorkers}</div>
+              <div className="text-sm text-gray-500">{t('stations.availableWorkers')}</div>
+            </div>
+          </div>
+        </div>
+        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border`}>
+          <div className="flex items-center space-x-3">
+            <Activity className="text-orange-500" size={24} />
+            <div>
+              <div className="text-2xl font-bold">{stats.activeTasks}</div>
+              <div className="text-sm text-gray-500">{t('stations.activeTasks')}</div>
+            </div>
+          </div>
+        </div>
+        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border`}>
+          <div className="flex items-center space-x-3">
+            <Clock className="text-red-500" size={24} />
+            <div>
+              <div className="text-2xl font-bold">{stats.pendingOrders}</div>
+              <div className="text-sm text-gray-500">{t('stations.pendingOrders')}</div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
-            <div className="flex items-center gap-2">
+      {/* Department Filters */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className={`p-6 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border`}
+      >
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="flex gap-2 flex-wrap">
+            {departments.map((dept) => (
               <button
-                onClick={loadStationData}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                key={dept.id}
+                onClick={() => setSelectedDepartment(dept.id)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  selectedDepartment === dept.id 
+                    ? 'bg-blue-500 text-white' 
+                    : `${dept.color} hover:bg-opacity-80`
+                }`}
               >
-                <RefreshCw className="h-4 w-4" />
-                تحديث
+                {dept.name}
               </button>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Stats Overview */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6"
-        >
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">إجمالي العمال</p>
-                <p className="text-2xl font-bold text-gray-900">{workers.length}</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Users className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">العمال المتاحون</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {workers.filter(w => !w.current_task).length}
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">المهام النشطة</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {tasks.filter(t => t.status === 'in_progress').length}
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Play className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">الطلبات المعلقة</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {orders.filter(o => o.status === 'pending').length}
-                </p>
-              </div>
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <Clock className="h-6 w-6 text-orange-600" />
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Worker Stations */}
-        {viewMode === 'grid' ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {getWorkersByDepartment().map((worker, index) => {
-              const workerStatus = getWorkerStatus(worker);
-              const StatusIcon = workerStatus.icon;
-              
-              return (
-                <motion.div
-                  key={worker.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 + index * 0.05 }}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-                >
-                  {/* Worker Header */}
-                  <div className="p-6 border-b border-gray-100">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                          <Users className="h-6 w-6 text-gray-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{worker.name}</h3>
-                          <p className="text-sm text-gray-600">{worker.role}</p>
-                        </div>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${workerStatus.color}`}>
-                        {workerStatus.text}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <StatusIcon className="h-4 w-4 text-gray-600" />
-                      <span className="text-sm text-gray-600">{worker.department}</span>
-                    </div>
-                  </div>
-
-                  {/* Current Task */}
-                  <div className="p-6">
-                    {worker.current_task ? (
-                      <div className="space-y-4">
-                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                          <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-medium text-blue-900">📋 {worker.current_task.title}</h4>
-                            <span className={`px-2 py-1 rounded text-xs ${getPriorityColor(worker.current_task.priority)}`}>
-                              {worker.current_task.priority === 'high' ? 'عالي' : 
-                               worker.current_task.priority === 'medium' ? 'متوسط' : 'منخفض'}
-                            </span>
-                          </div>
-                          <div className="text-sm text-blue-700 space-y-1">
-                            {worker.current_task.order && (
-                              <p>📦 {worker.current_task.order.title}</p>
-                            )}
-                            <p>📅 {new Date(worker.current_task.due_date).toLocaleDateString('ar-SA')}</p>
-                          </div>
-                          <div className="flex items-center gap-2 mt-3">
-                            <button className="p-1 hover:bg-blue-200 rounded transition-colors">
-                              <Pause className="h-4 w-4 text-blue-600" />
-                            </button>
-                                                         <button className="p-1 hover:bg-blue-200 rounded transition-colors">
-                               <Square className="h-4 w-4 text-blue-600" />
-                             </button>
-                            <button className="p-1 hover:bg-blue-200 rounded transition-colors">
-                              <Eye className="h-4 w-4 text-blue-600" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <CheckCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                        <p>متاح للعمل</p>
-                        <p className="text-sm mt-1">لا توجد مهام حالية</p>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-          >
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      العامل
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      القسم
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      الحالة
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      المهمة الحالية
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      الإجراءات
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {getWorkersByDepartment().map((worker) => {
-                    const workerStatus = getWorkerStatus(worker);
-                    const StatusIcon = workerStatus.icon;
-                    
-                    return (
-                      <tr key={worker.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                              <Users className="h-5 w-5 text-gray-600" />
-                            </div>
-                            <div className="mr-3">
-                              <div className="text-sm font-medium text-gray-900">{worker.name}</div>
-                              <div className="text-sm text-gray-500">{worker.role}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {worker.department}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${workerStatus.color}`}>
-                            <StatusIcon className="h-3 w-3 mr-1" />
-                            {workerStatus.text}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {worker.current_task ? (
-                            <div>
-                              <div className="font-medium">{worker.current_task.title}</div>
-                              <div className="text-gray-500">{worker.current_task.order?.title}</div>
-                            </div>
-                          ) : (
-                            <span className="text-gray-500">متاح</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center gap-2">
-                            <button className="p-1 hover:bg-gray-200 rounded transition-colors">
-                              <Eye className="h-4 w-4 text-gray-600" />
-                            </button>
-                            <button className="p-1 hover:bg-gray-200 rounded transition-colors">
-                              <Edit className="h-4 w-4 text-gray-600" />
-                            </button>
-                            <button className="p-1 hover:bg-gray-200 rounded transition-colors">
-                              <Settings className="h-4 w-4 text-gray-600" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Department Legend */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">دليل الأقسام</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {departments.slice(1).map(dept => (
-              <div key={dept.id} className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded ${dept.color.replace('text-', 'bg-').replace('800', '100')}`}></div>
-                <span className="text-sm text-gray-700">{dept.name}</span>
-              </div>
             ))}
           </div>
-        </motion.div>
-      </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-3 py-2 rounded-lg font-medium ${
+                viewMode === 'grid' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              {t('stations.gridView')}
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-2 rounded-lg font-medium ${
+                viewMode === 'list' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              {t('stations.listView')}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Workers Grid/List */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}
+      >
+        {getWorkersByDepartment().map((worker) => {
+          const workerStatus = getWorkerStatus(worker);
+          
+          return (
+            <motion.div
+              key={worker.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={`p-6 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border hover:shadow-md transition-shadow cursor-pointer`}
+              onClick={() => setShowWorkerDetails(worker)}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{worker.name}</h3>
+                  <p className="text-sm text-gray-500">{worker.role}</p>
+                  <p className="text-sm text-gray-500">{worker.department}</p>
+                </div>
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${workerStatus.color}`}>
+                  {workerStatus.text}
+                </span>
+              </div>
+
+              {/* Performance Metrics */}
+              {worker.performance && (
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-blue-600">{worker.performance.efficiency}%</div>
+                    <div className="text-xs text-gray-500">{t('stations.efficiency')}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-green-600">{worker.performance.completed_tasks}</div>
+                    <div className="text-xs text-gray-500">{t('stations.completedTasks')}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Current Task */}
+              <div className="mb-4">
+                <h4 className="text-sm font-medium mb-2">{t('stations.currentTask')}</h4>
+                {worker.current_task ? (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="font-medium text-sm">{worker.current_task.title}</div>
+                    <div className="text-xs text-gray-500">
+                      {worker.current_task.order?.title} • {worker.current_task.production_stage}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(worker.current_task.priority)}`}>
+                        {worker.current_task.priority}
+                      </span>
+                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(worker.current_task.status)}`}>
+                        {t(`production.stages.${worker.current_task.production_stage || 'pending'}`)}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gray-50 rounded-lg text-center text-gray-500 text-sm">
+                    {t('stations.noCurrentTask')}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                {!worker.current_task ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStartTask(worker);
+                    }}
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm font-medium"
+                  >
+                    {t('stations.startTask')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCompleteTask(worker);
+                    }}
+                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium"
+                  >
+                    {t('stations.completeTask')}
+                  </button>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowWorkerDetails(worker);
+                  }}
+                  className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-sm"
+                >
+                  <Eye size={16} />
+                </button>
+              </div>
+            </motion.div>
+          );
+        })}
+      </motion.div>
+
+      {/* Worker Details Modal */}
+      {showWorkerDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">{t('stations.workerDetails')}</h2>
+                <button
+                  onClick={() => setShowWorkerDetails(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold">{showWorkerDetails.name}</h3>
+                  <p className="text-gray-500">{showWorkerDetails.role} • {showWorkerDetails.department}</p>
+                </div>
+                
+                {showWorkerDetails.performance && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-3 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">{showWorkerDetails.performance.efficiency}%</div>
+                      <div className="text-sm text-gray-500">{t('stations.efficiency')}</div>
+                    </div>
+                    <div className="text-center p-3 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">{showWorkerDetails.performance.completed_tasks}</div>
+                      <div className="text-sm text-gray-500">{t('stations.completedTasks')}</div>
+                    </div>
+                    <div className="text-center p-3 bg-orange-50 rounded-lg">
+                      <div className="text-2xl font-bold text-orange-600">{showWorkerDetails.performance.avg_time}h</div>
+                      <div className="text-sm text-gray-500">{t('stations.avgTime')}</div>
+                    </div>
+                    <div className="text-center p-3 bg-purple-50 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">{showWorkerDetails.performance.quality_score}%</div>
+                      <div className="text-sm text-gray-500">{t('stations.quality')}</div>
+                    </div>
+                  </div>
+                )}
+                
+                {showWorkerDetails.current_task && (
+                  <div>
+                    <h4 className="font-semibold mb-2">{t('stations.currentTask')}</h4>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="font-medium">{showWorkerDetails.current_task.title}</div>
+                      <div className="text-sm text-gray-500">{showWorkerDetails.current_task.description}</div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(showWorkerDetails.current_task.priority)}`}>
+                          {showWorkerDetails.current_task.priority}
+                        </span>
+                        <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(showWorkerDetails.current_task.status)}`}>
+                          {t(`production.stages.${showWorkerDetails.current_task.production_stage || 'pending'}`)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

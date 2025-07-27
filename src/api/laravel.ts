@@ -123,4 +123,21 @@ export const wooCommerceService = {
   importAll: () => api.post('/woocommerce/import/all'),
 };
 
+// Role Service
+export const roleService = {
+  getAll: () => api.get('/roles'),
+  getById: (id: number) => api.get(`/roles/${id}`),
+  create: (data: any) => api.post('/roles', data),
+  update: (id: number, data: any) => api.put(`/roles/${id}`, data),
+  delete: (id: number) => api.delete(`/roles/${id}`),
+  getPermissions: () => api.get('/roles/permissions/available'),
+  getDefaultRoles: () => api.get('/roles/defaults'),
+};
+
+// Permission Service
+export const permissionService = {
+  getAll: () => api.get('/permissions'),
+  getGrouped: () => api.get('/permissions/grouped'),
+};
+
 export default api; 

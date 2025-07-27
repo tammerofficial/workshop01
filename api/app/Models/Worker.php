@@ -15,18 +15,23 @@ class Worker extends Model
         'phone',
         'role',
         'department',
+        'specialty', // تخصص العامل (design, cutting, sewing, fitting, finishing, quality_check)
         'salary',
         'hire_date',
         'is_active',
         'skills',
         'notes',
+        'hourly_rate', // معدل الساعة
+        'production_stages', // المراحل التي يتقنها
     ];
 
     protected $casts = [
         'hire_date' => 'date',
         'is_active' => 'boolean',
         'salary' => 'decimal:2',
+        'hourly_rate' => 'decimal:2',
         'skills' => 'array',
+        'production_stages' => 'array',
     ];
 
     public function tasks()

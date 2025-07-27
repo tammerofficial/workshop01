@@ -58,10 +58,17 @@ export default function Clients() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [loadingStats, setLoadingStats] = useState<number[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
 
   useEffect(() => {
     loadClients();
   }, []);
+
+  useEffect(() => {
+    console.log('State changed - showOrderDetails:', showOrderDetails);
+    console.log('State changed - selectedOrder:', selectedOrder);
+  }, [showOrderDetails, selectedOrder]);
 
   const loadClients = async () => {
     try {
@@ -79,17 +86,20 @@ export default function Clients() {
 
   const loadClientStats = async (client: Client) => {
     try {
-      const orders = await orderService.getOrdersByClient(client.id);
-      const totalValue = orders.reduce((sum: number, order: Order) => {
+      // Fetch all orders and filter by client_id to ensure we get all orders for this client
+      const allOrders = await orderService.getAll();
+      const clientOrders = allOrders.data.filter((order: Order) => order.client_id === client.id);
+      
+      const totalValue = clientOrders.reduce((sum: number, order: Order) => {
         const cost = typeof order.total_cost === 'number' ? order.total_cost : 0;
         return sum + cost;
       }, 0);
       
       return {
         ...client,
-        orders_count: orders.length,
+        orders_count: clientOrders.length,
         total_orders_value: totalValue,
-        last_order_date: orders.length > 0 ? orders[0].created_at : null
+        last_order_date: clientOrders.length > 0 ? clientOrders[0].created_at : null
       };
     } catch (error) {
       console.error('Error loading client stats:', error);
@@ -159,6 +169,42 @@ export default function Clients() {
       console.error('Error updating client:', error);
       alert('Failed to update client. Please try again.');
     }
+  };
+
+  const handleViewOrderDetails = (order: Order) => {
+    console.log('handleViewOrderDetails called with order:', order);
+    setSelectedOrder(order);
+    setShowOrderDetails(true);
+    console.log('Modal should be visible now');
+    console.log('showOrderDetails will be set to true');
+    console.log('selectedOrder will be set to:', order);
+  };
+
+  const formatCurrency = (amount: number | string) => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return `${(num || 0).toFixed(2)} د.ك`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed': return 'مكتمل';
+      case 'in_progress': return 'قيد التنفيذ';
+      case 'pending': return 'قيد الانتظار';
+      case 'cancelled': return 'ملغي';
+      default: return status;
+    }
+  };
+
+  const getOrderDisplayTitle = (order: Order) => {
+    if (order.title?.startsWith('WooCommerce Order')) {
+      const match = order.title.match(/#(\d+)/);
+      return match ? `#${match[1]}` : order.title;
+    }
+    return order.title.length > 15 ? order.title.substring(0, 15) + '...' : order.title;
   };
 
   const syncFromWooCommerce = async () => {
@@ -380,20 +426,27 @@ export default function Clients() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {clientOrders.map((order) => (
-                      <tr key={order.id}>
+                      <tr 
+                        key={order.id} 
+                        className="hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => handleViewOrderDetails(order)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{order.title}</div>
+                          <div className="text-sm font-medium text-gray-900 flex items-center space-x-2">
+                            <span>{getOrderDisplayTitle(order)}</span>
+                            <Eye size={14} className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                            {order.status}
+                            {getStatusText(order.status)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${typeof order.total_cost === 'number' ? order.total_cost.toFixed(2) : '0.00'}
+                          {formatCurrency(order.total_cost)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(order.created_at).toLocaleDateString()}
+                          {formatDate(order.created_at)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
@@ -422,6 +475,146 @@ export default function Clients() {
             )}
           </div>
         </motion.div>
+
+        {/* Order Details Modal */}
+        {showOrderDetails && selectedOrder && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">تفاصيل الطلب</h2>
+                  <button
+                    onClick={() => setShowOrderDetails(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Basic Order Info */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-3">معلومات الطلب الأساسية</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">عنوان الطلب</label>
+                        <p className="font-semibold">{getOrderDisplayTitle(selectedOrder)}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">الحالة</label>
+                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedOrder.status)}`}>
+                          {getStatusText(selectedOrder.status)}
+                        </span>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">التكلفة الإجمالية</label>
+                        <p className="text-xl font-bold text-green-600">{formatCurrency(selectedOrder.total_cost)}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">تاريخ الإنشاء</label>
+                        <p>{formatDate(selectedOrder.created_at)}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">تاريخ التسليم</label>
+                        <p>{formatDate(selectedOrder.due_date)}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">المصدر</label>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            selectedOrder.woocommerce_id 
+                              ? 'bg-purple-100 text-purple-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {selectedOrder.woocommerce_id ? 'WooCommerce' : 'Local'}
+                          </span>
+                          {selectedOrder.woocommerce_id && (
+                            <ExternalLink size={12} className="text-purple-600" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                                  {/* Order Details */}
+                {selectedOrder.woocommerce_id && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-3 text-blue-800">تفاصيل الطلب</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                                                  <label className="text-sm font-medium text-gray-500">رقم الطلب</label>
+                        <p className="font-semibold">#{selectedOrder.woocommerce_id}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">مستورد من</label>
+                          <p className="text-blue-600">WooCommerce</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Client Info */}
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-3 text-green-800">معلومات العميل</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">اسم العميل</label>
+                        <p className="font-semibold">{selectedClient?.name}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">البريد الإلكتروني</label>
+                        <p>{selectedClient?.email}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">رقم الهاتف</label>
+                        <p>{selectedClient?.phone}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">العنوان</label>
+                        <p>{selectedClient?.address}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-6 border-t">
+                  <button
+                    onClick={() => setShowOrderDetails(false)}
+                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    إغلاق
+                  </button>
+                  
+                  {/* Production Tracking Button - Show only for in-progress orders */}
+                  {(selectedOrder.status === 'in_progress' || selectedOrder.status === 'pending') && (
+                    <button
+                      onClick={() => {
+                        setShowOrderDetails(false);
+                        // Navigate to Production Tracking page
+                        window.open(`/production-tracking?order=${selectedOrder.id}`, '_blank');
+                      }}
+                      className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                    >
+                      <span>🏭</span>
+                      <span>{t('orders.trackProduction')}</span>
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={() => {
+                      setShowOrderDetails(false);
+                      // Navigate to Orders page to edit this order
+                      window.open(`/orders?order=${selectedOrder.id}`, '_blank');
+                    }}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    تعديل الطلب
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -431,8 +624,30 @@ export default function Clients() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('clients.title')}</h1>
-          <p className="text-gray-600 mt-2">{t('clients.subtitle')}</p>
+          <h1 
+            className="text-3xl font-bold text-gray-900"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 1.875)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--text-color)'
+            }}
+          >
+            Clients
+          </h1>
+          <p 
+            className="text-gray-600 mt-2"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 1.125)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--secondary-color)'
+            }}
+          >
+            Manage customer information and profiles
+          </p>
         </div>
         <div className="flex space-x-4">
           <button
@@ -740,6 +955,147 @@ export default function Clients() {
           </div>
         </div>
       )}
+
+      {/* Order Details Modal */}
+      {showOrderDetails && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">تفاصيل الطلب</h2>
+                <button
+                  onClick={() => setShowOrderDetails(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Basic Order Info */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-3">معلومات الطلب الأساسية</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">عنوان الطلب</label>
+                      <p className="font-semibold">{getOrderDisplayTitle(selectedOrder)}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">الحالة</label>
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedOrder.status)}`}>
+                        {getStatusText(selectedOrder.status)}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">التكلفة الإجمالية</label>
+                      <p className="text-xl font-bold text-green-600">{formatCurrency(selectedOrder.total_cost)}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">تاريخ الإنشاء</label>
+                      <p>{formatDate(selectedOrder.created_at)}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">تاريخ التسليم</label>
+                      <p>{formatDate(selectedOrder.due_date)}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">المصدر</label>
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          selectedOrder.woocommerce_id 
+                            ? 'bg-purple-100 text-purple-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {selectedOrder.woocommerce_id ? 'WooCommerce' : 'Local'}
+                        </span>
+                        {selectedOrder.woocommerce_id && (
+                          <ExternalLink size={12} className="text-purple-600" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Details */}
+                {selectedOrder.woocommerce_id && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-3 text-blue-800">تفاصيل الطلب</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">رقم الطلب</label>
+                        <p className="font-semibold">#{selectedOrder.woocommerce_id}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">مستورد من</label>
+                        <p className="text-blue-600">WooCommerce</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Client Info */}
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-3 text-green-800">معلومات العميل</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">اسم العميل</label>
+                      <p className="font-semibold">{selectedClient?.name}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">البريد الإلكتروني</label>
+                      <p>{selectedClient?.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">رقم الهاتف</label>
+                      <p>{selectedClient?.phone}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">العنوان</label>
+                      <p>{selectedClient?.address}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-6 border-t">
+                <button
+                  onClick={() => setShowOrderDetails(false)}
+                  className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                >
+                  إغلاق
+                </button>
+                
+                {/* Production Tracking Button - Show only for in-progress orders */}
+                {(selectedOrder.status === 'in_progress' || selectedOrder.status === 'pending') && (
+                  <button
+                    onClick={() => {
+                      setShowOrderDetails(false);
+                      // Navigate to Production Tracking page
+                      window.open(`/production-tracking?order=${selectedOrder.id}`, '_blank');
+                    }}
+                    className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                  >
+                    <span>🏭</span>
+                    <span>{t('orders.trackProduction')}</span>
+                  </button>
+                )}
+                
+                <button
+                  onClick={() => {
+                    setShowOrderDetails(false);
+                    // Navigate to Orders page to edit this order
+                    window.open(`/orders?order=${selectedOrder.id}`, '_blank');
+                  }}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  تعديل الطلب
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 } 

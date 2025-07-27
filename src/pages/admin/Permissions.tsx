@@ -1,433 +1,461 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Shield, Lock, Check, X, Save, Search, 
-  Filter, AlertTriangle, Info, HelpCircle
-} from 'lucide-react';
-import PageHeader from '../../components/common/PageHeader';
+import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import toast from 'react-hot-toast';
+import { roleService, permissionService } from '../../api/laravel';
+import { 
+  Shield, 
+  Users, 
+  Settings, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Eye, 
+  Save, 
+  X, 
+  HelpCircle,
+  Check,
+  AlertCircle
+} from 'lucide-react';
 
 interface Role {
-  id: string;
+  id: number;
   name: string;
+  display_name: string;
   description: string;
-  permissions: Record<string, boolean>;
+  permissions: string[];
+  is_system_role: boolean;
+  users_count?: number;
 }
 
-interface PermissionGroup {
-  id: string;
+interface Permission {
   name: string;
-  permissions: {
-    id: string;
-    name: string;
-    description: string;
-  }[];
+  display_name: string;
+  description: string;
+  module: string;
+  action: string;
+}
+
+interface GroupedPermissions {
+  [module: string]: {
+    [permission: string]: Permission;
+  };
 }
 
 const Permissions: React.FC = () => {
-  const { isDark } = useTheme();
-  const [selectedRole, setSelectedRole] = useState<string>('admin');
+  const { t } = useLanguage();
+  const { theme } = useTheme();
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [groupedPermissions, setGroupedPermissions] = useState<GroupedPermissions>({});
+  const [loading, setLoading] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    display_name: '',
+    description: '',
+    is_system_role: false
+  });
 
-  const [roles] = useState<Role[]>([
-    {
-      id: 'admin',
-      name: 'Administrator',
-      description: 'Full system access with all permissions',
-      permissions: {
-        'dashboard_view': true,
-        'dashboard_edit': true,
-        'orders_view': true,
-        'orders_create': true,
-        'orders_edit': true,
-        'orders_delete': true,
-        'inventory_view': true,
-        'inventory_create': true,
-        'inventory_edit': true,
-        'inventory_delete': true,
-        'workers_view': true,
-        'workers_create': true,
-        'workers_edit': true,
-        'workers_delete': true,
-        'reports_view': true,
-        'reports_export': true,
-        'settings_view': true,
-        'settings_edit': true,
-        'users_view': true,
-        'users_create': true,
-        'users_edit': true,
-        'users_delete': true,
-      }
-    },
-    {
-      id: 'manager',
-      name: 'Department Manager',
-      description: 'Department-specific management access',
-      permissions: {
-        'dashboard_view': true,
-        'dashboard_edit': false,
-        'orders_view': true,
-        'orders_create': true,
-        'orders_edit': true,
-        'orders_delete': false,
-        'inventory_view': true,
-        'inventory_create': true,
-        'inventory_edit': true,
-        'inventory_delete': false,
-        'workers_view': true,
-        'workers_create': true,
-        'workers_edit': true,
-        'workers_delete': false,
-        'reports_view': true,
-        'reports_export': true,
-        'settings_view': true,
-        'settings_edit': false,
-        'users_view': true,
-        'users_create': false,
-        'users_edit': false,
-        'users_delete': false,
-      }
-    },
-    {
-      id: 'worker',
-      name: 'Worker',
-      description: 'Limited access to assigned tasks and orders',
-      permissions: {
-        'dashboard_view': true,
-        'dashboard_edit': false,
-        'orders_view': true,
-        'orders_create': false,
-        'orders_edit': false,
-        'orders_delete': false,
-        'inventory_view': true,
-        'inventory_create': false,
-        'inventory_edit': false,
-        'inventory_delete': false,
-        'workers_view': false,
-        'workers_create': false,
-        'workers_edit': false,
-        'workers_delete': false,
-        'reports_view': false,
-        'reports_export': false,
-        'settings_view': false,
-        'settings_edit': false,
-        'users_view': false,
-        'users_create': false,
-        'users_edit': false,
-        'users_delete': false,
-      }
-    },
-    {
-      id: 'viewer',
-      name: 'Viewer',
-      description: 'Read-only access to system data',
-      permissions: {
-        'dashboard_view': true,
-        'dashboard_edit': false,
-        'orders_view': true,
-        'orders_create': false,
-        'orders_edit': false,
-        'orders_delete': false,
-        'inventory_view': true,
-        'inventory_create': false,
-        'inventory_edit': false,
-        'inventory_delete': false,
-        'workers_view': true,
-        'workers_create': false,
-        'workers_edit': false,
-        'workers_delete': false,
-        'reports_view': true,
-        'reports_export': false,
-        'settings_view': false,
-        'settings_edit': false,
-        'users_view': false,
-        'users_create': false,
-        'users_edit': false,
-        'users_delete': false,
-      }
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [rolesData, permissionsData] = await Promise.all([
+        roleService.getAll().then(res => res.data),
+        permissionService.getGrouped().then(res => res.data)
+      ]);
+      setRoles(rolesData);
+      setGroupedPermissions(permissionsData);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+    } finally {
+      setLoading(false);
     }
-  ]);
-
-  const permissionGroups: PermissionGroup[] = [
-    {
-      id: 'dashboard',
-      name: 'Dashboard',
-      permissions: [
-        { id: 'dashboard_view', name: 'View Dashboard', description: 'Access to view dashboard and statistics' },
-        { id: 'dashboard_edit', name: 'Edit Dashboard', description: 'Ability to customize dashboard widgets and layout' }
-      ]
-    },
-    {
-      id: 'orders',
-      name: 'Orders',
-      permissions: [
-        { id: 'orders_view', name: 'View Orders', description: 'Access to view all orders' },
-        { id: 'orders_create', name: 'Create Orders', description: 'Ability to create new orders' },
-        { id: 'orders_edit', name: 'Edit Orders', description: 'Ability to modify existing orders' },
-        { id: 'orders_delete', name: 'Delete Orders', description: 'Ability to delete orders' }
-      ]
-    },
-    {
-      id: 'inventory',
-      name: 'Inventory',
-      permissions: [
-        { id: 'inventory_view', name: 'View Inventory', description: 'Access to view inventory items' },
-        { id: 'inventory_create', name: 'Create Inventory', description: 'Ability to add new inventory items' },
-        { id: 'inventory_edit', name: 'Edit Inventory', description: 'Ability to modify inventory items' },
-        { id: 'inventory_delete', name: 'Delete Inventory', description: 'Ability to delete inventory items' }
-      ]
-    },
-    {
-      id: 'workers',
-      name: 'Workers',
-      permissions: [
-        { id: 'workers_view', name: 'View Workers', description: 'Access to view worker profiles' },
-        { id: 'workers_create', name: 'Create Workers', description: 'Ability to add new workers' },
-        { id: 'workers_edit', name: 'Edit Workers', description: 'Ability to modify worker information' },
-        { id: 'workers_delete', name: 'Delete Workers', description: 'Ability to remove workers' }
-      ]
-    },
-    {
-      id: 'reports',
-      name: 'Reports & Analytics',
-      permissions: [
-        { id: 'reports_view', name: 'View Reports', description: 'Access to view reports and analytics' },
-        { id: 'reports_export', name: 'Export Reports', description: 'Ability to export reports' }
-      ]
-    },
-    {
-      id: 'settings',
-      name: 'Settings',
-      permissions: [
-        { id: 'settings_view', name: 'View Settings', description: 'Access to view system settings' },
-        { id: 'settings_edit', name: 'Edit Settings', description: 'Ability to modify system settings' }
-      ]
-    },
-    {
-      id: 'users',
-      name: 'User Management',
-      permissions: [
-        { id: 'users_view', name: 'View Users', description: 'Access to view system users' },
-        { id: 'users_create', name: 'Create Users', description: 'Ability to add new users' },
-        { id: 'users_edit', name: 'Edit Users', description: 'Ability to modify user information' },
-        { id: 'users_delete', name: 'Delete Users', description: 'Ability to remove users' }
-      ]
-    }
-  ];
-
-  const currentRole = roles.find(role => role.id === selectedRole) || roles[0];
-
-  const togglePermission = (permissionId: string) => {
-    // In a real app, this would update the state and eventually save to the backend
-    console.log(`Toggling permission ${permissionId} for role ${selectedRole}`);
-    toast.success(`Permission updated for ${currentRole.name} role`);
   };
 
-  const savePermissions = () => {
-    toast.success(`Permissions saved for ${currentRole.name} role`);
+  const handleCreateRole = () => {
+    setFormData({
+      name: '',
+      display_name: '',
+      description: '',
+      is_system_role: false
+    });
+    setSelectedPermissions([]);
+    setShowCreateModal(true);
   };
+
+  const handleEditRole = (role: Role) => {
+    setEditingRole(role);
+    setFormData({
+      name: role.name,
+      display_name: role.display_name,
+      description: role.description,
+      is_system_role: role.is_system_role
+    });
+    setSelectedPermissions(role.permissions || []);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteRole = async (role: Role) => {
+    if (!window.confirm(t('roles.confirmDelete'))) return;
+    
+    try {
+      await roleService.delete(role.id);
+      await loadData();
+    } catch (error) {
+      console.error('Failed to delete role:', error);
+    }
+  };
+
+  const handleSaveRole = async () => {
+    try {
+      const roleData = {
+        ...formData,
+        permissions: selectedPermissions
+      };
+
+      if (showEditModal && editingRole) {
+        await roleService.update(editingRole.id, roleData);
+      } else {
+        await roleService.create(roleData);
+      }
+
+      await loadData();
+      setShowCreateModal(false);
+      setShowEditModal(false);
+      setEditingRole(null);
+    } catch (error) {
+      console.error('Failed to save role:', error);
+    }
+  };
+
+  const togglePermission = (permission: string) => {
+    setSelectedPermissions(prev => 
+      prev.includes(permission)
+        ? prev.filter(p => p !== permission)
+        : [...prev, permission]
+    );
+  };
+
+  const selectAllPermissions = () => {
+    const allPermissions = Object.values(groupedPermissions)
+      .flatMap(module => Object.keys(module));
+    setSelectedPermissions(allPermissions);
+  };
+
+  const clearAllPermissions = () => {
+    setSelectedPermissions([]);
+  };
+
+  const getPermissionDisplayName = (permissionKey: string): string => {
+    const [module, action] = permissionKey.split('.');
+    const moduleName = t(`permissions.${module}`) || module;
+    const actionName = t(`permissions.${action}`) || action;
+    return `${moduleName} - ${actionName}`;
+  };
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen p-6 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50'}`}>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4">{t('roles.loading')}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
-      <PageHeader 
-        title="Roles & Permissions"
-        subtitle="Manage user roles and access permissions"
-        action={
-          <button
-            onClick={() => setShowHelp(!showHelp)}
-            className={`inline-flex items-center px-4 py-2 border rounded-md text-sm font-medium transition-colors duration-200 ${
-              isDark 
-                ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
-            }`}
-          >
-            <HelpCircle size={16} className="mr-2" />
-            {showHelp ? 'Hide Help' : 'Show Help'}
-          </button>
-        }
-      />
-
+    <div className={`min-h-screen p-6 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50'}`}>
       <div className="max-w-7xl mx-auto">
-        {/* Help Panel */}
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              <Shield className="text-blue-500" size={32} />
+              {t('roles.title')}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              {t('roles.subtitle')}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowHelp(!showHelp)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
+                theme === 'dark' 
+                  ? 'border-gray-600 hover:border-gray-500' 
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <HelpCircle size={20} />
+              {t('roles.showHelp')}
+            </button>
+            <button
+              onClick={handleCreateRole}
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+            >
+              <Plus size={20} />
+              {t('roles.createRole')}
+            </button>
+          </div>
+        </div>
+
+        {/* Help Section */}
         {showHelp && (
-          <motion.div 
-            className={`rounded-lg shadow-sm p-6 mb-6 transition-colors duration-300 ${
-              isDark ? 'bg-blue-900 border border-blue-800' : 'bg-blue-50 border border-blue-100'
-            }`}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-          >
-            <div className="flex items-start">
-              <Info size={24} className="text-blue-500 mr-4 mt-1 flex-shrink-0" />
-              <div>
-                <h3 className={`text-lg font-medium mb-2 transition-colors duration-300 ${
-                  isDark ? 'text-white' : 'text-blue-800'
-                }`}>
-                  Understanding Roles & Permissions
-                </h3>
-                <div className={`space-y-2 transition-colors duration-300 ${
-                  isDark ? 'text-blue-100' : 'text-blue-700'
-                }`}>
-                  <p>Roles define a set of permissions that determine what actions users can perform in the system.</p>
-                  <ul className="list-disc list-inside space-y-1 ml-4">
-                    <li><strong>Administrator:</strong> Has full access to all system features</li>
-                    <li><strong>Department Manager:</strong> Can manage their department but has limited system-wide access</li>
-                    <li><strong>Worker:</strong> Has access only to assigned tasks and related information</li>
-                    <li><strong>Viewer:</strong> Has read-only access to system data</li>
-                  </ul>
-                  <p className="mt-2">To modify permissions, select a role and toggle the permissions as needed.</p>
-                </div>
-              </div>
+          <div className={`mb-6 p-4 rounded-lg border ${
+            theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-blue-50 border-blue-200'
+          }`}>
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <HelpCircle size={20} className="text-blue-500" />
+              {t('roles.showHelp')}
+            </h3>
+            <div className="space-y-2 text-sm">
+              <p><strong>Administrator:</strong> {t('roles.default.administratorDesc')}</p>
+              <p><strong>Department Manager:</strong> {t('roles.default.departmentManagerDesc')}</p>
+              <p><strong>Worker:</strong> {t('roles.default.workerDesc')}</p>
+              <p><strong>Viewer:</strong> {t('roles.default.viewerDesc')}</p>
             </div>
-          </motion.div>
+          </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Role Selection */}
-          <motion.div 
-            className="lg:col-span-1"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className={`rounded-lg shadow-sm overflow-hidden transition-colors duration-300 ${
-              isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white'
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Roles Section */}
+          <div className="lg:col-span-1">
+            <div className={`p-6 rounded-lg border ${
+              theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             }`}>
-              <div className={`p-4 border-b transition-colors duration-300 ${
-                isDark ? 'border-gray-700 bg-gray-700' : 'border-gray-200 bg-gray-50'
-              }`}>
-                <h3 className={`font-medium transition-colors duration-300 ${
-                  isDark ? 'text-white' : 'text-gray-900'
-                }`}>
-                  Roles
-                </h3>
-              </div>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Users size={24} className="text-blue-500" />
+                {t('roles.roles')}
+              </h2>
               
-              <div className="p-2">
+              <div className="space-y-3">
                 {roles.map((role) => (
-                  <button
+                  <div
                     key={role.id}
-                    onClick={() => setSelectedRole(role.id)}
-                    className={`w-full text-left px-4 py-3 rounded-lg mb-1 transition-colors duration-200 ${
-                      selectedRole === role.id
-                        ? isDark 
-                          ? 'bg-blue-900 text-white' 
-                          : 'bg-blue-50 text-blue-700'
-                        : isDark 
-                          ? 'text-gray-300 hover:bg-gray-700' 
-                          : 'text-gray-700 hover:bg-gray-50'
+                    className={`p-4 rounded-lg border ${
+                      theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
                     }`}
                   >
-                    <div className="flex items-center">
-                      <Shield size={16} className="mr-2" />
-                      <div>
-                        <div className="font-medium">{role.name}</div>
-                        <div className={`text-xs transition-colors duration-300 ${
-                          isDark ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{role.display_name}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                           {role.description}
+                        </p>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                          <span>{role.users_count || 0} {t('roles.usersCount')}</span>
+                          {role.is_system_role && (
+                            <span className="text-orange-500 flex items-center gap-1">
+                              <AlertCircle size={12} />
+                              {t('roles.isSystemRole')}
+                            </span>
+                          )}
                         </div>
                       </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditRole(role)}
+                          className="p-1 text-blue-500 hover:text-blue-600"
+                          title={t('roles.editRole')}
+                        >
+                          <Edit size={16} />
+                        </button>
+                        {!role.is_system_role && (
+                          <button
+                            onClick={() => handleDeleteRole(role)}
+                            className="p-1 text-red-500 hover:text-red-600"
+                            title={t('roles.deleteRole')}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
-          </motion.div>
-          
-          {/* Permissions Grid */}
-          <motion.div 
-            className="lg:col-span-3"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className={`rounded-lg shadow-sm overflow-hidden transition-colors duration-300 ${
-              isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white'
+          </div>
+
+          {/* Permissions Section */}
+          <div className="lg:col-span-2">
+            <div className={`p-6 rounded-lg border ${
+              theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             }`}>
-              <div className={`p-4 border-b transition-colors duration-300 ${
-                isDark ? 'border-gray-700 bg-gray-700' : 'border-gray-200 bg-gray-50'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <h3 className={`font-medium transition-colors duration-300 ${
-                    isDark ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    {currentRole.name} Permissions
-                  </h3>
-                  <button
-                    onClick={savePermissions}
-                    className="inline-flex items-center px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Save size={14} className="mr-1" />
-                    Save Changes
-                  </button>
-                </div>
-              </div>
-              
-              <div className="p-4">
-                {permissionGroups.map((group) => (
-                  <div key={group.id} className="mb-6">
-                    <h4 className={`text-md font-medium mb-3 transition-colors duration-300 ${
-                      isDark ? 'text-white' : 'text-gray-900'
-                    }`}>
-                      {group.name}
-                    </h4>
-                    
-                    <div className={`rounded-lg border transition-colors duration-300 ${
-                      isDark ? 'border-gray-700' : 'border-gray-200'
-                    }`}>
-                      {group.permissions.map((permission, index) => (
-                        <div 
-                          key={permission.id}
-                          className={`flex items-center justify-between p-3 ${
-                            index !== group.permissions.length - 1 
-                              ? isDark 
-                                ? 'border-b border-gray-700' 
-                                : 'border-b border-gray-200'
-                              : ''
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Settings size={24} className="text-green-500" />
+                {t('roles.permissionsList')}
+              </h2>
+
+              <div className="space-y-6">
+                {Object.entries(groupedPermissions).map(([module, permissions]) => (
+                  <div key={module}>
+                    <h3 className="font-semibold text-lg mb-3 text-blue-600 dark:text-blue-400">
+                      {t(`permissions.${module}`) || module}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Object.entries(permissions).map(([permissionKey, permission]) => (
+                        <div
+                          key={permissionKey}
+                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                            selectedPermissions.includes(permissionKey)
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                              : theme === 'dark'
+                              ? 'border-gray-600 hover:border-gray-500'
+                              : 'border-gray-200 hover:border-gray-300'
                           }`}
+                          onClick={() => togglePermission(permissionKey)}
                         >
-                          <div>
-                            <div className={`font-medium transition-colors duration-300 ${
-                              isDark ? 'text-gray-200' : 'text-gray-700'
+                          <div className="flex items-center gap-3">
+                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                              selectedPermissions.includes(permissionKey)
+                                ? 'border-blue-500 bg-blue-500'
+                                : 'border-gray-300'
                             }`}>
-                              {permission.name}
+                              {selectedPermissions.includes(permissionKey) && (
+                                <Check size={12} className="text-white" />
+                              )}
                             </div>
-                            <div className={`text-sm transition-colors duration-300 ${
-                              isDark ? 'text-gray-400' : 'text-gray-500'
-                            }`}>
-                              {permission.description}
+                            <div className="flex-1">
+                              <h4 className="font-medium">{permission.display_name}</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {permission.description}
+                              </p>
                             </div>
                           </div>
-                          
-                          <button
-                            onClick={() => togglePermission(permission.id)}
-                            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                              currentRole.permissions[permission.id] 
-                                ? 'bg-blue-600' 
-                                : isDark 
-                                  ? 'bg-gray-600' 
-                                  : 'bg-gray-200'
-                            }`}
-                          >
-                            <span
-                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                currentRole.permissions[permission.id] ? 'translate-x-5' : 'translate-x-0'
-                              }`}
-                            />
-                          </button>
                         </div>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
+
+              {/* Permission Actions */}
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={selectAllPermissions}
+                  className="px-4 py-2 text-sm bg-green-500 hover:bg-green-600 text-white rounded-lg"
+                >
+                  {t('roles.allPermissions')}
+                </button>
+                <button
+                  onClick={clearAllPermissions}
+                  className="px-4 py-2 text-sm bg-gray-500 hover:bg-gray-600 text-white rounded-lg"
+                >
+                  {t('roles.noPermissions')}
+                </button>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
+
+      {/* Create/Edit Role Modal */}
+      {(showCreateModal || showEditModal) && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`w-full max-w-md p-6 rounded-lg ${
+            theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <h2 className="text-xl font-semibold mb-4">
+              {showEditModal ? t('roles.editRole') : t('roles.createRole')}
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {t('roles.roleName')}
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className={`w-full p-2 border rounded-lg ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300'
+                  }`}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {t('roles.displayName')}
+                </label>
+                <input
+                  type="text"
+                  value={formData.display_name}
+                  onChange={(e) => setFormData({...formData, display_name: e.target.value})}
+                  className={`w-full p-2 border rounded-lg ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300'
+                  }`}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {t('roles.description')}
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  rows={3}
+                  className={`w-full p-2 border rounded-lg ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300'
+                  }`}
+                />
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="is_system_role"
+                  checked={formData.is_system_role}
+                  onChange={(e) => setFormData({...formData, is_system_role: e.target.checked})}
+                  className="rounded"
+                />
+                <label htmlFor="is_system_role" className="text-sm">
+                  {t('roles.isSystemRole')}
+                </label>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleSaveRole}
+                className="flex-1 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg"
+              >
+                <Save size={16} />
+                {t('common.save')}
+              </button>
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setShowEditModal(false);
+                  setEditingRole(null);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg"
+              >
+                <X size={16} />
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -959,46 +959,6 @@ const translations = {
     'advanced.features.automation.workflows.completion.description': 'Automatic order completion notification system',
     'advanced.features.automation.workflows.completion.trigger': 'On order status change',
 
-    // AI Features
-    'advanced.features.ai.title': 'AI & Machine Learning',
-    'advanced.features.ai.description': 'Intelligent automation and predictive analytics',
-    'advanced.features.ai.autoAssignment': 'Auto Assignment',
-    'advanced.features.ai.autoAssignment.description': 'Automatically assign orders to optimal workers',
-    'advanced.features.ai.predictiveAnalytics': 'Predictive Analytics',
-    'advanced.features.ai.predictiveAnalytics.description': 'Forecast demand and identify patterns',
-    'advanced.features.ai.qualityControl': 'Quality Control',
-    'advanced.features.ai.qualityControl.description': 'AI-powered quality assurance monitoring',
-    'advanced.features.ai.demandForecasting': 'Demand Forecasting',
-    'advanced.features.ai.demandForecasting.description': 'Predict future demand using historical data',
-
-    // IoT Features
-    'advanced.features.iot.title': 'IoT Device Management',
-    'advanced.features.iot.description': 'Monitor and control connected devices',
-    'advanced.features.iot.deviceName': 'Device Name',
-    'advanced.features.iot.type': 'Type',
-    'advanced.features.iot.status': 'Status',
-    'advanced.features.iot.lastSeen': 'Last Seen',
-    'advanced.features.iot.type.camera': 'Camera',
-    'advanced.features.iot.type.sensor': 'Sensor',
-    'advanced.features.iot.type.printer': 'Printer',
-    'advanced.features.iot.type.scanner': 'Scanner',
-    'advanced.features.iot.status.online': 'Online',
-    'advanced.features.iot.status.offline': 'Offline',
-    'advanced.features.iot.status.maintenance': 'Maintenance',
-
-    // System Health
-    'advanced.features.system.title': 'System Performance',
-    'advanced.features.system.description': 'Real-time system health monitoring',
-    'advanced.features.system.cpu': 'CPU Usage',
-    'advanced.features.system.memory': 'Memory Usage',
-    'advanced.features.system.storage': 'Storage Usage',
-    'advanced.features.system.network': 'Network Activity',
-    'advanced.features.system.uptime': 'System Uptime',
-
-    // Common Status
-    'common.enabled': 'Enabled',
-    'common.disabled': 'Disabled',
-
     // Language Settings
     'settings.general.language.ltr': 'Left to Right',
     'settings.general.language.rtl': 'Right to Left',
@@ -1832,46 +1792,6 @@ const translations = {
     'advanced.features.automation.workflows.completion.name': 'إكمال الطلب',
     'advanced.features.automation.workflows.completion.description': 'نظام إشعار إكمال الطلب التلقائي',
     'advanced.features.automation.workflows.completion.trigger': 'عند تغيير حالة الطلب',
-
-    // AI Features
-    'advanced.features.ai.title': 'الذكاء الاصطناعي والتعلم الآلي',
-    'advanced.features.ai.description': 'الأتمتة الذكية والتحليلات التنبؤية',
-    'advanced.features.ai.autoAssignment': 'التخصيص التلقائي',
-    'advanced.features.ai.autoAssignment.description': 'تخصيص الطلبات تلقائياً للعمال الأمثل',
-    'advanced.features.ai.predictiveAnalytics': 'التحليلات التنبؤية',
-    'advanced.features.ai.predictiveAnalytics.description': 'توقع الطلب وتحديد الأنماط',
-    'advanced.features.ai.qualityControl': 'مراقبة الجودة',
-    'advanced.features.ai.qualityControl.description': 'مراقبة ضمان الجودة بالذكاء الاصطناعي',
-    'advanced.features.ai.demandForecasting': 'توقع الطلب',
-    'advanced.features.ai.demandForecasting.description': 'توقع الطلب المستقبلي باستخدام البيانات التاريخية',
-
-    // IoT Features
-    'advanced.features.iot.title': 'إدارة أجهزة إنترنت الأشياء',
-    'advanced.features.iot.description': 'مراقبة والتحكم في الأجهزة المتصلة',
-    'advanced.features.iot.deviceName': 'اسم الجهاز',
-    'advanced.features.iot.type': 'النوع',
-    'advanced.features.iot.status': 'الحالة',
-    'advanced.features.iot.lastSeen': 'آخر ظهور',
-    'advanced.features.iot.type.camera': 'كاميرا',
-    'advanced.features.iot.type.sensor': 'مستشعر',
-    'advanced.features.iot.type.printer': 'طابعة',
-    'advanced.features.iot.type.scanner': 'ماسح ضوئي',
-    'advanced.features.iot.status.online': 'متصل',
-    'advanced.features.iot.status.offline': 'غير متصل',
-    'advanced.features.iot.status.maintenance': 'صيانة',
-
-    // System Health
-    'advanced.features.system.title': 'أداء النظام',
-    'advanced.features.system.description': 'مراقبة صحة النظام في الوقت الفعلي',
-    'advanced.features.system.cpu': 'استخدام المعالج',
-    'advanced.features.system.memory': 'استخدام الذاكرة',
-    'advanced.features.system.storage': 'استخدام التخزين',
-    'advanced.features.system.network': 'نشاط الشبكة',
-    'advanced.features.system.uptime': 'وقت تشغيل النظام',
-
-    // Common Status
-    'common.enabled': 'مفعل',
-    'common.disabled': 'معطل',
 
     // Language Settings
     'settings.general.language.ltr': 'من اليسار إلى اليمين',

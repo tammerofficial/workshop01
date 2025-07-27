@@ -155,8 +155,30 @@ const Workers = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
           <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('workers.title')}</h1>
-          <p className="text-gray-600 mt-2">{t('workers.subtitle')}</p>
+          <h1 
+            className="text-3xl font-bold text-gray-900"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 1.875)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--text-color)'
+            }}
+          >
+            Workers
+          </h1>
+          <p 
+            className="text-gray-600 mt-2"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 1.125)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--secondary-color)'
+            }}
+          >
+            Manage workshop staff and assignments
+          </p>
         </div>
                 <button 
           onClick={() => setShowCreateModal(true)}

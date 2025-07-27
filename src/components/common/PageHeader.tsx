@@ -16,8 +16,32 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, action }) => {
       transition={{ duration: 0.6 }}
     >
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
-        {subtitle && <p className="mt-2 text-lg text-gray-600">{subtitle}</p>}
+        <h1 
+          className="text-3xl font-bold text-gray-900"
+          style={{
+            fontFamily: 'var(--font-family)',
+            fontSize: 'calc(var(--font-size) * 1.875)',
+            fontWeight: 'var(--font-weight)',
+            lineHeight: 'var(--line-height)',
+            color: 'var(--text-color)'
+          }}
+        >
+          {title}
+        </h1>
+        {subtitle && (
+          <p 
+            className="mt-2 text-lg text-gray-600"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 1.125)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--secondary-color)'
+            }}
+          >
+            {subtitle}
+          </p>
+        )}
       </div>
       {action && (
         <motion.div 

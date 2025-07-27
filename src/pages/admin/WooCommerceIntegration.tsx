@@ -200,14 +200,27 @@ export default function WooCommerceIntegration() {
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              {t('woocommerce.status.connected')}
+            <h3 
+              className="text-lg font-semibold text-gray-900"
+              style={{
+                fontFamily: 'var(--font-family)',
+                fontSize: 'calc(var(--font-size) * 1.125)',
+                fontWeight: 'var(--font-weight)',
+                lineHeight: 'var(--line-height)'
+              }}
+            >
+              WooCommerce Integration
             </h3>
-            <p className="text-sm text-gray-600">
-              {status.lastSync 
-                ? `${t('woocommerce.lastSync')}: ${new Date(status.lastSync).toLocaleString()}` 
-                : t('woocommerce.never')
-              }
+            <p 
+              className="text-sm text-gray-600"
+              style={{
+                fontFamily: 'var(--font-family)',
+                fontSize: 'var(--font-size)',
+                fontWeight: 'var(--font-weight)',
+                lineHeight: 'var(--line-height)'
+              }}
+            >
+              Connect and sync with your WooCommerce store
             </p>
           </div>
           <div className={`px-3 py-1 rounded-full text-sm font-medium ${

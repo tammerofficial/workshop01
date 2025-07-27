@@ -168,8 +168,30 @@ const Invoices = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
     <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{t('invoices.title')}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">{t('invoices.subtitle')}</p>
+          <h1 
+            className="text-3xl font-bold text-gray-900 dark:text-gray-100"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 1.875)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--text-color)'
+            }}
+          >
+            Invoices
+          </h1>
+          <p 
+            className="text-gray-600 dark:text-gray-400 mt-2"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 1.125)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--secondary-color)'
+            }}
+          >
+            Manage billing and payments
+          </p>
         </div>
           <button 
           onClick={() => setShowCreateModal(true)}

@@ -114,8 +114,30 @@ const Dashboard = () => {
     <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('dashboard.header.title')}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">{t('dashboard.header.subtitle')}</p>
+          <h1 
+            className="text-3xl font-bold text-gray-900 dark:text-white"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 1.875)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--text-color)'
+            }}
+          >
+            Dashboard
+          </h1>
+          <p 
+            className="text-gray-600 dark:text-gray-400 mt-2"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 1.125)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--secondary-color)'
+            }}
+          >
+            Workshop management overview
+          </p>
         </div>
         
         <button

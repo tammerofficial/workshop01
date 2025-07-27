@@ -195,8 +195,30 @@ const Analytics: React.FC = () => {
               <BarChart3 className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">{t('analytics.header.title')}</h1>
-              <p className="text-gray-500">{t('analytics.header.subtitle')}</p>
+              <h1 
+                className="text-3xl font-bold text-gray-800"
+                style={{
+                  fontFamily: 'var(--font-family)',
+                  fontSize: 'calc(var(--font-size) * 1.875)',
+                  fontWeight: 'var(--font-weight)',
+                  lineHeight: 'var(--line-height)',
+                  color: 'var(--text-color)'
+                }}
+              >
+                Analytics
+              </h1>
+              <p 
+                className="text-gray-500"
+                style={{
+                  fontFamily: 'var(--font-family)',
+                  fontSize: 'calc(var(--font-size) * 1.125)',
+                  fontWeight: 'var(--font-weight)',
+                  lineHeight: 'var(--line-height)',
+                  color: 'var(--secondary-color)'
+                }}
+              >
+                Business insights and performance metrics
+              </p>
             </div>
           </div>
         </motion.div>

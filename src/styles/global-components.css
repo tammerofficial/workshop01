@@ -1,0 +1,448 @@
+/* Global Component Styling with CSS Variables */
+
+/* Apply typography to all headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family) !important;
+  font-weight: var(--font-weight) !important;
+  line-height: var(--line-height) !important;
+  color: var(--text-color) !important;
+}
+
+h1 {
+  font-size: calc(var(--font-size) * 1.875) !important;
+}
+
+h2 {
+  font-size: calc(var(--font-size) * 1.5) !important;
+}
+
+h3 {
+  font-size: calc(var(--font-size) * 1.25) !important;
+}
+
+h4 {
+  font-size: calc(var(--font-size) * 1.125) !important;
+}
+
+h5, h6 {
+  font-size: var(--font-size) !important;
+}
+
+/* Apply typography to paragraphs and text */
+p, span, div, td, th, label, input, textarea, select, li, a {
+  font-family: var(--font-family) !important;
+  line-height: var(--line-height) !important;
+}
+
+/* Input and form elements */
+input, textarea, select {
+  font-size: var(--font-size) !important;
+  font-weight: var(--font-weight) !important;
+}
+
+/* Table headers */
+th {
+  font-weight: calc(var(--font-weight) + 100) !important;
+}
+
+/* Secondary text colors */
+.text-gray-600, .text-gray-500, .text-gray-400 {
+  color: var(--secondary-color) !important;
+}
+
+/* Cards and container elements */
+.bg-white, .bg-gray-50, .bg-blue-50, .bg-green-50, .bg-red-50, .bg-yellow-50,
+.dark\\:bg-gray-800, .dark\\:bg-gray-700, .dark\\:bg-gray-900 {
+  border-radius: var(--border-radius) !important;
+}
+
+/* Modal and dialog headers */
+.modal h1, .modal h2, .modal h3,
+.dialog h1, .dialog h2, .dialog h3 {
+  font-family: var(--font-family) !important;
+  font-weight: var(--font-weight) !important;
+  color: var(--text-color) !important;
+}
+
+/* Badge and status elements */
+.badge, .status, .chip {
+  font-family: var(--font-family) !important;
+  font-size: calc(var(--font-size) * 0.75) !important;
+  border-radius: calc(var(--border-radius) * 2) !important;
+}
+
+/* Apply to all buttons across the application */
+button {
+  border-radius: var(--border-radius) !important;
+  padding: calc(var(--padding) * 0.5) var(--padding) !important;
+  transition: all var(--transition-duration) var(--transition-easing) !important;
+  font-family: var(--font-family) !important;
+}
+
+button.btn-primary,
+button.active,
+button[aria-selected="true"],
+button[data-active="true"] {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+button.btn-secondary {
+  background-color: var(--secondary-color) !important;
+  border-color: var(--secondary-color) !important;
+  color: white !important;
+}
+
+button:hover:not(.active):not([aria-selected="true"]):not([data-active="true"]) {
+  background-color: color-mix(in srgb, var(--primary-color) 10%, transparent) !important;
+  color: var(--primary-color) !important;
+}
+
+/* Apply to all input elements */
+input, select, textarea {
+  border-color: var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+  padding: calc(var(--padding) * 0.75) !important;
+  font-family: var(--font-family) !important;
+  font-size: var(--font-size) !important;
+  background-color: var(--background-color) !important;
+  color: var(--text-color) !important;
+  transition: all var(--transition-duration) var(--transition-easing) !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary-color) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent) !important;
+}
+
+/* Apply to all card elements */
+.card, [class*="card"] {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+  box-shadow: var(--shadow) !important;
+  padding: var(--padding) !important;
+  margin: var(--margin) !important;
+}
+
+/* Apply to navigation items */
+.nav-item, .nav-link, [class*="nav-"] {
+  border-radius: var(--border-radius) !important;
+  padding: calc(var(--padding) * 0.75) var(--padding) !important;
+  transition: all var(--transition-duration) var(--transition-easing) !important;
+  color: var(--secondary-color) !important;
+}
+
+.nav-item.active, .nav-link.active, [class*="nav-"].active {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+.nav-item:hover, .nav-link:hover, [class*="nav-"]:hover {
+  background-color: color-mix(in srgb, var(--primary-color) 10%, transparent) !important;
+}
+
+/* Sidebar specific styling */
+.sidebar {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.sidebar-item {
+  border-radius: var(--border-radius) !important;
+  padding: var(--padding) !important;
+  margin: var(--margin) !important;
+  transition: all var(--transition-duration) var(--transition-easing) !important;
+  color: var(--secondary-color) !important;
+}
+
+.sidebar-item.active {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.sidebar-item:hover:not(.active) {
+  background-color: color-mix(in srgb, var(--primary-color) 10%, transparent) !important;
+}
+
+/* Header styling */
+.header {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+/* Table styling */
+table, .table {
+  border-radius: var(--border-radius) !important;
+  overflow: hidden;
+  box-shadow: var(--shadow) !important;
+}
+
+table th, .table th {
+  background-color: var(--surface-color) !important;
+  color: var(--secondary-color) !important;
+  padding: var(--padding) !important;
+  border-color: var(--border-color) !important;
+}
+
+table td, .table td {
+  padding: var(--padding) !important;
+  border-color: var(--border-color) !important;
+  background-color: var(--background-color) !important;
+}
+
+table tr:hover, .table tr:hover {
+  background-color: color-mix(in srgb, var(--primary-color) 5%, transparent) !important;
+}
+
+/* Modal styling */
+.modal, [role="dialog"] {
+  border-radius: var(--border-radius) !important;
+  background-color: var(--background-color) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, calc(var(--shadow-opacity) * 3)) !important;
+}
+
+/* Badge styling */
+.badge {
+  border-radius: calc(var(--border-radius) * 2) !important;
+  padding: calc(var(--padding) * 0.25) calc(var(--padding) * 0.5) !important;
+  font-size: calc(var(--font-size) * 0.75) !important;
+}
+
+.badge-primary {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+.badge-secondary {
+  background-color: var(--secondary-color) !important;
+  color: white !important;
+}
+
+/* Alert styling */
+.alert {
+  border-radius: var(--border-radius) !important;
+  padding: var(--padding) !important;
+  margin: var(--margin) !important;
+}
+
+/* Progress bar styling */
+.progress {
+  background-color: var(--border-color) !important;
+  border-radius: var(--border-radius) !important;
+  height: calc(var(--padding) * 0.5) !important;
+}
+
+.progress-bar {
+  background-color: var(--primary-color) !important;
+  border-radius: var(--border-radius) !important;
+  transition: width var(--transition-duration) var(--transition-easing) !important;
+}
+
+/* Override Tailwind classes to use CSS variables */
+.bg-white { background-color: var(--background-color) !important; }
+.bg-gray-50 { background-color: var(--surface-color) !important; }
+.bg-gray-100 { background-color: var(--surface-color) !important; }
+.bg-gray-800 { background-color: var(--surface-color) !important; }
+.bg-gray-900 { background-color: var(--background-color) !important; }
+
+.text-gray-600 { color: var(--secondary-color) !important; }
+.text-gray-700 { color: var(--secondary-color) !important; }
+.text-gray-300 { color: var(--secondary-color) !important; }
+.text-gray-400 { color: var(--secondary-color) !important; }
+
+.border-gray-200 { border-color: var(--border-color) !important; }
+.border-gray-300 { border-color: var(--border-color) !important; }
+.border-gray-600 { border-color: var(--border-color) !important; }
+.border-gray-700 { border-color: var(--border-color) !important; }
+
+/* Override ALL blue color classes to use theme colors */
+.bg-blue-400, .bg-blue-500, .bg-blue-600, .bg-blue-700 { 
+  background-color: var(--primary-color) !important; 
+}
+
+.hover\:bg-blue-500:hover, 
+.hover\:bg-blue-600:hover, 
+.hover\:bg-blue-700:hover { 
+  background-color: color-mix(in srgb, var(--primary-color) 90%, black) !important; 
+}
+
+.text-blue-400, .text-blue-500, .text-blue-600, .text-blue-700 { 
+  color: var(--primary-color) !important; 
+}
+
+.border-blue-400, .border-blue-500, .border-blue-600, .border-blue-700 { 
+  border-color: var(--primary-color) !important; 
+}
+
+/* Additional focus and ring colors */
+.focus\:ring-blue-300:focus,
+.focus\:ring-blue-500:focus {
+  --tw-ring-color: color-mix(in srgb, var(--primary-color) 30%, transparent) !important;
+}
+
+.peer-focus\:ring-blue-300:focus,
+.peer-checked\:bg-blue-600:checked {
+  background-color: var(--primary-color) !important;
+}
+
+/* Specific overrides for common patterns */
+.peer-checked\:bg-blue-600 {
+  background-color: var(--primary-color) !important;
+}
+
+.hover\:bg-gray-100:hover { background-color: color-mix(in srgb, var(--primary-color) 10%, transparent) !important; }
+.hover\:bg-gray-700:hover { background-color: color-mix(in srgb, var(--primary-color) 10%, transparent) !important; }
+
+/* Apply rounded corners globally */
+.rounded { border-radius: var(--border-radius) !important; }
+.rounded-lg { border-radius: var(--border-radius) !important; }
+.rounded-xl { border-radius: calc(var(--border-radius) * 1.5) !important; }
+.rounded-full { border-radius: 9999px !important; }
+
+/* Apply padding and margins globally */
+.p-3 { padding: var(--padding) !important; }
+.p-4 { padding: calc(var(--padding) * 1.25) !important; }
+.px-3 { padding-left: var(--padding) !important; padding-right: var(--padding) !important; }
+.py-3 { padding-top: var(--padding) !important; padding-bottom: var(--padding) !important; }
+
+.m-3 { margin: var(--margin) !important; }
+.m-4 { margin: calc(var(--margin) * 1.25) !important; }
+.mx-3 { margin-left: var(--margin) !important; margin-right: var(--margin) !important; }
+.my-3 { margin-top: var(--margin) !important; margin-bottom: var(--margin) !important; }
+
+/* Apply gap spacing */
+.gap-4 { gap: var(--gap) !important; }
+.gap-6 { gap: calc(var(--gap) * 1.5) !important; }
+.space-y-4 > * + * { margin-top: var(--gap) !important; }
+.space-y-6 > * + * { margin-top: calc(var(--gap) * 1.5) !important; }
+
+/* Badge styling with theme colors */
+.bg-blue-500, .badge-new {
+  background-color: var(--accent-color) !important;
+}
+
+.bg-red-500, .badge-hot {
+  background-color: var(--primary-color) !important;
+}
+
+.bg-green-500, .badge-success {
+  background-color: #22c55e !important;
+}
+
+/* Enhanced sidebar active states */
+.sidebar-item.active .badge,
+.nav-item.active .badge {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+/* Improve tooltip theming */
+.tooltip {
+  background-color: var(--surface-color) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+/* Tab and button active states - comprehensive coverage */
+.active,
+[aria-current="page"],
+[data-active="true"],
+[aria-selected="true"],
+.tab-active,
+.nav-active {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* Enhanced switch/toggle styling */
+.toggle-enabled,
+[data-enabled="true"] {
+  background-color: var(--primary-color) !important;
+}
+
+.toggle-disabled,
+[data-enabled="false"] {
+  background-color: var(--border-color) !important;
+}
+
+/* Progress bars and status indicators */
+.progress-primary,
+.status-active,
+.status-in-progress {
+  background-color: var(--primary-color) !important;
+}
+
+.progress-secondary,
+.status-pending {
+  background-color: var(--secondary-color) !important;
+}
+
+/* Comprehensive button state overrides */
+button[type="submit"],
+.submit-button,
+.primary-button {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+button[type="submit"]:hover,
+.submit-button:hover,
+.primary-button:hover {
+  background-color: color-mix(in srgb, var(--primary-color) 90%, black) !important;
+}
+
+/* Sidebar specific scrollbar styling */
+.sidebar nav {
+  /* For Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--secondary-color) 50%, transparent) transparent;
+}
+
+.sidebar nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar nav::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--secondary-color) 50%, transparent);
+  border-radius: 3px;
+  transition: background-color var(--transition-duration) var(--transition-easing);
+}
+
+.sidebar nav::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--primary-color) 70%, transparent);
+}
+
+/* Smooth scrolling for sidebar */
+.sidebar nav {
+  scroll-behavior: smooth;
+  /* Improve scrolling performance */
+  overscroll-behavior: contain;
+}
+
+/* Hide scrollbar for collapsed sidebar */
+.sidebar.w-20 nav {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar.w-20 nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* Sidebar content spacing for better scrolling */
+.sidebar nav > div:last-child {
+  margin-bottom: 1rem;
+}

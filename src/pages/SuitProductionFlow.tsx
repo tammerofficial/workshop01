@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Factory, 
@@ -12,9 +12,14 @@ import {
   Search,
   Eye,
   Edit,
-  Trash2
+  Trash2,
+  Package,
+  TrendingUp
 } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { LanguageContext } from '../contexts/LanguageContext';
 import { orderService, taskService, workerService } from '../api/laravel';
+import { useNavigate } from 'react-router-dom';
 
 interface Order {
   id: number;
@@ -54,6 +59,9 @@ interface Worker {
 }
 
 const SuitProductionFlow: React.FC = () => {
+  const { isDark } = useTheme();
+  const { t, isRTL } = useContext(LanguageContext)!;
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
@@ -62,12 +70,12 @@ const SuitProductionFlow: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const stages = [
-    { id: 'pending', name: 'قيد الانتظار', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-    { id: 'design', name: 'التصميم', color: 'bg-blue-100 text-blue-800', icon: Edit },
-    { id: 'cutting', name: 'القطع', color: 'bg-purple-100 text-purple-800', icon: Factory },
-    { id: 'sewing', name: 'الخياطة', color: 'bg-green-100 text-green-800', icon: Users },
-    { id: 'fitting', name: 'التركيب', color: 'bg-orange-100 text-orange-800', icon: Eye },
-    { id: 'completed', name: 'مكتمل', color: 'bg-green-100 text-green-800', icon: CheckCircle }
+    { id: 'pending', name: t('production.stages.pending'), color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+    { id: 'design', name: t('production.stages.design'), color: 'bg-blue-100 text-blue-800', icon: Edit },
+    { id: 'cutting', name: t('production.stages.cutting'), color: 'bg-purple-100 text-purple-800', icon: Factory },
+    { id: 'sewing', name: t('production.stages.sewing'), color: 'bg-green-100 text-green-800', icon: Users },
+    { id: 'fitting', name: t('production.stages.fitting'), color: 'bg-orange-100 text-orange-800', icon: Eye },
+    { id: 'completed', name: t('production.stages.completed'), color: 'bg-green-100 text-green-800', icon: CheckCircle }
   ];
 
   useEffect(() => {
@@ -100,12 +108,10 @@ const SuitProductionFlow: React.FC = () => {
         order.client?.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
     return orders.filter(order => 
-      order.status === stage && (
-        order.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.client?.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      order.status === stage &&
+      (order.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       order.client?.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   };
 
@@ -113,290 +119,316 @@ const SuitProductionFlow: React.FC = () => {
     if (stage === 'all') {
       return tasks.filter(task => 
         task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.worker?.name.toLowerCase().includes(searchTerm.toLowerCase())
+        task.order?.title.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
     return tasks.filter(task => 
-      task.status === stage && (
-        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.worker?.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      task.status === stage &&
+      (task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       task.order?.title.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   };
 
   const getStageStats = (stage: string) => {
     const stageOrders = getOrdersByStage(stage);
     const stageTasks = getTasksByStage(stage);
+    const activeWorkers = workers.filter(w => w.is_active).length;
     
     return {
       orders: stageOrders.length,
       tasks: stageTasks.length,
-      workers: workers.filter(w => w.role.toLowerCase().includes(stage)).length
+      workers: activeWorkers
     };
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high':
-        return 'bg-red-100 text-red-800';
-      case 'medium':
-        return 'bg-orange-100 text-orange-800';
-      case 'low':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const getPriorityText = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'عالي';
+      case 'medium': return 'متوسط';
+      case 'low': return 'منخفض';
+      default: return 'متوسط';
+    }
+  };
+
+  const getOrderDisplayTitle = (order: Order) => {
+    if (order.title?.startsWith('WooCommerce Order')) {
+      const match = order.title.match(/#(\d+)/);
+      return match ? `#${match[1]}` : order.title;
+    }
+    return order.title.length > 15 ? order.title.substring(0, 15) + '...' : order.title;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل بيانات الإنتاج...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Factory className="h-6 w-6 text-blue-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">سير الإنتاج</h1>
-          </div>
-          <p className="text-gray-600">إدارة مراحل إنتاج البدلات والملابس</p>
-        </motion.div>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
+        <div>
+          <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {t('production.title')}
+          </h1>
+          <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            {t('production.subtitle')}
+          </p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <motion.button 
+            onClick={() => navigate('/station-display')}
+            className="flex items-center space-x-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+          >
+            <Users size={16} />
+            <span>{t('stations.title')}</span>
+          </motion.button>
+          <motion.button 
+            onClick={() => navigate('/production-tracking')}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            <TrendingUp size={16} />
+            <span>{t('production.title')}</span>
+          </motion.button>
+          <motion.button 
+            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2"
+          >
+            <Plus size={20} />
+            <span>{t('production.addNewOrder')}</span>
+          </motion.button>
+        </div>
+      </motion.div>
 
-        {/* Search and Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
-        >
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="البحث في الطلبات والمهام..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+      {/* Search and Filters */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className={`p-6 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border`}
+      >
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input 
+                type="text" 
+                placeholder={t('production.searchPlaceholder')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-900 border-gray-300'}`}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setSelectedStage('all')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                selectedStage === 'all' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+              }`}
+            >
+              {t('production.stages.all')}
+            </button>
+            {stages.map((stage) => (
+              <button
+                key={stage.id}
+                onClick={() => setSelectedStage(stage.id)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  selectedStage === stage.id 
+                    ? 'bg-blue-500 text-white' 
+                    : `${stage.color} hover:bg-opacity-80`
+                }`}
+              >
+                {stage.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Stage Statistics */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4"
+      >
+        <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border`}>
+          <h3 className="font-semibold mb-2">{t('production.stages.all')}</h3>
+          <div className="text-2xl font-bold text-blue-600 mb-1">{orders.length}</div>
+          <div className="text-sm text-gray-500">
+            {orders.length} {t('production.stats.orders')} • {tasks.length} {t('production.stats.tasks')} • {workers.length} {t('production.stats.workers')}
+          </div>
+        </div>
+        {stages.map((stage) => {
+          const stats = getStageStats(stage.id);
+          return (
+            <div 
+              key={stage.id} 
+              className={`p-4 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border`}
+            >
+              <h3 className="font-semibold mb-2">{stage.name}</h3>
+              <div className="text-2xl font-bold text-blue-600 mb-1">{stats.orders}</div>
+              <div className="text-sm text-gray-500">
+                {stats.orders} {t('production.stats.orders')} • {stats.tasks} {t('production.stats.tasks')} • {stats.workers} {t('production.stats.workers')}
               </div>
             </div>
-            
-            <div className="flex gap-2">
-              <select
-                value={selectedStage}
-                onChange={(e) => setSelectedStage(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="all">جميع المراحل</option>
-                {stages.map(stage => (
-                  <option key={stage.id} value={stage.id}>{stage.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </motion.div>
+          );
+        })}
+      </motion.div>
 
-        {/* Production Stages */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {stages.map((stage, index) => {
-            const stats = getStageStats(stage.id);
-            const stageOrders = getOrdersByStage(stage.id);
-            const stageTasks = getTasksByStage(stage.id);
-            
-            return (
-              <motion.div
-                key={stage.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + index * 0.1 }}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-              >
-                {/* Stage Header */}
-                <div className="p-6 border-b border-gray-100">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${stage.color.replace('text-', 'bg-').replace('800', '100')}`}>
-                        <stage.icon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{stage.name}</h3>
-                        <p className="text-sm text-gray-600">
-                          {stats.orders} طلب • {stats.tasks} مهمة • {stats.workers} عامل
-                        </p>
-                      </div>
-                    </div>
-                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${stage.color}`}>
-                      {stats.orders + stats.tasks}
-                    </div>
-                  </div>
+      {/* Orders by Stage */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+      >
+        {stages.map((stage) => {
+          const stageOrders = getOrdersByStage(stage.id);
+
+          return (
+            <div 
+              key={stage.id} 
+              className={`p-6 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border`}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">{stage.name}</h3>
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(stage.id)}`}>
+                  {stageOrders.length}
+                </span>
+              </div>
+
+              {stageOrders.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="mx-auto text-gray-400 mb-2" size={32} />
+                  <p className="text-sm text-gray-500">{t('production.empty.noItems')}</p>
                 </div>
-
-                {/* Stage Content */}
-                <div className="p-6">
-                  <div className="space-y-4">
-                    {/* Orders in this stage */}
-                    {stageOrders.slice(0, 3).map(order => (
-                      <div
-                        key={`order-${order.id}`}
-                        className="p-4 bg-gray-50 rounded-lg border border-gray-200"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-medium text-gray-900">📦 {order.title}</h4>
-                          <span className={`px-2 py-1 rounded text-xs ${getPriorityColor(order.priority)}`}>
-                            {order.priority === 'high' ? 'عالي' : 
-                             order.priority === 'medium' ? 'متوسط' : 'منخفض'}
-                          </span>
+              ) : (
+                <div className="space-y-3">
+                  {stageOrders.slice(0, 3).map((order) => (
+                    <motion.div 
+                      key={order.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-50'} border`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <h4 className="font-semibold">📦 {getOrderDisplayTitle(order)}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(order.priority)}`}>
+                              {getPriorityText(order.priority)}
+                            </span>
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                              {t(`production.stages.${order.status}`)}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <p>👤 {order.client?.name}</p>
-                          <p>👷 {order.worker?.name || 'غير محدد'}</p>
-                          <p>📅 {new Date(order.due_date).toLocaleDateString('ar-SA')}</p>
-                        </div>
-                        <div className="flex items-center gap-2 mt-3">
-                          <button className="p-1 hover:bg-gray-200 rounded transition-colors">
-                            <Eye className="h-4 w-4 text-gray-600" />
+                        <div className="flex items-center space-x-1">
+                          <button 
+                            className="p-1 text-blue-600 hover:text-blue-800"
+                            title={t('production.updateStatus')}
+                          >
+                            <Edit size={16} />
                           </button>
-                          <button className="p-1 hover:bg-gray-200 rounded transition-colors">
-                            <Edit className="h-4 w-4 text-gray-600" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Tasks in this stage */}
-                    {stageTasks.slice(0, 3).map(task => (
-                      <div
-                        key={`task-${task.id}`}
-                        className="p-4 bg-purple-50 rounded-lg border border-purple-200"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-medium text-purple-900">📋 {task.title}</h4>
-                          <span className={`px-2 py-1 rounded text-xs ${getPriorityColor(task.priority)}`}>
-                            {task.priority === 'high' ? 'عالي' : 
-                             task.priority === 'medium' ? 'متوسط' : 'منخفض'}
-                          </span>
-                        </div>
-                        <div className="text-sm text-purple-700 space-y-1">
-                          <p>👷 {task.worker?.name || 'غير محدد'}</p>
-                          <p>📅 {new Date(task.due_date).toLocaleDateString('ar-SA')}</p>
-                        </div>
-                        <div className="flex items-center gap-2 mt-3">
-                          <button className="p-1 hover:bg-purple-200 rounded transition-colors">
-                            <Eye className="h-4 w-4 text-purple-600" />
-                          </button>
-                          <button className="p-1 hover:bg-purple-200 rounded transition-colors">
-                            <Edit className="h-4 w-4 text-purple-600" />
+                          <button 
+                            className="p-1 text-red-600 hover:text-red-800"
+                            title={t('common.delete')}
+                          >
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </div>
-                    ))}
 
-                    {/* Show more indicator */}
-                    {(stageOrders.length > 3 || stageTasks.length > 3) && (
-                      <div className="text-center py-2">
-                        <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                          عرض المزيد ({stageOrders.length + stageTasks.length - 6})
-                        </button>
+                      <div className="space-y-2 text-sm text-gray-600">
+                        {order.client && (
+                          <div className="flex items-center gap-2">
+                            <Users size={14} />
+                            <span>{order.client.name}</span>
+                          </div>
+                        )}
+                        {order.worker && (
+                          <div className="flex items-center gap-2">
+                            <Users size={14} />
+                            <span>{order.worker.name}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Clock size={14} />
+                          <span>{new Date(order.due_date).toLocaleDateString('ar-SA')}</span>
+                        </div>
                       </div>
-                    )}
-
-                    {/* Empty state */}
-                    {stageOrders.length === 0 && stageTasks.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <stage.icon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                        <p>لا توجد عناصر في هذه المرحلة</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {/* Production Flow Diagram */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-        >
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">سير الإنتاج</h3>
-          <div className="flex items-center justify-center overflow-x-auto">
-            <div className="flex items-center space-x-4 min-w-max">
-              {stages.map((stage, index) => (
-                <React.Fragment key={stage.id}>
-                  <div className="text-center">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${stage.color.replace('text-', 'bg-').replace('800', '100')} mb-2`}>
-                      <stage.icon className="h-8 w-8" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-900">{stage.name}</p>
-                    <p className="text-xs text-gray-600">{getStageStats(stage.id).orders + getStageStats(stage.id).tasks}</p>
-                  </div>
-                  {index < stages.length - 1 && (
-                    <ArrowRight className="h-6 w-6 text-gray-400" />
+                    </motion.div>
+                  ))}
+                  
+                  {stageOrders.length > 3 && (
+                    <button className="w-full text-center py-2 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                      {t('production.showMore')} ({stageOrders.length - 3})
+                    </button>
                   )}
-                </React.Fragment>
-              ))}
+                </div>
+              )}
             </div>
-          </div>
-        </motion.div>
+          );
+        })}
+      </motion.div>
 
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">إجراءات سريعة</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">
-              <Plus className="h-5 w-5" />
-              إضافة طلب جديد
-            </button>
-            <button className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors">
-              <Plus className="h-5 w-5" />
-              إضافة مهمة جديدة
-            </button>
-            <button className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors">
-              <Users className="h-5 w-5" />
-              إدارة العمال
-            </button>
-          </div>
-        </motion.div>
-      </div>
+      {/* Quick Actions */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className={`p-6 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border`}
+      >
+        <h3 className="text-lg font-semibold mb-4">{t('production.quickActions')}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <motion.button 
+            className="flex items-center justify-center space-x-2 p-4 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+          >
+            <Plus size={20} />
+            <span>{t('production.addNewOrder')}</span>
+          </motion.button>
+          <motion.button 
+            className="flex items-center justify-center space-x-2 p-4 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors"
+          >
+            <Plus size={20} />
+            <span>{t('production.addNewTask')}</span>
+          </motion.button>
+          <motion.button 
+            className="flex items-center justify-center space-x-2 p-4 rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-colors"
+          >
+            <Users size={20} />
+            <span>{t('production.manageWorkers')}</span>
+          </motion.button>
+        </div>
+      </motion.div>
     </div>
   );
 };

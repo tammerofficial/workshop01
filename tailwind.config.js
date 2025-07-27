@@ -6,17 +6,17 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#060606',
-          50: '#f7f7f7',
-          100: '#e3e3e3',
-          200: '#c8c8c8',
-          300: '#a4a4a4',
-          400: '#818181',
-          500: '#666666',
-          600: '#515151',
-          700: '#434343',
-          800: '#383838',
-          900: '#060606',
+          DEFAULT: 'var(--primary-color, #3b82f6)',
+          50: 'color-mix(in srgb, var(--primary-color, #3b82f6) 5%, white)',
+          100: 'color-mix(in srgb, var(--primary-color, #3b82f6) 10%, white)',
+          200: 'color-mix(in srgb, var(--primary-color, #3b82f6) 20%, white)',
+          300: 'color-mix(in srgb, var(--primary-color, #3b82f6) 30%, white)',
+          400: 'color-mix(in srgb, var(--primary-color, #3b82f6) 40%, white)',
+          500: 'var(--primary-color, #3b82f6)',
+          600: 'color-mix(in srgb, var(--primary-color, #3b82f6) 70%, black)',
+          700: 'color-mix(in srgb, var(--primary-color, #3b82f6) 60%, black)',
+          800: 'color-mix(in srgb, var(--primary-color, #3b82f6) 40%, black)',
+          900: 'color-mix(in srgb, var(--primary-color, #3b82f6) 30%, black)',
         },
         secondary: {
           DEFAULT: '#FFFFFF',

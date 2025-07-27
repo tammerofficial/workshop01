@@ -11,9 +11,12 @@ use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\MeasurementController;
 use App\Http\Controllers\Api\ProductionController;
+use App\Http\Controllers\Api\SmartProductionController;
 use App\Http\Controllers\DashboardController;
 use App\Services\WooCommerceService;
 use App\Http\Controllers\Api\WooCommerceController;
+use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\PermissionController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -59,7 +62,7 @@ Route::apiResource('invoices', InvoiceController::class);
 Route::patch('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markAsPaid']);
 Route::patch('invoices/{invoice}/status', [InvoiceController::class, 'updateStatus']);
 
-// Production Routes
+// Production Routes (Original)
 Route::prefix('production')->group(function () {
     Route::post('orders/{order}/start', [ProductionController::class, 'startProduction']);
     Route::post('stages/{trackingId}/start', [ProductionController::class, 'startStage']);
@@ -71,8 +74,62 @@ Route::prefix('production')->group(function () {
     Route::get('dashboard', [ProductionController::class, 'getDashboard']);
 });
 
+// Smart Production Routes (New Enhanced System)
+Route::prefix('smart-production')->group(function () {
+    // الإنتاج الذكي
+    Route::post('orders/{order}/start', [SmartProductionController::class, 'startProduction']);
+    Route::post('orders/{order}/next-stage', [SmartProductionController::class, 'moveToNextStage']);
+    Route::post('orders/{order}/assign-worker', [SmartProductionController::class, 'assignWorkerByStage']);
+    Route::post('orders/{order}/quality-check', [SmartProductionController::class, 'updateQualityStatus']);
+    
+    // إحصائيات وتقارير
+    Route::get('stats', [SmartProductionController::class, 'getStats']);
+    Route::get('worker-performance', [SmartProductionController::class, 'getWorkerPerformance']);
+    Route::get('workers/specialty/{specialty}', [SmartProductionController::class, 'getWorkersBySpecialty']);
+    
+    // طلبات ومنتجات
+    Route::get('orders/stage/{stage}', [SmartProductionController::class, 'getOrdersByStage']);
+    Route::get('products', [SmartProductionController::class, 'getProductsWithHours']);
+    Route::get('collections', [SmartProductionController::class, 'getCollections']);
+});
+
 // WooCommerce Import Routes
 Route::prefix('woocommerce')->group(function () {
+    // GET routes for documentation/info purposes
+    Route::get('import/customers', function () {
+        return response()->json([
+            'message' => 'This endpoint requires POST method',
+            'method' => 'POST',
+            'endpoint' => '/api/woocommerce/import/customers'
+        ], 405);
+    });
+
+    Route::get('import/orders', function () {
+        return response()->json([
+            'message' => 'This endpoint requires POST method',
+            'method' => 'POST',
+            'endpoint' => '/api/woocommerce/import/orders'
+        ], 405);
+    });
+
+    Route::get('import/products', function () {
+        return response()->json([
+            'message' => 'This endpoint requires POST method',
+            'method' => 'POST',
+            'endpoint' => '/api/woocommerce/import/products'
+        ], 405);
+    });
+
+    Route::get('import/all', function () {
+        return response()->json([
+            'message' => 'This endpoint requires POST method',
+            'method' => 'POST',
+            'endpoint' => '/api/woocommerce/import/all',
+            'description' => 'Imports all data from WooCommerce (customers, products, orders)'
+        ], 405);
+    });
+
+    // POST routes for actual import functionality
     Route::post('import/customers', function () {
         $service = new WooCommerceService();
         $imported = $service->importCustomers();
@@ -149,4 +206,20 @@ Route::prefix('woocommerce')->group(function () {
     Route::post('sync-orders', [WooCommerceController::class, 'syncOrders']);
     Route::post('sync-customers', [WooCommerceController::class, 'syncCustomers']);
     Route::post('sync-all', [WooCommerceController::class, 'syncAll']);
+});
+
+// Roles & Permissions Routes
+Route::prefix('roles')->group(function () {
+    Route::get('/', [RoleController::class, 'index']);
+    Route::post('/', [RoleController::class, 'store']);
+    Route::get('/{role}', [RoleController::class, 'show']);
+    Route::put('/{role}', [RoleController::class, 'update']);
+    Route::delete('/{role}', [RoleController::class, 'destroy']);
+    Route::get('/permissions/available', [RoleController::class, 'getPermissions']);
+    Route::get('/defaults', [RoleController::class, 'getDefaultRoles']);
+});
+
+Route::prefix('permissions')->group(function () {
+    Route::get('/', [PermissionController::class, 'index']);
+    Route::get('/grouped', [PermissionController::class, 'getGroupedPermissions']);
 }); 

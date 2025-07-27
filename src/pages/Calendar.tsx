@@ -56,10 +56,16 @@ const Calendar: React.FC = () => {
         orderService.getAll()
       ]);
       
-      setTasks(tasksResponse.data);
-      setOrders(ordersResponse.data);
+      console.log('Calendar Tasks:', tasksResponse.data);
+      console.log('Calendar Orders:', ordersResponse.data);
+      
+      setTasks(tasksResponse.data || []);
+      setOrders(ordersResponse.data || []);
     } catch (error) {
       console.error('Error loading calendar data:', error);
+      // Set empty arrays on error to prevent crashes
+      setTasks([]);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -68,13 +74,17 @@ const Calendar: React.FC = () => {
   const getEventsForDate = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
     
-    const dayTasks = tasks.filter(task => 
-      task.due_date === dateStr && (filter === 'all' || filter === 'tasks')
-    );
+    const dayTasks = tasks.filter(task => {
+      if (!task.due_date) return false;
+      const taskDate = new Date(task.due_date).toISOString().split('T')[0];
+      return taskDate === dateStr && (filter === 'all' || filter === 'tasks');
+    });
     
-    const dayOrders = orders.filter(order => 
-      order.due_date === dateStr && (filter === 'all' || filter === 'orders')
-    );
+    const dayOrders = orders.filter(order => {
+      if (!order.due_date) return false;
+      const orderDate = new Date(order.due_date).toISOString().split('T')[0];
+      return orderDate === dateStr && (filter === 'all' || filter === 'orders');
+    });
 
     return { tasks: dayTasks, orders: dayOrders };
   };
@@ -105,6 +115,14 @@ const Calendar: React.FC = () => {
     }
   };
 
+  const getOrderDisplayTitle = (order: Order) => {
+    if (order.title?.startsWith('WooCommerce Order')) {
+      const match = order.title.match(/#(\d+)/);
+      return match ? `#${match[1]}` : order.title;
+    }
+    return order.title.length > 15 ? order.title.substring(0, 15) + '...' : order.title;
+  };
+
   const renderMonthView = () => {
     const currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
     const lastDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
@@ -131,19 +149,39 @@ const Calendar: React.FC = () => {
             {events.tasks.map(task => (
               <div
                 key={`task-${task.id}`}
-                className="text-xs p-1 rounded bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 truncate"
-                title={task.title}
+                className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity ${
+                  task.status === 'completed' 
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                    : task.status === 'in_progress'
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                    : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                }`}
+                title={`${task.title} - ${task.status} - ${task.worker?.name || 'Unassigned'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(`/production-tracking?task=${task.id}`, '_blank');
+                }}
               >
-                {t('calendar.taskPrefix')} {task.title}
+                📋 {task.title.substring(0, 15)}...
               </div>
             ))}
             {events.orders.map(order => (
               <div
                 key={`order-${order.id}`}
-                className="text-xs p-1 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 truncate"
-                title={order.title}
+                className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity ${
+                  order.status === 'completed' 
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                    : order.status === 'in_progress'
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                    : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                }`}
+                title={`${order.title} - ${order.status} - ${order.client?.name || 'No Client'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(`/orders?order=${order.id}`, '_blank');
+                }}
               >
-                {t('calendar.orderPrefix')} {order.title}
+                📦 {getOrderDisplayTitle(order)}
               </div>
             ))}
           </div>
@@ -203,10 +241,10 @@ const Calendar: React.FC = () => {
                 key={`order-${order.id}`}
                 className="p-2 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800 rounded-lg"
               >
-                <div className="text-sm font-medium text-blue-900 dark:text-blue-200">{t('calendar.orderPrefix')} {order.title}</div>
+                <div className="text-sm font-medium text-blue-900 dark:text-blue-200">{getOrderDisplayTitle(order)}</div>
                 <div className="text-xs text-blue-700 dark:text-blue-300">{order.client?.name}</div>
                 <div className={`inline-block px-2 py-1 rounded text-xs mt-1 ${getStatusColor(order.status)}`}>
-                  {t(`calendar.status.${order.status.replace('_', '')}`)}
+                  {t('orders.status.' + order.status)}
                 </div>
               </div>
             ))}
@@ -250,38 +288,24 @@ const Calendar: React.FC = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="text-lg">
-                      {event.type === 'task' ? t('calendar.taskPrefix') : t('calendar.orderPrefix')}
+                      {event.type === 'task' ? t('calendar.taskPrefix') : ''}
                     </span>
                     <h3 className="font-medium text-gray-900 dark:text-gray-100">
-                      {event.title}
+                      {event.type === 'order' ? getOrderDisplayTitle(event) : event.title}
                     </h3>
                     <span className={`px-2 py-1 rounded text-xs ${getStatusColor(event.status)}`}>
-                      {t(`calendar.status.${event.status.replace('_', '')}`)}
+                      {t('orders.status.' + event.status)}
                     </span>
                     {event.type === 'task' && 'priority' in event && (
                       <span className={`px-2 py-1 rounded text-xs ${getPriorityColor(event.priority)}`}>
-                        {t(`calendar.priority.${event.priority}`)}
+                        {t('orders.priority.' + event.priority)}
                       </span>
                     )}
                   </div>
                   
-                  <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                    {event.type === 'task' && event.worker && (
-                      <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        <span>{event.worker.name}</span>
-                      </div>
-                    )}
-                    {event.type === 'order' && event.client && (
-                      <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        <span>{event.client.name}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{new Date(event.due_date).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}</span>
-                    </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    {event.type === 'order' && event.client?.name}
+                    {event.type === 'task' && event.worker?.name}
                   </div>
                 </div>
               </div>
@@ -316,9 +340,31 @@ const Calendar: React.FC = () => {
             <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
               <CalendarIcon className="h-6 w-6 text-blue-600 dark:text-blue-300" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('calendar.header.title')}</h1>
+            <h1 
+              className="text-3xl font-bold text-gray-900 dark:text-white"
+              style={{
+                fontFamily: 'var(--font-family)',
+                fontSize: 'calc(var(--font-size) * 1.875)',
+                fontWeight: 'var(--font-weight)',
+                lineHeight: 'var(--line-height)',
+                color: 'var(--text-color)'
+              }}
+            >
+              Calendar
+            </h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400">{t('calendar.header.subtitle')}</p>
+          <p 
+            className="text-gray-600 dark:text-gray-400"
+            style={{
+              fontFamily: 'var(--font-family)',
+              fontSize: 'calc(var(--font-size) * 1.125)',
+              fontWeight: 'var(--font-weight)',
+              lineHeight: 'var(--line-height)',
+              color: 'var(--secondary-color)'
+            }}
+          >
+            Schedule appointments and manage events
+          </p>
         </motion.div>
 
         {/* Controls */}
@@ -392,6 +438,50 @@ const Calendar: React.FC = () => {
                   </button>
                 ))}
               </div>
+
+              <button
+                onClick={loadCalendarData}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                <span>🔄</span>
+                <span>{t('calendar.refresh') || 'Refresh'}</span>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Calendar Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('calendar.stats.title') || 'Calendar Statistics'}</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {tasks.filter(t => t.status === 'pending').length}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">{t('calendar.stats.pendingTasks') || 'Pending Tasks'}</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {tasks.filter(t => t.status === 'completed').length}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">{t('calendar.stats.completedTasks') || 'Completed Tasks'}</div>
+            </div>
+            <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                {orders.filter(o => o.status === 'pending').length}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">{t('calendar.stats.pendingOrders') || 'Pending Orders'}</div>
+            </div>
+            <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {orders.filter(o => o.status === 'completed').length}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">{t('calendar.stats.completedOrders') || 'Completed Orders'}</div>
             </div>
           </div>
         </motion.div>
