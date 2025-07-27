@@ -11,7 +11,10 @@ class ClientController extends Controller
 {
     public function index(): JsonResponse
     {
-        $clients = Client::with(['orders', 'measurements'])->get();
+        // Optimize query to avoid loading all orders for all clients
+        $clients = Client::select('id', 'name', 'email', 'phone', 'address', 'woocommerce_id', 'created_at')
+            ->get();
+            
         return response()->json($clients);
     }
 

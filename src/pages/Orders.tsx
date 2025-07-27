@@ -479,7 +479,7 @@ const Orders = () => {
                     <input
                       type="text"
                       required
-                      value={editingOrder.title}
+                      value={editingOrder.title || ''}
                       onChange={(e) => setEditingOrder({ ...editingOrder, title: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -490,7 +490,7 @@ const Orders = () => {
                     <input
                       type="number"
                       step="0.01"
-                      value={editingOrder.total_cost}
+                      value={editingOrder.total_cost || ''}
                       onChange={(e) => setEditingOrder({ ...editingOrder, total_cost: parseFloat(e.target.value) || 0 })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -500,7 +500,7 @@ const Orders = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">تاريخ البداية</label>
                     <input
                       type="date"
-                      value={editingOrder.start_date}
+                      value={editingOrder.start_date || ''}
                       onChange={(e) => setEditingOrder({ ...editingOrder, start_date: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -510,7 +510,7 @@ const Orders = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">تاريخ التسليم</label>
                     <input
                       type="date"
-                      value={editingOrder.due_date}
+                      value={editingOrder.due_date || ''}
                       onChange={(e) => setEditingOrder({ ...editingOrder, due_date: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -521,7 +521,7 @@ const Orders = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
                   <textarea
                     rows={3}
-                    value={editingOrder.description}
+                    value={editingOrder.description || ''}
                     onChange={(e) => setEditingOrder({ ...editingOrder, description: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />

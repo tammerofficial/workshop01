@@ -42,6 +42,7 @@ interface Order {
   due_date: string;
   created_at: string;
   woocommerce_id?: number;
+  client_id: number;
 }
 
 export default function Clients() {
@@ -54,6 +55,9 @@ export default function Clients() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'woocommerce' | 'local'>('all');
   const [showProfile, setShowProfile] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [loadingStats, setLoadingStats] = useState<number[]>([]);
 
   useEffect(() => {
     loadClients();
@@ -64,29 +68,8 @@ export default function Clients() {
       setLoading(true);
       const response = await clientService.getClients();
       
-      // Add statistics for each client
-      const clientsWithStats = await Promise.all(
-        response.map(async (client: Client) => {
-          try {
-            const orders = await orderService.getOrdersByClient(client.id);
-            return {
-              ...client,
-              orders_count: orders.length,
-              total_orders_value: orders.reduce((sum: number, order: Order) => sum + order.total_cost, 0),
-              last_order_date: orders.length > 0 ? orders[0].created_at : null
-            };
-          } catch (error) {
-            return {
-              ...client,
-              orders_count: 0,
-              total_orders_value: 0,
-              last_order_date: null
-            };
-          }
-        })
-      );
-      
-      setClients(clientsWithStats);
+      // Just load clients without stats initially - we'll load stats on demand
+      setClients(response);
     } catch (error) {
       console.error('Error loading clients:', error);
     } finally {
@@ -94,11 +77,47 @@ export default function Clients() {
     }
   };
 
+  const loadClientStats = async (client: Client) => {
+    try {
+      const orders = await orderService.getOrdersByClient(client.id);
+      const totalValue = orders.reduce((sum: number, order: Order) => {
+        const cost = typeof order.total_cost === 'number' ? order.total_cost : 0;
+        return sum + cost;
+      }, 0);
+      
+      return {
+        ...client,
+        orders_count: orders.length,
+        total_orders_value: totalValue,
+        last_order_date: orders.length > 0 ? orders[0].created_at : null
+      };
+    } catch (error) {
+      console.error('Error loading client stats:', error);
+      return {
+        ...client,
+        orders_count: 0,
+        total_orders_value: 0,
+        last_order_date: null
+      };
+    }
+  };
+
   const loadClientOrders = async (clientId: number) => {
     try {
       setOrdersLoading(true);
-      const orders = await orderService.getOrdersByClient(clientId);
-      setClientOrders(orders);
+      console.log('Loading orders for client ID:', clientId);
+      
+      // Fetch all orders and filter by client_id
+      const allOrders = await orderService.getAll();
+      console.log('All orders:', allOrders.data);
+      
+      const clientOrders = allOrders.data.filter((order: Order) => {
+        console.log(`Order ${order.id}: client_id = ${order.client_id}, target = ${clientId}`);
+        return order.client_id === clientId;
+      });
+      
+      console.log('Filtered orders for client:', clientOrders);
+      setClientOrders(clientOrders);
     } catch (error) {
       console.error('Error loading client orders:', error);
       setClientOrders([]);
@@ -107,10 +126,39 @@ export default function Clients() {
     }
   };
 
-  const handleViewProfile = (client: Client) => {
-    setSelectedClient(client);
+  const handleViewProfile = async (client: Client) => {
+    // Load client stats if not already loaded
+    const clientWithStats = client.orders_count !== undefined ? client : await loadClientStats(client);
+    
+    setSelectedClient(clientWithStats);
     setShowProfile(true);
     loadClientOrders(client.id);
+  };
+
+  const handleEditClient = (client: Client) => {
+    setEditingClient(client);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingClient) return;
+
+    try {
+      await clientService.update(editingClient.id, editingClient);
+      
+      // Update the client in the list
+      setClients(prev => prev.map(c => c.id === editingClient.id ? editingClient : c));
+      
+      setShowEditModal(false);
+      setEditingClient(null);
+      
+      // Show success message
+      alert('Client updated successfully!');
+    } catch (error) {
+      console.error('Error updating client:', error);
+      alert('Failed to update client. Please try again.');
+    }
   };
 
   const syncFromWooCommerce = async () => {
@@ -177,7 +225,9 @@ export default function Clients() {
             >
               ← {t('common.back')}
             </button>
-            <h1 className="text-3xl font-bold text-gray-900">{t('clients.profile.title')}</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {t('clients.profile.title') || 'Client Profile'}
+            </h1>
             <p className="text-gray-600 mt-2">{selectedClient.name}</p>
           </div>
         </div>
@@ -262,7 +312,7 @@ export default function Clients() {
               <div>
                 <p className="text-sm text-gray-600">{t('clients.profile.totalValue')}</p>
                 <p className="text-2xl font-bold text-green-600">
-                  ${selectedClient.total_orders_value?.toFixed(2) || '0.00'}
+                  ${typeof selectedClient.total_orders_value === 'number' ? selectedClient.total_orders_value.toFixed(2) : '0.00'}
                 </p>
               </div>
             </div>
@@ -340,7 +390,7 @@ export default function Clients() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${order.total_cost.toFixed(2)}
+                          ${typeof order.total_cost === 'number' ? order.total_cost.toFixed(2) : '0.00'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {new Date(order.created_at).toLocaleDateString()}
@@ -557,17 +607,43 @@ export default function Clients() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex items-center space-x-2">
                         <ShoppingBag size={16} className="text-blue-500" />
-                        <span>{client.orders_count || 0}</span>
+                        {client.orders_count !== undefined ? (
+                          <span>{client.orders_count}</span>
+                        ) : loadingStats.includes(client.id) ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        ) : (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setLoadingStats(prev => [...prev, client.id]);
+                              const clientWithStats = await loadClientStats(client);
+                              setClients(prev => prev.map(c => c.id === client.id ? clientWithStats : c));
+                              setLoadingStats(prev => prev.filter(id => id !== client.id));
+                            }}
+                            className="text-blue-600 hover:text-blue-800 text-xs underline"
+                          >
+                            Load
+                          </button>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleViewProfile(client)}
-                        className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
-                      >
-                        <Eye size={16} />
-                        <span>{t('clients.viewProfile')}</span>
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleViewProfile(client)}
+                          className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
+                        >
+                          <Eye size={16} />
+                          <span>{t('clients.viewProfile')}</span>
+                        </button>
+                        <button
+                          onClick={() => handleEditClient(client)}
+                          className="text-green-600 hover:text-green-900 flex items-center space-x-1"
+                        >
+                          <Edit size={16} />
+                          <span>{t('clients.editClient')}</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -582,6 +658,88 @@ export default function Clients() {
           </div>
         )}
       </motion.div>
+
+      {/* Edit Client Modal */}
+      {showEditModal && editingClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t('clients.editClient')}</h2>
+              <form onSubmit={handleUpdateClient} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('clients.table.name')}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editingClient.name}
+                      onChange={(e) => setEditingClient({ ...editingClient, name: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('clients.table.email')}
+                    </label>
+                    <input
+                      type="email"
+                      value={editingClient.email || ''}
+                      onChange={(e) => setEditingClient({ ...editingClient, email: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('clients.table.phone')}
+                    </label>
+                    <input
+                      type="text"
+                      value={editingClient.phone || ''}
+                      onChange={(e) => setEditingClient({ ...editingClient, phone: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('clients.table.address')}
+                    </label>
+                    <input
+                      type="text"
+                      value={editingClient.address || ''}
+                      onChange={(e) => setEditingClient({ ...editingClient, address: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {t('common.save')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingClient(null);
+                    }}
+                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

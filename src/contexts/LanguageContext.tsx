@@ -20,6 +20,11 @@ interface LanguageProviderProps {
 // Translation dictionaries
 const translations = {
   en: {
+    // Common
+    'common.back': 'Back',
+    'common.save': 'Save',
+    'common.cancel': 'Cancel',
+    
     // Navigation
     'nav.dashboard': 'Dashboard',
     'nav.orders': 'Orders',
@@ -530,6 +535,25 @@ const translations = {
     'tracking.actual': 'Actual',
     'tracking.station': 'Station',
     'tracking.started': 'Started',
+    'production.title': 'Production Flow',
+    'production.subtitle': 'Manage production stages for suits and clothing',
+    'production.searchPlaceholder': 'Search orders and tasks...',
+    'production.stages.all': 'All Stages',
+    'production.stages.pending': 'Pending',
+    'production.stages.design': 'Design',
+    'production.stages.cutting': 'Cutting',
+    'production.stages.sewing': 'Sewing',
+    'production.stages.fitting': 'Fitting',
+    'production.stages.completed': 'Completed',
+    'production.stats.orders': 'orders',
+    'production.stats.tasks': 'tasks',
+    'production.stats.workers': 'workers',
+    'production.empty.noItems': 'No items in this stage',
+    'production.showMore': 'Show More',
+    'production.quickActions': 'Quick Actions',
+    'production.addNewOrder': 'Add New Order',
+    'production.addNewTask': 'Add New Task',
+    'production.manageWorkers': 'Manage Workers',
     
     // Workers Additional Translations
     'workers.total': 'Total Workers',
@@ -555,11 +579,19 @@ const translations = {
     'clients.table.orders': 'Orders',
     'clients.table.lastOrder': 'Last Order',
     'clients.table.actions': 'Actions',
-    'clients.source.woocommerce': 'WooCommerce',
-    'clients.source.local': 'Local',
+                    'clients.source.woocommerce': 'WooCommerce',
+                'clients.source.local': 'Local',
+                'clients.source.all': 'All Sources',
     'clients.empty.title': 'No clients found',
     'clients.empty.subtitle': 'Start by adding a new client or sync from WooCommerce',
     'clients.syncFromWooCommerce': 'Sync from WooCommerce',
+    'clients.viewProfile': 'View Profile',
+    'clients.editClient': 'Edit Client',
+    'clients.profile.title': 'Client Profile',
+    'clients.profile.orders': 'Client Orders',
+    'clients.profile.totalOrders': 'Total Orders',
+    'clients.profile.totalValue': 'Total Value',
+    'clients.profile.lastActivity': 'Last Activity',
     
     // Dashboard Translations
     'dashboard.header.title': 'Dashboard',
@@ -613,6 +645,11 @@ const translations = {
     'woocommerce.never': 'Never',
   },
   ar: {
+    // Common
+    'common.back': 'العودة',
+    'common.save': 'حفظ',
+    'common.cancel': 'إلغاء',
+    
     // Navigation
     'nav.dashboard': 'لوحة القيادة',
     'nav.orders': 'الطلبات',
@@ -1123,6 +1160,25 @@ const translations = {
     'tracking.actual': 'الفعلي',
     'tracking.station': 'المحطة',
     'tracking.started': 'بدأ في',
+    'production.title': 'سير الإنتاج',
+    'production.subtitle': 'إدارة مراحل إنتاج البدلات والملابس',
+    'production.searchPlaceholder': 'البحث في الطلبات والمهام...',
+    'production.stages.all': 'جميع المراحل',
+    'production.stages.pending': 'قيد الانتظار',
+    'production.stages.design': 'التصميم',
+    'production.stages.cutting': 'القطع',
+    'production.stages.sewing': 'الخياطة',
+    'production.stages.fitting': 'التركيب',
+    'production.stages.completed': 'مكتمل',
+    'production.stats.orders': 'طلب',
+    'production.stats.tasks': 'مهمة',
+    'production.stats.workers': 'عامل',
+    'production.empty.noItems': 'لا توجد عناصر في هذه المرحلة',
+    'production.showMore': 'عرض المزيد',
+    'production.quickActions': 'إجراءات سريعة',
+    'production.addNewOrder': 'إضافة طلب جديد',
+    'production.addNewTask': 'إضافة مهمة جديدة',
+    'production.manageWorkers': 'إدارة العمال',
     
     // Workers Additional Translations
     'workers.total': 'إجمالي العمال',
@@ -1153,7 +1209,8 @@ const translations = {
     'clients.empty.title': 'لا يوجد عملاء',
     'clients.empty.subtitle': 'ابدأ بإضافة عميل جديد أو قم بالمزامنة من ووكومرس',
     'clients.syncFromWooCommerce': 'مزامنة من ووكومرس',
-    'clients.viewProfile': 'عرض الملف الشخصي',
+                    'clients.viewProfile': 'عرض الملف الشخصي',
+                'clients.editClient': 'تعديل العميل',
     'clients.profile.title': 'ملف العميل',
     'clients.profile.orders': 'طلبات العميل',
     'clients.profile.totalOrders': 'إجمالي الطلبات',
