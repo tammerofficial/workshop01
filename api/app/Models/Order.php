@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
@@ -101,9 +102,19 @@ class Order extends Model
         return $this->hasMany(Sale::class);
     }
 
-    public function productionTracking()
+    public function productionTracking(): HasMany
     {
         return $this->hasMany(OrderProductionTracking::class);
+    }
+
+    public function costBreakdown(): HasMany
+    {
+        return $this->hasMany(OrderCostBreakdown::class);
+    }
+
+    public function materialReservations(): HasMany
+    {
+        return $this->hasMany(MaterialReservation::class);
     }
 
     public function materialTransactions()

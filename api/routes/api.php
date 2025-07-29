@@ -17,6 +17,7 @@ use App\Services\WooCommerceService;
 use App\Http\Controllers\Api\WooCommerceController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\ProductionController as IntegratedProductionController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -222,4 +223,27 @@ Route::prefix('roles')->group(function () {
 Route::prefix('permissions')->group(function () {
     Route::get('/', [PermissionController::class, 'index']);
     Route::get('/grouped', [PermissionController::class, 'getGroupedPermissions']);
+});
+
+// Integrated Production Management Routes
+Route::prefix('integrated-production')->group(function () {
+    // بدء الإنتاج المتكامل
+    Route::post('orders/{orderId}/start', [IntegratedProductionController::class, 'startProduction']);
+    
+    // إدارة مراحل الإنتاج
+    Route::post('orders/{orderId}/stages/{stageId}/complete', [IntegratedProductionController::class, 'moveToNextStage']);
+    
+    // متطلبات المواد
+    Route::post('orders/{orderId}/materials/calculate', [IntegratedProductionController::class, 'calculateMaterialRequirements']);
+    Route::get('orders/{orderId}/materials/reserved', [IntegratedProductionController::class, 'getReservedMaterials']);
+    
+    // تتبع التقدم
+    Route::get('orders/{orderId}/progress', [IntegratedProductionController::class, 'getOrderProgress']);
+    Route::get('orders/{orderId}/estimated-completion', [IntegratedProductionController::class, 'getEstimatedCompletion']);
+    
+    // مراقبة المخزون
+    Route::get('materials/low-stock', [IntegratedProductionController::class, 'checkLowStockMaterials']);
+    
+    // إحصائيات الإنتاج
+    Route::get('stats', [IntegratedProductionController::class, 'getProductionStats']);
 }); 

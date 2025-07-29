@@ -8,15 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class OrderProductionTracking extends Model
 {
     use HasFactory;
+    
+    protected $table = 'order_production_tracking';
 
     protected $fillable = [
         'order_id',
         'production_stage_id',
-        'station_id',
         'worker_id',
         'status',
         'started_at',
         'completed_at',
+        'estimated_minutes',
         'actual_hours',
         'notes'
     ];
