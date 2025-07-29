@@ -39,7 +39,7 @@ class MaterialFactory extends Factory
             'supplier' => fake()->randomElement($suppliers),
             'reorder_level' => fake()->numberBetween(5, 50),
             'location' => fake()->randomElement(['Warehouse A', 'Warehouse B', 'Storage Room']),
-            'image_url' => fake()->optional()->imageUrl(),
+            'image_url' => null, // تم إزالة الصور المعطلة مؤقتاً
             'is_active' => fake()->boolean(90),
         ];
     }
