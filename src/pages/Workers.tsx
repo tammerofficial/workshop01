@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, User, Phone, Mail, Calendar, Settings } from 'lucide-react';
-import { workerService } from '../api/laravel';
+import { Plus, Search, Filter, Edit, Trash2, User, Phone, Mail, Calendar, Settings, Grid, List } from 'lucide-react';
+import { workerService, biometricService } from '../api/laravel';
 import toast from 'react-hot-toast';
 import { LanguageContext } from '../contexts/LanguageContext';
+import WorkerCard from '../components/workers/WorkerCard';
 
 interface Worker {
   id: number;
@@ -16,6 +17,9 @@ interface Worker {
   is_active: boolean;
   skills: string[];
   notes: string;
+  biometric_id?: string;
+  employee_code?: string;
+  biometric_data?: any;
 }
 
 const Workers = () => {
@@ -25,20 +29,9 @@ const Workers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
-
-  const [newWorker, setNewWorker] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    role: '',
-    department: '',
-    salary: '',
-    hire_date: '',
-    skills: '',
-    notes: ''
-  });
+  // تم إزالة showCreateModal لأن البيانات تأتي من البصمة فقط
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  // تم إزالة editingWorker و newWorker لأن البيانات للعرض فقط من البصمة
 
   useEffect(() => {
     loadWorkers();
@@ -46,7 +39,9 @@ const Workers = () => {
 
   const loadWorkers = async () => {
     try {
-      const response = await workerService.getAll();
+      setLoading(true);
+      // Get workers directly from biometric system
+      const response = await biometricService.getBiometricWorkers();
       setWorkers(response.data);
     } catch (error) {
       console.error('Error loading workers:', error);
@@ -56,63 +51,25 @@ const Workers = () => {
     }
   };
 
-  const handleCreateWorker = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const refreshWorkers = async () => {
     try {
-      const workerData = {
-        ...newWorker,
-        salary: parseFloat(newWorker.salary) || 0,
-        skills: newWorker.skills.split(',').map(skill => skill.trim()).filter(Boolean)
-      };
-
-      await workerService.create(workerData);
-      toast.success(t('common.success'));
-      setShowCreateModal(false);
-      setNewWorker({
-        name: '',
-        email: '',
-        phone: '',
-        role: '',
-        department: '',
-        salary: '',
-        hire_date: '',
-        skills: '',
-        notes: ''
-      });
-      loadWorkers();
+      setLoading(true);
+      toast.loading(t('workers.refreshing'));
+      
+      // Reload workers from biometric system
+      await loadWorkers();
+      toast.success(t('workers.refreshed'));
     } catch (error) {
-      console.error('Error creating worker:', error);
+      console.error('Error refreshing workers:', error);
       toast.error(t('common.error'));
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleUpdateWorker = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingWorker) return;
+  // تم إزالة دوال إنشاء وتعديل العمال لأن البيانات للعرض فقط من البصمة
 
-    try {
-      await workerService.update(editingWorker.id, editingWorker);
-      toast.success(t('common.success'));
-      setEditingWorker(null);
-      loadWorkers();
-    } catch (error) {
-      console.error('Error updating worker:', error);
-      toast.error(t('common.error'));
-    }
-  };
-
-  const handleDeleteWorker = async (id: number) => {
-    if (!confirm(t('common.deleteConfirm'))) return;
-
-    try {
-      await workerService.delete(id);
-      toast.success(t('common.success'));
-      loadWorkers();
-    } catch (error) {
-      console.error('Error deleting worker:', error);
-      toast.error(t('common.error'));
-    }
-  };
+  // تم إزالة دالة الحذف لأن البيانات للعرض فقط من البصمة
 
   const handleToggleStatus = async (id: number, isActive: boolean) => {
     try {
@@ -143,18 +100,18 @@ const Workers = () => {
   const departments = [...new Set(workers.map(w => w.department))];
 
   if (loading) {
-  return (
+    return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-        return (
+  return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-          <div>
+        <div>
           <h1 
             className="text-3xl font-bold text-gray-900"
             style={{
@@ -165,7 +122,7 @@ const Workers = () => {
               color: 'var(--text-color)'
             }}
           >
-            Workers
+            {t('workers.title')}
           </h1>
           <p 
             className="text-gray-600 mt-2"
@@ -177,16 +134,19 @@ const Workers = () => {
               color: 'var(--secondary-color)'
             }}
           >
-            Manage workshop staff and assignments
+            {t('workers.subtitle')}
           </p>
         </div>
-                <button 
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                >
-          <Plus className="h-5 w-5" />
-          {t('workers.addWorker')}
-                </button>
+        <div className="flex gap-3">
+          <button
+            onClick={refreshWorkers}
+            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
+          >
+            <Settings className="h-5 w-5" />
+            {t('workers.refresh')}
+          </button>
+          {/* إزالة زر إضافة عامل جديد لأن البيانات تأتي من البصمة فقط */}
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -234,7 +194,7 @@ const Workers = () => {
 
       {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
           <div className="relative col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
@@ -268,69 +228,110 @@ const Workers = () => {
               <option value="inactive">{t('workers.inactiveStatus')}</option>
             </select>
           </div>
+          <div className="flex justify-end">
+            <div className="flex border rounded-lg overflow-hidden">
+              <button 
+                onClick={() => setViewMode('card')} 
+                className={`p-2 ${viewMode === 'card' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
+              >
+                <Grid className="h-5 w-5" />
+              </button>
+              <button 
+                onClick={() => setViewMode('table')} 
+                className={`p-2 ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}
+              >
+                <List className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Workers Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
-        <table className="w-full text-sm text-left text-gray-500">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3">{t('workers.table.name')}</th>
-              <th scope="col" className="px-6 py-3">{t('workers.table.contact')}</th>
-              <th scope="col" className="px-6 py-3">{t('workers.table.role')}</th>
-              <th scope="col" className="px-6 py-3">{t('workers.table.department')}</th>
-              <th scope="col" className="px-6 py-3">{t('workers.table.hireDate')}</th>
-              <th scope="col" className="px-6 py-3">{t('workers.table.status')}</th>
-              <th scope="col" className="px-6 py-3">{t('workers.table.actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredWorkers.length > 0 ? (
-              filteredWorkers.map(worker => (
-                <tr key={worker.id} className="bg-white border-b hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900">
-                    {worker.name}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      <span>{worker.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      <span>{worker.phone}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">{worker.role}</td>
-                  <td className="px-6 py-4">{worker.department}</td>
-                  <td className="px-6 py-4">{new Date(worker.hire_date).toLocaleDateString()}</td>
-                  <td className="px-6 py-4">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={worker.is_active} onChange={() => handleToggleStatus(worker.id, !worker.is_active)} className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </td>
-                  <td className="px-6 py-4 flex items-center gap-4">
-                    <button onClick={() => setEditingWorker(worker)} className="text-blue-600 hover:text-blue-800">
-                      <Edit className="h-5 w-5" />
-                    </button>
-                    <button onClick={() => handleDeleteWorker(worker.id)} className="text-red-600 hover:text-red-800">
-                      <Trash2 className="h-5 w-5" />
-                    </button>
+      {/* Workers Display */}
+      {viewMode === 'card' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredWorkers.length > 0 ? (
+            filteredWorkers.map(worker => (
+              <WorkerCard 
+                key={worker.id} 
+                worker={worker} 
+                onToggleStatus={handleToggleStatus} 
+                onEdit={setEditingWorker}
+                t={t}
+              />
+            ))
+          ) : (
+            <div className="col-span-full flex justify-center py-10">
+              <p className="text-gray-500">{t('workers.noResults')}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+          <table className="w-full text-sm text-left text-gray-500">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3">{t('workers.table.name')}</th>
+                <th scope="col" className="px-6 py-3">{t('workers.table.contact')}</th>
+                <th scope="col" className="px-6 py-3">{t('workers.table.role')}</th>
+                <th scope="col" className="px-6 py-3">{t('workers.table.department')}</th>
+                <th scope="col" className="px-6 py-3">{t('workers.table.hireDate')}</th>
+                <th scope="col" className="px-6 py-3">{t('workers.table.status')}</th>
+                <th scope="col" className="px-6 py-3">{t('workers.table.actions')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredWorkers.length > 0 ? (
+                filteredWorkers.map(worker => (
+                  <tr key={worker.id} className="bg-white border-b hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      {worker.name}
+                      {worker.biometric_id && (
+                        <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
+                          {t('workers.biometric')}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                        <span>{worker.email || '-'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        <span>{worker.phone || '-'}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">{worker.role}</td>
+                    <td className="px-6 py-4">{worker.department}</td>
+                    <td className="px-6 py-4">{new Date(worker.hire_date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked={worker.is_active} onChange={() => handleToggleStatus(worker.id, !worker.is_active)} className="sr-only peer" />
+                        <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </td>
+                    <td className="px-6 py-4 flex items-center gap-4">
+                      <button onClick={() => setEditingWorker(worker)} className="text-blue-600 hover:text-blue-800">
+                        <Edit className="h-5 w-5" />
+                      </button>
+                      <button onClick={() => handleDeleteWorker(worker.id)} className="text-red-600 hover:text-red-800">
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-gray-500">
+                    {t('workers.noResults')}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="7" className="text-center py-10 text-gray-500">
-                  {t('workers.noResults')}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Create/Edit Modal */}
       {(showCreateModal || editingWorker) && (
@@ -416,6 +417,27 @@ const Workers = () => {
                           onChange={e => editingWorker ? setEditingWorker({...editingWorker, notes: e.target.value}) : setNewWorker({...newWorker, notes: e.target.value})}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
               </div>
+
+              {/* Biometric Information (read-only) */}
+              {editingWorker && editingWorker.biometric_id && (
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">{t('workers.biometricInfo')}</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">{t('workers.biometricId')}</label>
+                      <input type="text" value={editingWorker.biometric_id} className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm" readOnly />
+                    </div>
+                    
+                    {editingWorker.employee_code && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">{t('workers.employeeCode')}</label>
+                        <input type="text" value={editingWorker.employee_code} className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm" readOnly />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end gap-4 pt-4">
                 <button type="button" onClick={() => { setShowCreateModal(false); setEditingWorker(null); }}

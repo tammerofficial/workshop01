@@ -23,6 +23,9 @@ class Worker extends Model
         'notes',
         'hourly_rate', // معدل الساعة
         'production_stages', // المراحل التي يتقنها
+        'biometric_id', // رقم الموظف في نظام البصمة
+        'biometric_data', // بيانات إضافية من نظام البصمة
+        'employee_code', // رمز الموظف في نظام البصمة
     ];
 
     protected $casts = [
@@ -32,6 +35,7 @@ class Worker extends Model
         'hourly_rate' => 'decimal:2',
         'skills' => 'array',
         'production_stages' => 'array',
+        'biometric_data' => 'array',
     ];
 
     public function tasks()

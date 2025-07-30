@@ -140,4 +140,14 @@ export const permissionService = {
   getGrouped: () => api.get('/permissions/grouped'),
 };
 
+// Biometric Service
+export const biometricService = {
+  syncWorkers: () => api.post('/biometric/sync-workers'),
+  syncAttendance: (data?: any) => api.post('/biometric/sync-attendance', data),
+  getAttendanceReport: (params?: any) => api.get('/biometric/attendance-report', { params }),
+  getWorkerAttendance: (id: number, params?: any) => api.get(`/biometric/worker/${id}/attendance`, { params }),
+  getTokenInfo: () => api.get('/biometric/token-info'),
+  getBiometricWorkers: () => api.get('/biometric/workers'), // جديد: جلب العمال من البصمة مباشرة
+};
+
 export default api; 

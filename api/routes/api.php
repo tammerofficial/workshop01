@@ -17,6 +17,7 @@ use App\Services\WooCommerceService;
 use App\Http\Controllers\Api\WooCommerceController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\BiometricController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -70,6 +71,7 @@ Route::prefix('production')->group(function () {
     Route::post('orders/{order}/materials', [ProductionController::class, 'recordMaterialUsage']);
     Route::post('orders/{order}/sales', [ProductionController::class, 'recordSale']);
     Route::post('attendance', [ProductionController::class, 'recordAttendance']);
+    Route::get('attendance', [BiometricController::class, 'getAttendanceReport']);
     Route::get('orders/{order}/progress', [ProductionController::class, 'getOrderProgress']);
     Route::get('dashboard', [ProductionController::class, 'getDashboard']);
 });
@@ -222,4 +224,14 @@ Route::prefix('roles')->group(function () {
 Route::prefix('permissions')->group(function () {
     Route::get('/', [PermissionController::class, 'index']);
     Route::get('/grouped', [PermissionController::class, 'getGroupedPermissions']);
+});
+
+// Biometric System Integration Routes
+Route::prefix('biometric')->group(function () {
+    Route::post('/sync-workers', [BiometricController::class, 'syncWorkers']);
+    Route::post('/sync-attendance', [BiometricController::class, 'syncAttendance']);
+    Route::get('/attendance-report', [BiometricController::class, 'getAttendanceReport']);
+    Route::get('/worker/{id}/attendance', [BiometricController::class, 'getWorkerAttendance']);
+    Route::get('/token-info', [BiometricController::class, 'getTokenInfo']);
+    Route::get('/workers', [BiometricController::class, 'getBiometricWorkers']);
 }); 

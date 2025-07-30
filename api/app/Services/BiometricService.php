@@ -1,0 +1,331 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+
+class BiometricService
+{
+    protected $authUrl = 'https://staff.hudaaljarallah.net/jwt-api-token-auth/';
+    protected $transactionsUrl = 'http://staff.hudaaljarallah.net/iclock/api/transactions/';
+    protected $employeesUrl = 'http://staff.hudaaljarallah.net/personnel/api/employees/';
+    protected $departmentsUrl = 'https://staff.hudaaljarallah.net/personnel/api/departments/';
+    protected $username = 'superadmin';
+    protected $password = 'Alhuda@123';
+    protected $token = null;
+    protected $tokenFile;
+
+    public function __construct()
+    {
+        $this->tokenFile = storage_path('app/biometric_token.json');
+    }
+
+    /**
+     * Load token from file if it exists and is valid
+     */
+    protected function loadTokenFromFile()
+    {
+        if (file_exists($this->tokenFile)) {
+            $tokenData = json_decode(file_get_contents($this->tokenFile), true);
+            
+            if ($tokenData && isset($tokenData['token']) && isset($tokenData['expires_at'])) {
+                // Check if token is still valid (expires in 24 hours, check with 1 hour buffer)
+                $expiresAt = Carbon::parse($tokenData['expires_at']);
+                $hoursRemaining = now()->diffInHours($expiresAt, false);
+                if ($expiresAt->isFuture() && $hoursRemaining > 1) {
+                    $this->token = $tokenData['token'];
+                    Log::info('Loaded valid token from file', ['expires_at' => $tokenData['expires_at']]);
+                    return true;
+                } else {
+                    Log::info('Token expired or about to expire', [
+                        'expires_at' => $tokenData['expires_at'],
+                        'now' => now()->toISOString(),
+                        'hours_remaining' => $hoursRemaining
+                    ]);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Save token to file
+     */
+    protected function saveTokenToFile($token)
+    {
+        $tokenData = [
+            'token' => $token,
+            'created_at' => now()->toISOString(),
+            'expires_at' => now()->addHours(24)->toISOString() // JWT tokens usually expire in 24 hours
+        ];
+        
+        // Ensure storage/app directory exists
+        if (!file_exists(dirname($this->tokenFile))) {
+            mkdir(dirname($this->tokenFile), 0755, true);
+        }
+        
+        file_put_contents($this->tokenFile, json_encode($tokenData, JSON_PRETTY_PRINT));
+        Log::info('Token saved to file', ['expires_at' => $tokenData['expires_at']]);
+    }
+
+    /**
+     * Clear token from memory and file
+     */
+    protected function clearToken()
+    {
+        $this->token = null;
+        if (file_exists($this->tokenFile)) {
+            unlink($this->tokenFile);
+            Log::info('Token file deleted');
+        }
+    }
+
+    /**
+     * Get token information (for debugging)
+     */
+    public function getTokenInfo()
+    {
+        if (file_exists($this->tokenFile)) {
+            $tokenData = json_decode(file_get_contents($this->tokenFile), true);
+            if ($tokenData) {
+                return [
+                    'exists' => true,
+                    'created_at' => $tokenData['created_at'] ?? null,
+                    'expires_at' => $tokenData['expires_at'] ?? null,
+                    'is_valid' => $this->loadTokenFromFile(),
+                    'current_token' => $this->token ? 'Set' : 'Not set'
+                ];
+            }
+        }
+        
+        return [
+            'exists' => false,
+            'current_token' => $this->token ? 'Set' : 'Not set'
+        ];
+    }
+
+    /**
+     * Authenticate with the biometric API and get a token
+     */
+    public function authenticate()
+    {
+        // Try to load existing valid token first
+        if ($this->loadTokenFromFile()) {
+            return true;
+        }
+
+        // If no valid token found, get a new one
+        try {
+            Log::info('Requesting new token from biometric API');
+            
+            $response = Http::post($this->authUrl, [
+                'username' => $this->username,
+                'password' => $this->password
+            ]);
+
+            if ($response->successful()) {
+                $this->token = $response->json('token');
+                
+                if ($this->token) {
+                    $this->saveTokenToFile($this->token);
+                    Log::info('Successfully authenticated with biometric API and saved token');
+                    return true;
+                }
+            }
+            
+            Log::error('Biometric API authentication failed', [
+                'status' => $response->status(),
+                'response' => $response->json()
+            ]);
+            
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Biometric API authentication exception', [
+                'message' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Get all employees from the biometric system
+     */
+    public function getEmployees()
+    {
+        if (!$this->token && !$this->authenticate()) {
+            return [];
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->get($this->employeesUrl);
+
+            if ($response->successful()) {
+                return $response->json('data');
+            }
+            
+            // If token is invalid (401/403), clear it and try to re-authenticate
+            if (in_array($response->status(), [401, 403])) {
+                Log::warning('Token appears invalid, attempting re-authentication');
+                $this->clearToken();
+                
+                if ($this->authenticate()) {
+                    $response = Http::withToken($this->token)
+                        ->get($this->employeesUrl);
+                        
+                    if ($response->successful()) {
+                        return $response->json('data');
+                    }
+                }
+            }
+            
+            Log::error('Failed to fetch employees from biometric system', [
+                'status' => $response->status(),
+                'response' => $response->json()
+            ]);
+            
+            return [];
+        } catch (\Exception $e) {
+            Log::error('Exception fetching employees from biometric system', [
+                'message' => $e->getMessage()
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Get all departments from the biometric system
+     */
+    public function getDepartments()
+    {
+        if (!$this->token && !$this->authenticate()) {
+            return [];
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->get($this->departmentsUrl);
+
+            if ($response->successful()) {
+                return $response->json('data');
+            }
+            
+            Log::error('Failed to fetch departments from biometric system', [
+                'status' => $response->status(),
+                'response' => $response->json()
+            ]);
+            
+            return [];
+        } catch (\Exception $e) {
+            Log::error('Exception fetching departments from biometric system', [
+                'message' => $e->getMessage()
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Get attendance transactions for a specific date range
+     */
+    public function getAttendanceTransactions($startDate = null, $endDate = null, $employeeIds = [])
+    {
+        if (!$this->token && !$this->authenticate()) {
+            return [];
+        }
+
+        $startDate = $startDate ?? Carbon::now()->subDays(7)->format('Y-m-d');
+        $endDate = $endDate ?? Carbon::now()->format('Y-m-d');
+
+        try {
+            $query = [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ];
+
+            if (!empty($employeeIds)) {
+                $query['emp_code'] = implode(',', $employeeIds);
+            }
+
+            $response = Http::withToken($this->token)
+                ->get($this->transactionsUrl, $query);
+
+            if ($response->successful()) {
+                return $response->json('data');
+            }
+            
+            // If token is invalid (401/403), clear it and try to re-authenticate
+            if (in_array($response->status(), [401, 403])) {
+                Log::warning('Token appears invalid, attempting re-authentication');
+                $this->clearToken();
+                
+                if ($this->authenticate()) {
+                    $response = Http::withToken($this->token)
+                        ->get($this->transactionsUrl, $query);
+                        
+                    if ($response->successful()) {
+                        return $response->json('data');
+                    }
+                }
+            }
+            
+            Log::error('Failed to fetch attendance transactions', [
+                'status' => $response->status(),
+                'response' => $response->json(),
+                'query' => $query
+            ]);
+            
+            return [];
+        } catch (\Exception $e) {
+            Log::error('Exception fetching attendance transactions', [
+                'message' => $e->getMessage()
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Get attendance data for a specific employee
+     */
+    public function getEmployeeAttendance($employeeId, $startDate = null, $endDate = null)
+    {
+        return $this->getAttendanceTransactions($startDate, $endDate, [$employeeId]);
+    }
+
+    /**
+     * Map biometric employee data to our worker model
+     */
+    public function mapEmployeeToWorker($employee)
+    {
+        // Clean and prepare name
+        $firstName = $employee['first_name'] ?? '';
+        $lastName = $employee['last_name'] ?? '';
+        $fullName = trim($firstName . ' ' . $lastName);
+        
+        // Get department name
+        $departmentName = 'General'; // Default department
+        if (isset($employee['department']) && is_array($employee['department'])) {
+            $departmentName = $employee['department']['dept_name'] ?? 'General';
+        }
+        
+        // Set default role based on department or use a generic one
+        $role = $employee['position'] ?? 'Worker';
+        if (empty($role) || is_null($role)) {
+            $role = 'Worker'; // Default role
+        }
+        
+        return [
+            'biometric_id' => $employee['id'] ?? null,
+            'name' => $fullName ?: 'Employee ' . ($employee['emp_code'] ?? 'Unknown'),
+            'email' => !empty($employee['email']) ? $employee['email'] : null,
+            'phone' => !empty($employee['mobile']) ? $employee['mobile'] : null,
+            'role' => $role,
+            'department' => $departmentName,
+            'employee_code' => $employee['emp_code'] ?? null,
+            'is_active' => true, // Set all biometric employees as active by default
+            'hire_date' => $employee['hire_date'] ?? now()->format('Y-m-d'),
+            'biometric_data' => $employee // Store as array, will be cast to JSON
+        ];
+    }
+}

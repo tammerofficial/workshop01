@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Attendance extends Model
 {
     use HasFactory;
+    
+    protected $table = 'attendance';
 
     protected $fillable = [
         'worker_id',
@@ -19,7 +21,12 @@ class Attendance extends Model
         'total_hours',
         'status',
         'device_id',
-        'notes'
+        'notes',
+        'biometric_transaction_id',
+        'biometric_data',
+        'punch_state',
+        'verification_type',
+        'terminal_alias'
     ];
 
     protected $casts = [
@@ -27,7 +34,8 @@ class Attendance extends Model
         'check_in_time' => 'datetime:H:i',
         'check_out_time' => 'datetime:H:i',
         'break_start' => 'datetime:H:i',
-        'break_end' => 'datetime:H:i'
+        'break_end' => 'datetime:H:i',
+        'biometric_data' => 'array'
     ];
 
     // Relationships
