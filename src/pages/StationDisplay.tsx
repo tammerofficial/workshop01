@@ -435,7 +435,12 @@ const StationDisplay: React.FC = () => {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{worker.name}</h3>
-                  <p className="text-sm text-gray-500">{worker.role}</p>
+                  <p className="text-sm text-gray-500">
+                  {typeof worker.role === 'string' 
+                    ? worker.role 
+                    : worker.role?.position_name || 'Unknown'
+                  }
+                </p>
                   <p className="text-sm text-gray-500">{worker.department}</p>
                 </div>
                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${workerStatus.color}`}>

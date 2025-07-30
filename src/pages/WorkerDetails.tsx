@@ -6,7 +6,7 @@ import {
   CheckCircle, AlertTriangle, BarChart, Loader
 } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
-import { workerService, taskService } from '../api/laravel';
+import { biometricService, taskService } from '../api/laravel';
 import { Worker, Task } from '../types';
 import toast from 'react-hot-toast';
 
@@ -21,11 +21,27 @@ const WorkerDetails: React.FC = () => {
     const fetchWorkerData = async () => {
       setLoading(true);
       try {
-        const workerRes = await workerService.getById(parseInt(id!));
-        const tasksRes = await taskService.getAll();
-        setWorker(workerRes.data);
-        setWorkerTasks(tasksRes.data.filter((task: any) => task.worker_id === parseInt(id!)));
+        // جلب جميع العمال من نظام البصمة والبحث عن العامل المطلوب
+        const workersRes = await biometricService.getBiometricWorkers(50);
+        const workers = workersRes.data.data || workersRes.data;
+        const foundWorker = workers.find((w: any) => w.id.toString() === id || w.biometric_id?.toString() === id);
+        
+        if (foundWorker) {
+          setWorker(foundWorker);
+          
+          // جلب المهام المرتبطة بهذا العامل
+          try {
+            const tasksRes = await taskService.getAll();
+            setWorkerTasks(tasksRes.data.filter((task: any) => task.worker_id === foundWorker.id));
+          } catch (taskError) {
+            console.log('Tasks not available:', taskError);
+            setWorkerTasks([]);
+          }
+        } else {
+          toast.error('Worker not found');
+        }
       } catch (error) {
+        console.error('Error loading worker details:', error);
         toast.error('Failed to load worker details');
       } finally {
         setLoading(false);
@@ -62,7 +78,7 @@ const WorkerDetails: React.FC = () => {
     <div>
       <PageHeader 
         title={worker.name} 
-        subtitle={`${worker.role} - ${worker.department}`}
+        subtitle={`${typeof worker.role === 'string' ? worker.role : worker.role?.position_name || 'Unknown'} - ${worker.department}`}
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -81,7 +97,12 @@ const WorkerDetails: React.FC = () => {
                 className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
               />
               <h2 className="text-xl font-semibold text-gray-900">{worker.name}</h2>
-              <p className="text-gray-500">{worker.role}</p>
+              <p className="text-gray-500">
+              {typeof worker.role === 'string' 
+                ? worker.role 
+                : worker.role?.position_name || 'Unknown'
+              }
+            </p>
               
               <div className="mt-4">
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
@@ -94,7 +115,7 @@ const WorkerDetails: React.FC = () => {
                   {worker.status === 'active' && <CheckCircle size={14} className="mr-1" />}
                   {worker.status === 'on leave' && <Calendar size={14} className="mr-1" />}
                   {worker.status === 'unavailable' && <AlertTriangle size={14} className="mr-1" />}
-                  {worker.status.charAt(0).toUpperCase() + worker.status.slice(1)}
+                  {worker.status ? worker.status.charAt(0).toUpperCase() + worker.status.slice(1) : 'Unknown'}
                 </span>
               </div>
             </div>
@@ -104,7 +125,7 @@ const WorkerDetails: React.FC = () => {
                 <Mail size={20} className="text-gray-400 mr-3" />
                 <div>
                   <p className="text-sm font-medium text-gray-500">Email</p>
-                  <p className="text-gray-900">{worker.contactInfo.email}</p>
+                  <p className="text-gray-900">{worker.email || worker.contactInfo?.email || 'N/A'}</p>
                 </div>
               </div>
               
@@ -112,7 +133,7 @@ const WorkerDetails: React.FC = () => {
                 <Phone size={20} className="text-gray-400 mr-3" />
                 <div>
                   <p className="text-sm font-medium text-gray-500">Phone</p>
-                  <p className="text-gray-900">{worker.contactInfo.phone}</p>
+                  <p className="text-gray-900">{worker.phone || worker.contactInfo?.phone || 'N/A'}</p>
                 </div>
               </div>
               
@@ -121,14 +142,18 @@ const WorkerDetails: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-500">Skills</p>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {worker.skills.map((skill, index) => (
-                      <span 
-                        key={index}
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800"
-                      >
-                        {skill}
-                      </span>
-                    ))}
+                    {worker.skills && worker.skills.length > 0 ? (
+                      worker.skills.map((skill, index) => (
+                        <span 
+                          key={index}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800"
+                        >
+                          {skill}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-gray-500 text-sm">No skills listed</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -191,7 +216,7 @@ const WorkerDetails: React.FC = () => {
                         <div>
                           <p className="text-sm font-medium text-gray-500">Completed Tasks</p>
                           <p className="text-xl font-semibold text-gray-900">
-                            {worker.performance.completedTasks}
+                            {worker.performance?.completedTasks || workerTasks.filter(task => task.status === 'completed').length}
                           </p>
                         </div>
                       </div>
@@ -203,7 +228,7 @@ const WorkerDetails: React.FC = () => {
                         <div>
                           <p className="text-sm font-medium text-gray-500">Average Time</p>
                           <p className="text-xl font-semibold text-gray-900">
-                            {worker.performance.averageTime} min
+                            {worker.performance?.averageTime || 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -215,7 +240,7 @@ const WorkerDetails: React.FC = () => {
                         <div>
                           <p className="text-sm font-medium text-gray-500">Efficiency</p>
                           <p className="text-xl font-semibold text-gray-900">
-                            {worker.performance.efficiency}%
+                            {worker.performance?.efficiency || 'N/A'}%
                           </p>
                         </div>
                       </div>
@@ -225,7 +250,8 @@ const WorkerDetails: React.FC = () => {
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
                     <div className="space-y-4">
-                      {workerTasks.slice(0, 5).map((task) => (
+                      {workerTasks && workerTasks.length > 0 ? (
+                        workerTasks.slice(0, 5).map((task) => (
                         <div key={task.id} className="flex items-start">
                           <div className="flex-shrink-0">
                             <div className="w-8 h-8 rounded-full bg-secondary-100 flex items-center justify-center">
@@ -257,7 +283,12 @@ const WorkerDetails: React.FC = () => {
                             </span>
                           </div>
                         </div>
-                      ))}
+                        ))
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-gray-500">No recent tasks available</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -284,30 +315,38 @@ const WorkerDetails: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {workerTasks.map((task) => (
-                          <tr key={task.id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {task.id}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {task.stage.replace(/_/g, ' ')}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(task.startTime).toLocaleDateString()}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                task.status === 'completed'
-                                  ? 'bg-success-100 text-success-800'
-                                  : task.status === 'in progress'
-                                  ? 'bg-secondary-100 text-secondary-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {task.status}
-                              </span>
+                        {workerTasks && workerTasks.length > 0 ? (
+                          workerTasks.map((task) => (
+                            <tr key={task.id}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {task.id}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {task.stage.replace(/_/g, ' ')}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {new Date(task.startTime).toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  task.status === 'completed'
+                                    ? 'bg-success-100 text-success-800'
+                                    : task.status === 'in progress'
+                                    ? 'bg-secondary-100 text-secondary-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {task.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                              No tasks available
                             </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -324,12 +363,12 @@ const WorkerDetails: React.FC = () => {
                         <div className="mt-1 relative pt-1">
                           <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
                             <div
-                              style={{ width: `${worker.performance.efficiency}%` }}
+                              style={{ width: `${worker.performance?.efficiency || 0}%` }}
                               className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-success"
                             ></div>
                           </div>
                           <p className="mt-2 text-sm font-semibold text-gray-700">
-                            {worker.performance.efficiency}%
+                            {worker.performance?.efficiency || 'N/A'}%
                           </p>
                         </div>
                       </div>
@@ -337,14 +376,14 @@ const WorkerDetails: React.FC = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-500">Tasks Completed</p>
                         <p className="mt-1 text-3xl font-semibold text-gray-900">
-                          {worker.performance.completedTasks}
+                          {worker.performance?.completedTasks || workerTasks.filter(task => task.status === 'completed').length}
                         </p>
                       </div>
                       
                       <div>
                         <p className="text-sm font-medium text-gray-500">Average Time per Task</p>
                         <p className="mt-1 text-3xl font-semibold text-gray-900">
-                          {worker.performance.averageTime}
+                          {worker.performance?.averageTime || 'N/A'}
                           <span className="text-sm text-gray-500 ml-1">min</span>
                         </p>
                       </div>
@@ -354,16 +393,22 @@ const WorkerDetails: React.FC = () => {
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Skills Assessment</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {worker.skills.map((skill, index) => (
-                        <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-gray-700">{skill}</p>
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800">
-                              Expert
-                            </span>
+                      {worker.skills && worker.skills.length > 0 ? (
+                        worker.skills.map((skill, index) => (
+                          <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium text-gray-700">{skill}</p>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800">
+                                Expert
+                              </span>
+                            </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="col-span-2 text-center py-8">
+                          <p className="text-gray-500">No skills data available</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 </div>

@@ -95,7 +95,12 @@ const AssignTask: React.FC = () => {
                     />
                     <div className="ml-3">
                       <p className="text-sm font-medium text-gray-900">{worker.name}</p>
-                      <p className="text-sm text-gray-500">{worker.role}</p>
+                      <p className="text-sm text-gray-500">
+                  {typeof worker.role === 'string' 
+                    ? worker.role 
+                    : worker.role?.position_name || 'Unknown'
+                  }
+                </p>
                     </div>
                     <div className="ml-auto">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-100 text-success-800">
@@ -192,7 +197,12 @@ const AssignTask: React.FC = () => {
                       />
                       <div className="ml-3">
                         <p className="text-sm font-medium text-gray-900">{selectedWorker.name}</p>
-                        <p className="text-sm text-gray-500">{selectedWorker.role}</p>
+                        <p className="text-sm text-gray-500">
+                  {typeof selectedWorker.role === 'string' 
+                    ? selectedWorker.role 
+                    : selectedWorker.role?.position_name || 'Unknown'
+                  }
+                </p>
                       </div>
                     </div>
                   </div>

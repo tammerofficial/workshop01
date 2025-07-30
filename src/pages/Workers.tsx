@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Plus, Search, Edit, Trash2, User, Phone, Mail, Settings, Grid, List } from 'lucide-react';
+import { Plus, Search, Trash2, User, Phone, Mail, Settings, Grid, List } from 'lucide-react';
 import { biometricService } from '../api/laravel';
 import toast from 'react-hot-toast';
 import { LanguageContext } from '../contexts/LanguageContext';
@@ -10,7 +10,7 @@ interface Worker {
   name: string;
   email: string;
   phone: string;
-  role: string;
+  role: string | { id: number; position_code: string; position_name: string };
   department: string;
   salary: number;
   hire_date: string;
@@ -177,7 +177,7 @@ const Workers = () => {
 
   const filteredWorkers = workers.filter(worker => {
     const matchesSearch = worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         worker.role.toLowerCase().includes(searchTerm.toLowerCase());
+                         (typeof worker.role === 'string' ? worker.role : worker.role?.position_name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDepartment = departmentFilter === 'all' || worker.department === departmentFilter;
     const matchesStatus = statusFilter === 'all' || 
                          (statusFilter === 'active' && worker.is_active) ||
@@ -347,7 +347,7 @@ const Workers = () => {
               <WorkerCard 
                 key={worker.id} 
                 worker={worker}
-                onEdit={setEditingWorker}
+                onEdit={() => {}} 
                 onDelete={handleDeleteWorker}
                 t={t}
               />
@@ -394,7 +394,12 @@ const Workers = () => {
                         <span>{worker.phone || '-'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">{worker.role}</td>
+                    <td className="px-6 py-4">
+                      {typeof worker.role === 'string' 
+                        ? worker.role 
+                        : worker.role?.position_name || t('common.notAvailable')
+                      }
+                    </td>
                     <td className="px-6 py-4">{worker.department}</td>
                     <td className="px-6 py-4">{new Date(worker.hire_date).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
@@ -404,9 +409,6 @@ const Workers = () => {
                       </label>
                     </td>
                     <td className="px-6 py-4 flex items-center gap-4">
-                      <button onClick={() => setEditingWorker(worker)} className="text-blue-600 hover:text-blue-800">
-                        <Edit className="h-5 w-5" />
-                      </button>
                       <button onClick={() => handleDeleteWorker(worker.id)} className="text-red-600 hover:text-red-800">
                         <Trash2 className="h-5 w-5" />
                       </button>

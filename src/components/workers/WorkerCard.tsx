@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Phone, Mail, Calendar, Briefcase, Building, Star, Check, X, Clock, Edit, Eye } from 'lucide-react';
+import { Phone, Mail, Calendar, Building, X, Clock, Edit, Eye, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface WorkerCardProps {
@@ -8,7 +8,7 @@ interface WorkerCardProps {
     name: string;
     email: string;
     phone: string;
-    role: string;
+    role: string | { id: number; position_code: string; position_name: string };
     department: string;
     salary: number;
     hire_date: string;
@@ -18,7 +18,7 @@ interface WorkerCardProps {
     biometric_id?: string;
     employee_code?: string;
   };
-  onEdit: (worker: any) => void;
+  onEdit: (worker: WorkerCardProps['worker']) => void;
   onDelete: (id: number) => void;
   t: (key: string) => string;
 }
@@ -80,7 +80,12 @@ const WorkerCard: React.FC<WorkerCardProps> = ({ worker, onEdit, onDelete, t }) 
       {/* Card Body */}
       <div className="pt-12 px-6 pb-6">
         <h3 className="text-xl font-semibold text-gray-900 mb-1">{worker.name}</h3>
-        <p className="text-sm text-gray-600 mb-4">{worker.role}</p>
+        <p className="text-sm text-gray-600 mb-4">
+          {typeof worker.role === 'string' 
+            ? worker.role 
+            : worker.role?.position_name || t('common.notAvailable')
+          }
+        </p>
 
         <div className="space-y-3">
           <div className="flex items-center text-sm">

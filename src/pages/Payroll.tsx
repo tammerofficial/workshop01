@@ -229,7 +229,12 @@ const Payroll: React.FC = () => {
                   <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                     <div>
                       <div className="font-medium">{payroll.worker.name}</div>
-                      <div className="text-xs">{payroll.worker.role}</div>
+                      <div className="text-xs">
+                  {typeof payroll.worker.role === 'string' 
+                    ? payroll.worker.role 
+                    : payroll.worker.role?.position_name || 'Unknown'
+                  }
+                </div>
                     </div>
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>

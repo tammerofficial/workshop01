@@ -588,7 +588,7 @@ const ProductionTracking: React.FC = () => {
                     <option value="">{t('production.modal.selectWorker')}</option>
                     {workers.map((worker) => (
                       <option key={worker.id} value={worker.id}>
-                        {worker.name} - {worker.role}
+                        {worker.name} - {typeof worker.role === 'string' ? worker.role : worker.role?.position_name || 'Unknown'}
                       </option>
                     ))}
                   </select>
