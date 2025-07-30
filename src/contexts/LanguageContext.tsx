@@ -28,6 +28,8 @@ const translations = {
     'common.error': 'An error occurred',
     'common.success': 'Success',
     'common.deleteConfirm': 'Are you sure you want to delete this item?',
+    'common.previous': 'Previous',
+    'common.next': 'Next',
     
     // Navigation
     'nav.dashboard': 'Dashboard',
@@ -856,6 +858,9 @@ const translations = {
     'workers.refresh': 'Refresh',
     'workers.refreshing': 'Refreshing...',
     'workers.refreshed': 'Workers refreshed successfully',
+    'workers.createSuccess': 'Employee created successfully in biometric system',
+    'workers.updateSuccess': 'Employee updated successfully in biometric system',
+    'workers.deleteSuccess': 'Employee deleted successfully from biometric system',
     
     // Attendance Translations
     'attendance.title': 'Attendance Management',
@@ -903,6 +908,9 @@ const translations = {
     'attendance.statusChart': 'Attendance Status Chart',
     'attendance.hoursChart': 'Working Hours Chart',
     'attendance.hours': 'hours',
+    'attendance.noDataFound': 'No attendance data found',
+    'attendance.syncSuccess': 'Attendance data synced successfully',
+    'attendance.syncError': 'Error syncing attendance data',
     
     // Calendar Translations
     'calendar.january': 'January',
@@ -1267,6 +1275,8 @@ const translations = {
     'common.error': 'حدث خطأ. يرجى المحاولة مرة أخرى.',
     'common.success': 'العملية ناجحة!',
     'common.deleteConfirm': 'هل أنت متأكد أنك تريد حذف هذا العنصر؟',
+    'common.previous': 'السابق',
+    'common.next': 'التالي',
     'common.available': 'متوفر',
     'common.cancel': 'إلغاء',
     'common.update': 'تحديث',
@@ -1816,6 +1826,9 @@ const translations = {
     'workers.refresh': 'تحديث',
     'workers.refreshing': 'جاري التحديث...',
     'workers.refreshed': 'تم تحديث بيانات العمال بنجاح',
+    'workers.createSuccess': 'تم إنشاء الموظف بنجاح في نظام البصمة',
+    'workers.updateSuccess': 'تم تحديث الموظف بنجاح في نظام البصمة',
+    'workers.deleteSuccess': 'تم حذف الموظف بنجاح من نظام البصمة',
     
     // Attendance Translations
     'attendance.title': 'إدارة الحضور والانصراف',
@@ -1863,6 +1876,9 @@ const translations = {
     'attendance.statusChart': 'رسم بياني لحالة الحضور',
     'attendance.hoursChart': 'رسم بياني لساعات العمل',
     'attendance.hours': 'ساعات',
+    'attendance.noDataFound': 'لم يتم العثور على بيانات حضور',
+    'attendance.syncSuccess': 'تم مزامنة بيانات الحضور بنجاح',
+    'attendance.syncError': 'خطأ في مزامنة بيانات الحضور',
     
     // Calendar Translations
     'calendar.january': 'يناير',

@@ -379,12 +379,13 @@ class BiometricController extends Controller
     /**
      * Get workers directly from biometric system
      */
-    public function getBiometricWorkers()
+    public function getBiometricWorkers(Request $request)
     {
         try {
-            $employees = $this->biometricService->getEmployees();
+            $pageSize = $request->input('page_size', 50);
+            $employeeResponse = $this->biometricService->getEmployees($pageSize);
             
-            if (empty($employees)) {
+            if (empty($employeeResponse) || empty($employeeResponse['data'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No employees found in biometric system'
@@ -393,7 +394,7 @@ class BiometricController extends Controller
 
             // Transform biometric employees to our worker format
             $workers = [];
-            foreach ($employees as $employee) {
+            foreach ($employeeResponse['data'] as $employee) {
                 $workerData = $this->biometricService->mapEmployeeToWorker($employee);
                 
                 // Add additional biometric specific data
@@ -411,11 +412,367 @@ class BiometricController extends Controller
                 $workers[] = $workerData;
             }
             
-            return response()->json($workers);
+            return response()->json([
+                'data' => $workers,
+                'next' => $employeeResponse['next'],
+                'previous' => $employeeResponse['previous'],
+                'count' => $employeeResponse['count'],
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error getting biometric workers: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get attendance directly from biometric system
+     */
+    public function getBiometricAttendance(Request $request)
+    {
+        try {
+            // Get attendance transactions from biometric system
+            $transactions = $this->biometricService->getAttendanceTransactions();
+            
+            if (empty($transactions)) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                    'message' => 'No attendance records found'
+                ]);
+            }
+
+            // Get filters from request
+            $startDate = $request->get('start_date', now()->subDays(30)->format('Y-m-d'));
+            $endDate = $request->get('end_date', now()->format('Y-m-d'));
+            $workerId = $request->get('worker_id');
+
+            // Transform transactions to attendance format
+            $attendanceData = [];
+            foreach ($transactions as $transaction) {
+                $punchTime = \Carbon\Carbon::parse($transaction['punch_time']);
+                
+                // Apply date filter
+                if ($punchTime->format('Y-m-d') < $startDate || $punchTime->format('Y-m-d') > $endDate) {
+                    continue;
+                }
+
+                // Apply worker filter
+                if ($workerId && $transaction['emp_id'] != $workerId) {
+                    continue;
+                }
+
+                $attendanceData[] = [
+                    'id' => $transaction['id'],
+                    'worker_id' => $transaction['emp_id'],
+                    'worker_name' => $transaction['emp_name'] ?? 'Unknown',
+                    'employee_code' => $transaction['emp_code'] ?? null,
+                    'punch_time' => $punchTime->format('Y-m-d H:i:s'),
+                    'punch_state' => $transaction['punch_state'], // 0=Check In, 1=Check Out, etc.
+                    'punch_state_display' => $this->getPunchStateDisplay($transaction['punch_state']),
+                    'verification_type' => $transaction['verification_type'] ?? null,
+                    'terminal_alias' => $transaction['terminal_alias'] ?? null,
+                    'date' => $punchTime->format('Y-m-d'),
+                    'time' => $punchTime->format('H:i:s'),
+                    'day_of_week' => $punchTime->format('l'),
+                    'is_late' => $punchTime->format('H:i') > '08:00' && $transaction['punch_state'] == 0,
+                    'biometric_data' => $transaction
+                ];
+            }
+
+            // Sort by punch time (most recent first)
+            usort($attendanceData, function($a, $b) {
+                return strtotime($b['punch_time']) - strtotime($a['punch_time']);
+            });
+
+            // Calculate statistics
+            $stats = $this->calculateAttendanceStats($attendanceData);
+
+            return response()->json([
+                'success' => true,
+                'data' => $attendanceData,
+                'stats' => $stats,
+                'filters' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'worker_id' => $workerId
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error getting biometric attendance: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get punch state display text
+     */
+    private function getPunchStateDisplay($punchState)
+    {
+        $states = [
+            0 => 'Check In',
+            1 => 'Check Out',
+            2 => 'Break Start',
+            3 => 'Break End',
+            4 => 'Overtime Start',
+            5 => 'Overtime End'
+        ];
+        
+        return $states[$punchState] ?? 'Unknown';
+    }
+
+    /**
+     * Calculate attendance statistics
+     */
+    private function calculateAttendanceStats($attendanceData)
+    {
+        $totalRecords = count($attendanceData);
+        $uniqueWorkers = count(array_unique(array_column($attendanceData, 'worker_id')));
+        $uniqueDates = count(array_unique(array_column($attendanceData, 'date')));
+        
+        // Group by worker and date to calculate working hours
+        $dailyHours = [];
+        $grouped = [];
+        
+        foreach ($attendanceData as $record) {
+            $key = $record['worker_id'] . '_' . $record['date'];
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = [];
+            }
+            $grouped[$key][] = $record;
+        }
+
+        $totalHours = 0;
+        foreach ($grouped as $dayRecords) {
+            $checkIn = null;
+            $checkOut = null;
+            
+            foreach ($dayRecords as $record) {
+                if ($record['punch_state'] == 0) { // Check In
+                    $checkIn = $record['punch_time'];
+                }
+                if ($record['punch_state'] == 1) { // Check Out
+                    $checkOut = $record['punch_time'];
+                }
+            }
+            
+            if ($checkIn && $checkOut) {
+                $hours = (strtotime($checkOut) - strtotime($checkIn)) / 3600;
+                $totalHours += $hours;
+                $dailyHours[] = $hours;
+            }
+        }
+
+        $avgHoursPerDay = count($dailyHours) > 0 ? array_sum($dailyHours) / count($dailyHours) : 0;
+
+        return [
+            'total_records' => $totalRecords,
+            'total_workers' => $uniqueWorkers,
+            'total_days' => $uniqueDates,
+            'total_hours' => round($totalHours, 2),
+            'avg_hours_per_day' => round($avgHoursPerDay, 2),
+            'check_ins' => count(array_filter($attendanceData, fn($r) => $r['punch_state'] == 0)),
+            'check_outs' => count(array_filter($attendanceData, fn($r) => $r['punch_state'] == 1)),
+            'late_arrivals' => count(array_filter($attendanceData, fn($r) => $r['is_late']))
+        ];
+    }
+
+    /**
+     * Get areas from biometric system
+     */
+    public function getAreas()
+    {
+        try {
+            $areas = $this->biometricService->getAreas();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $areas
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error getting areas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get departments from biometric system
+     */
+    public function getDepartments()
+    {
+        try {
+            $departments = $this->biometricService->getDepartments();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $departments
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error getting departments: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get positions from biometric system
+     */
+    public function getPositions()
+    {
+        try {
+            $positions = $this->biometricService->getPositions();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $positions
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error getting positions: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create employee in biometric system
+     */
+    public function createEmployee(Request $request)
+    {
+        try {
+            // Validate request
+            $request->validate([
+                'emp_code' => 'required|string|max:50',
+                'first_name' => 'required|string|max:100',
+                'last_name' => 'nullable|string|max:100',
+                'department' => 'required|integer',
+                'area' => 'required|array',
+                'area.*' => 'integer',
+                'email' => 'nullable|email|max:100',
+                'mobile' => 'nullable|string|max:20',
+                'hire_date' => 'nullable|date',
+                'position' => 'nullable|integer'
+            ]);
+
+            // Prepare data for biometric system
+            $employeeData = [
+                'emp_code' => $request->emp_code,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'department' => $request->department,
+                'area' => $request->area,
+                'email' => $request->email,
+                'mobile' => $request->mobile,
+                'hire_date' => $request->hire_date ?: now()->format('Y-m-d'),
+                'position' => $request->position
+            ];
+
+            $response = $this->biometricService->createEmployee($employeeData);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $response,
+                'message' => 'Employee created successfully in biometric system'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating employee: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update employee in biometric system
+     */
+    public function updateEmployee(Request $request, $id)
+    {
+        try {
+            // Validate request
+            $request->validate([
+                'emp_code' => 'sometimes|required|string|max:50',
+                'first_name' => 'sometimes|required|string|max:100',
+                'last_name' => 'nullable|string|max:100',
+                'department' => 'sometimes|required|integer',
+                'area' => 'sometimes|required|array',
+                'area.*' => 'integer',
+                'email' => 'nullable|email|max:100',
+                'mobile' => 'nullable|string|max:20',
+                'hire_date' => 'nullable|date',
+                'position' => 'nullable|integer'
+            ]);
+
+            // Prepare data for biometric system
+            $employeeData = $request->only([
+                'emp_code', 'first_name', 'last_name', 'department', 
+                'area', 'email', 'mobile', 'hire_date', 'position'
+            ]);
+
+            $response = $this->biometricService->updateEmployee($id, $employeeData);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $response,
+                'message' => 'Employee updated successfully in biometric system'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating employee: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete employee from biometric system
+     */
+    public function deleteEmployee($id)
+    {
+        try {
+            $result = $this->biometricService->deleteEmployee($id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Employee deleted successfully from biometric system'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting employee: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get single employee from biometric system
+     */
+    public function getEmployee($id)
+    {
+        try {
+            $employee = $this->biometricService->getEmployee($id);
+            
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Employee not found'
+                ], 404);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => $employee
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error getting employee: ' . $e->getMessage()
             ], 500);
         }
     }

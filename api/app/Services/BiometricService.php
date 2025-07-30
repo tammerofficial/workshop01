@@ -12,6 +12,8 @@ class BiometricService
     protected $transactionsUrl = 'http://staff.hudaaljarallah.net/iclock/api/transactions/';
     protected $employeesUrl = 'http://staff.hudaaljarallah.net/personnel/api/employees/';
     protected $departmentsUrl = 'https://staff.hudaaljarallah.net/personnel/api/departments/';
+    protected $areasUrl = 'http://staff.hudaaljarallah.net/personnel/api/areas/';
+    protected $positionsUrl = 'http://staff.hudaaljarallah.net/personnel/api/positions/';
     protected $username = 'superadmin';
     protected $password = 'Alhuda@123';
     protected $token = null;
@@ -152,7 +154,7 @@ class BiometricService
     /**
      * Get all employees from the biometric system
      */
-    public function getEmployees()
+    public function getEmployees($pageSize = 50)
     {
         if (!$this->token && !$this->authenticate()) {
             return [];
@@ -160,10 +162,10 @@ class BiometricService
 
         try {
             $response = Http::withToken($this->token)
-                ->get($this->employeesUrl);
+                ->get($this->employeesUrl, ['page_size' => $pageSize]);
 
             if ($response->successful()) {
-                return $response->json('data');
+                return $response->json();
             }
             
             // If token is invalid (401/403), clear it and try to re-authenticate
@@ -173,10 +175,10 @@ class BiometricService
                 
                 if ($this->authenticate()) {
                     $response = Http::withToken($this->token)
-                        ->get($this->employeesUrl);
+                        ->get($this->employeesUrl, ['page_size' => $pageSize]);
                         
                     if ($response->successful()) {
-                        return $response->json('data');
+                        return $response->json();
                     }
                 }
             }
@@ -189,37 +191,6 @@ class BiometricService
             return [];
         } catch (\Exception $e) {
             Log::error('Exception fetching employees from biometric system', [
-                'message' => $e->getMessage()
-            ]);
-            return [];
-        }
-    }
-
-    /**
-     * Get all departments from the biometric system
-     */
-    public function getDepartments()
-    {
-        if (!$this->token && !$this->authenticate()) {
-            return [];
-        }
-
-        try {
-            $response = Http::withToken($this->token)
-                ->get($this->departmentsUrl);
-
-            if ($response->successful()) {
-                return $response->json('data');
-            }
-            
-            Log::error('Failed to fetch departments from biometric system', [
-                'status' => $response->status(),
-                'response' => $response->json()
-            ]);
-            
-            return [];
-        } catch (\Exception $e) {
-            Log::error('Exception fetching departments from biometric system', [
                 'message' => $e->getMessage()
             ]);
             return [];
@@ -327,5 +298,301 @@ class BiometricService
             'hire_date' => $employee['hire_date'] ?? now()->format('Y-m-d'),
             'biometric_data' => $employee // Store as array, will be cast to JSON
         ];
+    }
+
+    /**
+     * Get areas from biometric system
+     */
+    public function getAreas()
+    {
+        if (!$this->token && !$this->authenticate()) {
+            return [];
+        }
+
+        try {
+            $response = Http::withToken($this->token)->get($this->areasUrl);
+            
+            if ($response->successful()) {
+                return $response->json('data', []);
+            }
+            
+            if (in_array($response->status(), [401, 403])) {
+                Log::warning('Token appears invalid for areas, attempting re-authentication');
+                $this->clearToken();
+                if ($this->authenticate()) {
+                    $response = Http::withToken($this->token)->get($this->areasUrl);
+                    if ($response->successful()) {
+                        return $response->json('data', []);
+                    }
+                }
+            }
+            
+            Log::error('Failed to get areas from biometric system', [
+                'status' => $response->status(),
+                'response' => $response->body()
+            ]);
+            return [];
+            
+        } catch (\Exception $e) {
+            Log::error('Exception getting areas from biometric system: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get departments from biometric system
+     */
+    public function getDepartments()
+    {
+        if (!$this->token && !$this->authenticate()) {
+            return [];
+        }
+
+        try {
+            $response = Http::withToken($this->token)->get($this->departmentsUrl);
+            
+            if ($response->successful()) {
+                return $response->json('data', []);
+            }
+            
+            if (in_array($response->status(), [401, 403])) {
+                Log::warning('Token appears invalid for departments, attempting re-authentication');
+                $this->clearToken();
+                if ($this->authenticate()) {
+                    $response = Http::withToken($this->token)->get($this->departmentsUrl);
+                    if ($response->successful()) {
+                        return $response->json('data', []);
+                    }
+                }
+            }
+            
+            Log::error('Failed to get departments from biometric system', [
+                'status' => $response->status(),
+                'response' => $response->body()
+            ]);
+            return [];
+            
+        } catch (\Exception $e) {
+            Log::error('Exception getting departments from biometric system: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get positions from biometric system
+     */
+    public function getPositions()
+    {
+        if (!$this->token && !$this->authenticate()) {
+            return [];
+        }
+
+        try {
+            $response = Http::withToken($this->token)->get($this->positionsUrl);
+            
+            if ($response->successful()) {
+                return $response->json('data', []);
+            }
+            
+            if (in_array($response->status(), [401, 403])) {
+                Log::warning('Token appears invalid for positions, attempting re-authentication');
+                $this->clearToken();
+                if ($this->authenticate()) {
+                    $response = Http::withToken($this->token)->get($this->positionsUrl);
+                    if ($response->successful()) {
+                        return $response->json('data', []);
+                    }
+                }
+            }
+            
+            Log::error('Failed to get positions from biometric system', [
+                'status' => $response->status(),
+                'response' => $response->body()
+            ]);
+            return [];
+            
+        } catch (\Exception $e) {
+            Log::error('Exception getting positions from biometric system: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Create employee in biometric system
+     */
+    public function createEmployee($employeeData)
+    {
+        if (!$this->token && !$this->authenticate()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->post($this->employeesUrl, $employeeData);
+            
+            if ($response->successful()) {
+                Log::info('Employee created successfully in biometric system', [
+                    'employee_data' => $employeeData,
+                    'response' => $response->json()
+                ]);
+                return $response->json();
+            }
+            
+            if (in_array($response->status(), [401, 403])) {
+                Log::warning('Token appears invalid for employee creation, attempting re-authentication');
+                $this->clearToken();
+                if ($this->authenticate()) {
+                    $response = Http::withToken($this->token)
+                        ->post($this->employeesUrl, $employeeData);
+                    if ($response->successful()) {
+                        return $response->json();
+                    }
+                }
+            }
+            
+            $errorMessage = 'Failed to create employee in biometric system. Status: ' . $response->status();
+            Log::error($errorMessage, [
+                'employee_data' => $employeeData,
+                'response' => $response->body()
+            ]);
+            throw new \Exception($errorMessage . '. Response: ' . $response->body());
+            
+        } catch (\Exception $e) {
+            Log::error('Exception creating employee in biometric system: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Update employee in biometric system
+     */
+    public function updateEmployee($employeeId, $employeeData)
+    {
+        if (!$this->token && !$this->authenticate()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->put($this->employeesUrl . $employeeId . '/', $employeeData);
+            
+            if ($response->successful()) {
+                Log::info('Employee updated successfully in biometric system', [
+                    'employee_id' => $employeeId,
+                    'employee_data' => $employeeData,
+                    'response' => $response->json()
+                ]);
+                return $response->json();
+            }
+            
+            if (in_array($response->status(), [401, 403])) {
+                Log::warning('Token appears invalid for employee update, attempting re-authentication');
+                $this->clearToken();
+                if ($this->authenticate()) {
+                    $response = Http::withToken($this->token)
+                        ->put($this->employeesUrl . $employeeId . '/', $employeeData);
+                    if ($response->successful()) {
+                        return $response->json();
+                    }
+                }
+            }
+            
+            $errorMessage = 'Failed to update employee in biometric system. Status: ' . $response->status();
+            Log::error($errorMessage, [
+                'employee_id' => $employeeId,
+                'employee_data' => $employeeData,
+                'response' => $response->body()
+            ]);
+            throw new \Exception($errorMessage . '. Response: ' . $response->body());
+            
+        } catch (\Exception $e) {
+            Log::error('Exception updating employee in biometric system: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete employee from biometric system
+     */
+    public function deleteEmployee($employeeId)
+    {
+        if (!$this->token && !$this->authenticate()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->delete($this->employeesUrl . $employeeId . '/');
+            
+            if ($response->successful()) {
+                Log::info('Employee deleted successfully from biometric system', [
+                    'employee_id' => $employeeId
+                ]);
+                return true;
+            }
+            
+            if (in_array($response->status(), [401, 403])) {
+                Log::warning('Token appears invalid for employee deletion, attempting re-authentication');
+                $this->clearToken();
+                if ($this->authenticate()) {
+                    $response = Http::withToken($this->token)
+                        ->delete($this->employeesUrl . $employeeId . '/');
+                    if ($response->successful()) {
+                        return true;
+                    }
+                }
+            }
+            
+            $errorMessage = 'Failed to delete employee from biometric system. Status: ' . $response->status();
+            Log::error($errorMessage, [
+                'employee_id' => $employeeId,
+                'response' => $response->body()
+            ]);
+            throw new \Exception($errorMessage . '. Response: ' . $response->body());
+            
+        } catch (\Exception $e) {
+            Log::error('Exception deleting employee from biometric system: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Get single employee from biometric system
+     */
+    public function getEmployee($employeeId)
+    {
+        if (!$this->token && !$this->authenticate()) {
+            return null;
+        }
+
+        try {
+            $response = Http::withToken($this->token)->get($this->employeesUrl . $employeeId . '/');
+            
+            if ($response->successful()) {
+                return $response->json();
+            }
+            
+            if (in_array($response->status(), [401, 403])) {
+                Log::warning('Token appears invalid for employee fetch, attempting re-authentication');
+                $this->clearToken();
+                if ($this->authenticate()) {
+                    $response = Http::withToken($this->token)->get($this->employeesUrl . $employeeId . '/');
+                    if ($response->successful()) {
+                        return $response->json();
+                    }
+                }
+            }
+            
+            Log::error('Failed to get employee from biometric system', [
+                'employee_id' => $employeeId,
+                'status' => $response->status(),
+                'response' => $response->body()
+            ]);
+            return null;
+            
+        } catch (\Exception $e) {
+            Log::error('Exception getting employee from biometric system: ' . $e->getMessage());
+            return null;
+        }
     }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, User, Phone, Mail, Calendar, Settings, Grid, List } from 'lucide-react';
-import { workerService, biometricService } from '../api/laravel';
+import { Plus, Search, Edit, Trash2, User, Phone, Mail, Settings, Grid, List } from 'lucide-react';
+import { biometricService } from '../api/laravel';
 import toast from 'react-hot-toast';
 import { LanguageContext } from '../contexts/LanguageContext';
 import WorkerCard from '../components/workers/WorkerCard';
@@ -19,7 +19,7 @@ interface Worker {
   notes: string;
   biometric_id?: string;
   employee_code?: string;
-  biometric_data?: any;
+  biometric_data?: Record<string, unknown>;
 }
 
 const Workers = () => {
@@ -31,18 +31,37 @@ const Workers = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   // تم إزالة showCreateModal لأن البيانات تأتي من البصمة فقط
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
-  // تم إزالة editingWorker و newWorker لأن البيانات للعرض فقط من البصمة
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [areas, setAreas] = useState<{id: number, area_name: string, area_code: string}[]>([]);
+  const [departments, setDepartments] = useState<{id: number, dept_name: string, dept_code: string}[]>([]);
+  const [positions, setPositions] = useState<{id: number, position_name: string}[]>([]);
+  
+  const [totalWorkers, setTotalWorkers] = useState(0);
+
+  const [newWorker, setNewWorker] = useState({
+    emp_code: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    mobile: '',
+    department: '',
+    area: [] as number[],
+    position: '',
+    hire_date: ''
+  });
 
   useEffect(() => {
     loadWorkers();
+    loadSupportData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadWorkers = async () => {
     try {
       setLoading(true);
-      // Get workers directly from biometric system
-      const response = await biometricService.getBiometricWorkers();
-      setWorkers(response.data);
+      const response = await biometricService.getBiometricWorkers(50);
+      setWorkers(response.data.data || response.data);
+      setTotalWorkers(response.data.count || response.data.length);
     } catch (error) {
       console.error('Error loading workers:', error);
       toast.error(t('common.error'));
@@ -55,8 +74,6 @@ const Workers = () => {
     try {
       setLoading(true);
       toast.loading(t('workers.refreshing'));
-      
-      // Reload workers from biometric system
       await loadWorkers();
       toast.success(t('workers.refreshed'));
     } catch (error) {
@@ -67,23 +84,94 @@ const Workers = () => {
     }
   };
 
-  // تم إزالة دوال إنشاء وتعديل العمال لأن البيانات للعرض فقط من البصمة
-
-  // تم إزالة دالة الحذف لأن البيانات للعرض فقط من البصمة
-
-  const handleToggleStatus = async (id: number, isActive: boolean) => {
+  const loadSupportData = async () => {
     try {
-      if (isActive) {
-        await workerService.activate(id);
-        toast.success(t('common.success'));
-      } else {
-        await workerService.deactivate(id);
-        toast.success(t('common.success'));
+      const [areasResponse, departmentsResponse, positionsResponse] = await Promise.all([
+        biometricService.getAreas(),
+        biometricService.getDepartments(),
+        biometricService.getPositions()
+      ]);
+      
+      if (areasResponse.data.success) {
+        setAreas(areasResponse.data.data);
       }
-      loadWorkers();
+      if (departmentsResponse.data.success) {
+        setDepartments(departmentsResponse.data.data);
+      }
+      if (positionsResponse.data.success) {
+        setPositions(positionsResponse.data.data);
+      }
     } catch (error) {
-      console.error('Error toggling worker status:', error);
+      console.error('Error loading support data:', error);
+    }
+  };
+  
+  const handleToggleStatus = (id: number, status: boolean) => {
+    // This functionality might need to be implemented via the biometric API if available.
+    // For now, it will only affect the local view.
+    setWorkers(workers.map(w => w.id === id ? {...w, is_active: status} : w));
+  };
+
+  const handleCreateWorker = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      
+      const workerData = {
+        ...newWorker,
+        department: parseInt(newWorker.department),
+        area: newWorker.area,
+        position: newWorker.position ? parseInt(newWorker.position) : undefined,
+        hire_date: newWorker.hire_date || new Date().toISOString().split('T')[0]
+      };
+
+      const response = await biometricService.createEmployee(workerData);
+      
+      if (response.data.success) {
+        toast.success(t('workers.createSuccess'));
+        setShowCreateModal(false);
+        setNewWorker({
+          emp_code: '',
+          first_name: '',
+          last_name: '',
+          email: '',
+          mobile: '',
+          department: '',
+          area: [],
+          position: '',
+          hire_date: ''
+        });
+        loadWorkers(); // Refresh workers list
+      } else {
+        toast.error(response.data.message || t('common.error'));
+      }
+    } catch (error) {
+      console.error('Error creating worker:', error);
       toast.error(t('common.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteWorker = async (id: number) => {
+    if (!confirm(t('common.deleteConfirm'))) return;
+
+    try {
+      setLoading(true);
+      
+      const response = await biometricService.deleteEmployee(id);
+      
+      if (response.data.success) {
+        toast.success(t('workers.deleteSuccess'));
+        loadWorkers(); // Refresh workers list
+      } else {
+        toast.error(response.data.message || t('common.error'));
+      }
+    } catch (error) {
+      console.error('Error deleting worker:', error);
+      toast.error(t('common.error'));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,8 +184,6 @@ const Workers = () => {
                          (statusFilter === 'inactive' && !worker.is_active);
     return matchesSearch && matchesDepartment && matchesStatus;
   });
-
-  const departments = [...new Set(workers.map(w => w.department))];
 
   if (loading) {
     return (
@@ -145,7 +231,13 @@ const Workers = () => {
             <Settings className="h-5 w-5" />
             {t('workers.refresh')}
           </button>
-          {/* إزالة زر إضافة عامل جديد لأن البيانات تأتي من البصمة فقط */}
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            {t('workers.addWorker')}
+          </button>
         </div>
       </div>
 
@@ -155,7 +247,7 @@ const Workers = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">{t('workers.total')}</p>
-              <p className="text-2xl font-bold text-gray-900">{workers.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{totalWorkers}</p>
             </div>
             <User className="h-8 w-8 text-blue-600" />
           </div>
@@ -212,7 +304,7 @@ const Workers = () => {
               className="w-full p-2 border rounded-lg"
             >
               <option value="all">{t('workers.allDepartments')}</option>
-              {departments.map(dep => (
+              {[...new Set(workers.map(w => w.department))].filter(Boolean).map(dep => (
                 <option key={dep} value={dep}>{dep}</option>
               ))}
             </select>
@@ -254,9 +346,9 @@ const Workers = () => {
             filteredWorkers.map(worker => (
               <WorkerCard 
                 key={worker.id} 
-                worker={worker} 
-                onToggleStatus={handleToggleStatus} 
+                worker={worker}
                 onEdit={setEditingWorker}
+                onDelete={handleDeleteWorker}
                 t={t}
               />
             ))
@@ -333,120 +425,156 @@ const Workers = () => {
         </div>
       )}
 
-      {/* Create/Edit Modal */}
-      {(showCreateModal || editingWorker) && (
+      {/* Create Worker Modal */}
+      {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <form onSubmit={editingWorker ? handleUpdateWorker : handleCreateWorker} className="p-8 space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {editingWorker ? t('workers.modal.editTitle') : t('workers.modal.addTitle')}
-              </h2>
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4">{t('workers.modal.addTitle')}</h2>
+            <form onSubmit={handleCreateWorker}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="emp_code" className="block text-sm font-medium text-gray-700">Employee Code *</label>
+                  <input
+                    type="text"
+                    id="emp_code"
+                    value={newWorker.emp_code}
+                    onChange={(e) => setNewWorker({...newWorker, emp_code: e.target.value})}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">First Name *</label>
+                  <input
+                    type="text"
+                    id="first_name"
+                    value={newWorker.first_name}
+                    onChange={(e) => setNewWorker({...newWorker, first_name: e.target.value})}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700">Last Name</label>
+                  <input
+                    type="text"
+                    id="last_name"
+                    value={newWorker.last_name}
+                    onChange={(e) => setNewWorker({...newWorker, last_name: e.target.value})}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={newWorker.email}
+                    onChange={(e) => setNewWorker({...newWorker, email: e.target.value})}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="mobile" className="block text-sm font-medium text-gray-700">Mobile</label>
+                  <input
+                    type="tel"
+                    id="mobile"
+                    value={newWorker.mobile}
+                    onChange={(e) => setNewWorker({...newWorker, mobile: e.target.value})}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="department" className="block text-sm font-medium text-gray-700">Department *</label>
+                  <select
+                    id="department"
+                    value={newWorker.department}
+                    onChange={(e) => setNewWorker({...newWorker, department: e.target.value})}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  >
+                    <option value="">Select Department</option>
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>{dept.dept_name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="position" className="block text-sm font-medium text-gray-700">Position</label>
+                  <select
+                    id="position"
+                    value={newWorker.position}
+                    onChange={(e) => setNewWorker({...newWorker, position: e.target.value})}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  >
+                    <option value="">Select Position</option>
+                    {positions.map((pos) => (
+                      <option key={pos.id} value={pos.id}>{pos.position_name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="hire_date" className="block text-sm font-medium text-gray-700">Hire Date</label>
+                  <input
+                    type="date"
+                    id="hire_date"
+                    value={newWorker.hire_date}
+                    onChange={(e) => setNewWorker({...newWorker, hire_date: e.target.value})}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('workers.form.name')}</label>
-                  <input type="text" name="name" id="name" 
-                         value={editingWorker ? editingWorker.name : newWorker.name}
-                         onChange={e => editingWorker ? setEditingWorker({...editingWorker, name: e.target.value}) : setNewWorker({...newWorker, name: e.target.value})}
-                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
-                </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">{t('workers.form.email')}</label>
-                  <input type="email" name="email" id="email"
-                         value={editingWorker ? editingWorker.email : newWorker.email}
-                         onChange={e => editingWorker ? setEditingWorker({...editingWorker, email: e.target.value}) : setNewWorker({...newWorker, email: e.target.value})}
-                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('workers.form.phone')}</label>
-                  <input type="tel" name="phone" id="phone"
-                         value={editingWorker ? editingWorker.phone : newWorker.phone}
-                         onChange={e => editingWorker ? setEditingWorker({...editingWorker, phone: e.target.value}) : setNewWorker({...newWorker, phone: e.target.value})}
-                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-                </div>
-                <div>
-                  <label htmlFor="role" className="block text-sm font-medium text-gray-700">{t('workers.form.role')}</label>
-                  <input type="text" name="role" id="role"
-                         value={editingWorker ? editingWorker.role : newWorker.role}
-                         onChange={e => editingWorker ? setEditingWorker({...editingWorker, role: e.target.value}) : setNewWorker({...newWorker, role: e.target.value})}
-                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700">Areas * (Select at least one)</label>
+                <div className="mt-2 space-y-2 max-h-40 overflow-y-auto">
+                  {areas.map((area) => (
+                    <label key={area.id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={newWorker.area.includes(area.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setNewWorker({...newWorker, area: [...newWorker.area, area.id]});
+                          } else {
+                            setNewWorker({...newWorker, area: newWorker.area.filter(id => id !== area.id)});
+                          }
+                        }}
+                        className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-900">{area.area_name}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-gray-700">{t('workers.form.department')}</label>
-                  <input type="text" name="department" id="department"
-                         value={editingWorker ? editingWorker.department : newWorker.department}
-                         onChange={e => editingWorker ? setEditingWorker({...editingWorker, department: e.target.value}) : setNewWorker({...newWorker, department: e.target.value})}
-                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-                </div>
-                <div>
-                  <label htmlFor="salary" className="block text-sm font-medium text-gray-700">{t('workers.form.salary')}</label>
-                  <input type="number" name="salary" id="salary"
-                         value={editingWorker ? editingWorker.salary : newWorker.salary}
-                         onChange={e => editingWorker ? setEditingWorker({...editingWorker, salary: parseFloat(e.target.value)}) : setNewWorker({...newWorker, salary: e.target.value})}
-                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="hire_date" className="block text-sm font-medium text-gray-700">{t('workers.form.hireDate')}</label>
-                  <input type="date" name="hire_date" id="hire_date"
-                         value={editingWorker ? editingWorker.hire_date : newWorker.hire_date}
-                         onChange={e => editingWorker ? setEditingWorker({...editingWorker, hire_date: e.target.value}) : setNewWorker({...newWorker, hire_date: e.target.value})}
-                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-                </div>
-                <div>
-                  <label htmlFor="skills" className="block text-sm font-medium text-gray-700">{t('workers.form.skills')}</label>
-                  <input type="text" name="skills" id="skills"
-                         value={editingWorker ? (Array.isArray(editingWorker.skills) ? editingWorker.skills.join(', ') : '') : newWorker.skills}
-                         onChange={e => editingWorker ? setEditingWorker({...editingWorker, skills: e.target.value.split(',').map(s => s.trim())}) : setNewWorker({...newWorker, skills: e.target.value})}
-                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('workers.form.notes')}</label>
-                <textarea name="notes" id="notes" rows="3"
-                          value={editingWorker ? editingWorker.notes : newWorker.notes}
-                          onChange={e => editingWorker ? setEditingWorker({...editingWorker, notes: e.target.value}) : setNewWorker({...newWorker, notes: e.target.value})}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
-              </div>
-
-              {/* Biometric Information (read-only) */}
-              {editingWorker && editingWorker.biometric_id && (
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-3">{t('workers.biometricInfo')}</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">{t('workers.biometricId')}</label>
-                      <input type="text" value={editingWorker.biometric_id} className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm" readOnly />
-                    </div>
-                    
-                    {editingWorker.employee_code && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">{t('workers.employeeCode')}</label>
-                        <input type="text" value={editingWorker.employee_code} className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm" readOnly />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-4 pt-4">
-                <button type="button" onClick={() => { setShowCreateModal(false); setEditingWorker(null); }}
-                        className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                  {t('common.cancel')}
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setNewWorker({
+                      emp_code: '',
+                      first_name: '',
+                      last_name: '',
+                      email: '',
+                      mobile: '',
+                      department: '',
+                      area: [],
+                      position: '',
+                      hire_date: ''
+                    });
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
                 </button>
-                <button type="submit"
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  {editingWorker ? t('common.update') : t('common.save')}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {loading ? 'Creating...' : 'Create Employee'}
                 </button>
               </div>
             </form>

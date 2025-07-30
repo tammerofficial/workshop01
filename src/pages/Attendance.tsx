@@ -1,40 +1,39 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Clock, Users, CheckCircle, XCircle, Calendar, TrendingUp, RefreshCw } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, TrendingUp, RefreshCw } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { LanguageContext } from '../contexts/LanguageContext';
 import AttendanceFilter from '../components/attendance/AttendanceFilter';
 import AttendanceCalendar from '../components/attendance/AttendanceCalendar';
 import AttendanceChart from '../components/attendance/AttendanceChart';
+import { biometricService } from '../api/laravel';
+import toast from 'react-hot-toast';
 
 interface AttendanceRecord {
   id: number;
   worker_id: number;
-  worker: {
-    id: number;
-    name: string;
-    role: string;
-    department: string;
-  };
-  attendance_date: string;
-  check_in_time: string | null;
-  check_out_time: string | null;
-  total_hours: number;
-  status: string;
-  device_id: string | null;
-  punch_state: string | null;
+  worker_name: string;
+  employee_code: string | null;
+  punch_time: string;
+  punch_state: number;
+  punch_state_display: string;
   verification_type: string | null;
   terminal_alias: string | null;
-  biometric_transaction_id: string | null;
+  date: string;
+  time: string;
+  day_of_week: string;
+  is_late: boolean;
+  biometric_data: Record<string, any>;
 }
 
 interface AttendanceStats {
-  totalWorkers: number;
-  presentToday: number;
-  absentToday: number;
-  totalHours: number;
-  lateToday: number;
-  averageHoursPerDay: number;
-  attendanceRate: number;
+  total_records: number;
+  total_workers: number;
+  total_days: number;
+  total_hours: number;
+  avg_hours_per_day: number;
+  check_ins: number;
+  check_outs: number;
+  late_arrivals: number;
 }
 
 const Attendance: React.FC = () => {
@@ -48,13 +47,14 @@ const Attendance: React.FC = () => {
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   
   const [stats, setStats] = useState<AttendanceStats>({
-    totalWorkers: 0,
-    presentToday: 0,
-    absentToday: 0,
-    totalHours: 0,
-    lateToday: 0,
-    averageHoursPerDay: 0,
-    attendanceRate: 0
+    total_records: 0,
+    total_workers: 0,
+    total_days: 0,
+    total_hours: 0,
+    avg_hours_per_day: 0,
+    check_ins: 0,
+    check_outs: 0,
+    late_arrivals: 0
   });
 
   const [filters, setFilters] = useState({
@@ -76,137 +76,91 @@ const Attendance: React.FC = () => {
     try {
       setLoading(true);
       
-      // In a real implementation, this would be an API call
-      // For now, we'll simulate with mock data
-      setTimeout(() => {
-        const mockAttendance: AttendanceRecord[] = [
-          {
-            id: 1,
-            worker_id: 1,
-            worker: { id: 1, name: 'Youssef', role: 'Tailor', department: 'Production' },
-            attendance_date: '2025-07-30',
-            check_in_time: '09:00',
-            check_out_time: '17:00',
-            total_hours: 8,
-            status: 'present',
-            device_id: 'ZKTeco-001',
-            punch_state: 'in',
-            verification_type: 'fingerprint',
-            terminal_alias: 'Main Entrance',
-            biometric_transaction_id: '12345'
-          },
-          {
-            id: 2,
-            worker_id: 2,
-            worker: { id: 2, name: 'Mohammed', role: 'Cutter', department: 'Production' },
-            attendance_date: '2025-07-30',
-            check_in_time: '08:45',
-            check_out_time: '17:30',
-            total_hours: 8.75,
-            status: 'present',
-            device_id: 'ZKTeco-002',
-            punch_state: 'in',
-            verification_type: 'fingerprint',
-            terminal_alias: 'Main Entrance',
-            biometric_transaction_id: '12346'
-          },
-          {
-            id: 3,
-            worker_id: 3,
-            worker: { id: 3, name: 'Ahmed', role: 'Finisher', department: 'Quality Control' },
-            attendance_date: '2025-07-30',
-            check_in_time: null,
-            check_out_time: null,
-            total_hours: 0,
-            status: 'absent',
-            device_id: null,
-            punch_state: null,
-            verification_type: null,
-            terminal_alias: null,
-            biometric_transaction_id: null
-          },
-          {
-            id: 4,
-            worker_id: 4,
-            worker: { id: 4, name: 'Sara', role: 'Designer', department: 'Design' },
-            attendance_date: '2025-07-30',
-            check_in_time: '09:15',
-            check_out_time: '17:00',
-            total_hours: 7.75,
-            status: 'late',
-            device_id: 'ZKTeco-001',
-            punch_state: 'in',
-            verification_type: 'fingerprint',
-            terminal_alias: 'Main Entrance',
-            biometric_transaction_id: '12347'
-          },
-          {
-            id: 5,
-            worker_id: 5,
-            worker: { id: 5, name: 'Fatima', role: 'Supervisor', department: 'Management' },
-            attendance_date: '2025-07-30',
-            check_in_time: '08:30',
-            check_out_time: '18:00',
-            total_hours: 9.5,
-            status: 'present',
-            device_id: 'ZKTeco-002',
-            punch_state: 'in',
-            verification_type: 'fingerprint',
-            terminal_alias: 'Main Entrance',
-            biometric_transaction_id: '12348'
-          }
-        ];
-
-        setAttendance(mockAttendance);
-        
-        // Calculate stats
+      // Get attendance data from biometric system
+      const params = {
+        start_date: filters.startDate,
+        end_date: filters.endDate,
+        worker_id: filters.workerId || undefined
+      };
+      
+      const response = await biometricService.getBiometricAttendance(params);
+      
+      if (response.data.success) {
+        setAttendance(response.data.data);
+        setStats(response.data.stats);
+      } else {
+        setAttendance([]);
         setStats({
-          totalWorkers: 5,
-          presentToday: 3,
-          absentToday: 1,
-          lateToday: 1,
-          totalHours: mockAttendance.reduce((sum, record) => sum + record.total_hours, 0),
-          averageHoursPerDay: mockAttendance.filter(r => r.total_hours > 0).reduce((sum, record) => sum + record.total_hours, 0) / 
-                             mockAttendance.filter(r => r.total_hours > 0).length,
-          attendanceRate: (3 / 5) * 100 // (present / total) * 100
+          total_records: 0,
+          total_workers: 0,
+          total_days: 0,
+          total_hours: 0,
+          avg_hours_per_day: 0,
+          check_ins: 0,
+          check_outs: 0,
+          late_arrivals: 0
         });
-        
-        setLoading(false);
-      }, 1000);
+        toast.error(response.data.message || t('attendance.noDataFound'));
+      }
     } catch (error) {
       console.error('Error loading attendance data:', error);
+      toast.error(t('common.error'));
+      setAttendance([]);
+      setStats({
+        total_records: 0,
+        total_workers: 0,
+        total_days: 0,
+        total_hours: 0,
+        avg_hours_per_day: 0,
+        check_ins: 0,
+        check_outs: 0,
+        late_arrivals: 0
+      });
+    } finally {
       setLoading(false);
     }
   };
 
   const loadWorkers = async () => {
-    // In a real implementation, this would be an API call
-    const mockWorkers = [
-      { id: '1', name: 'Youssef' },
-      { id: '2', name: 'Mohammed' },
-      { id: '3', name: 'Ahmed' },
-      { id: '4', name: 'Sara' },
-      { id: '5', name: 'Fatima' }
-    ];
-    
-    const mockDepartments = ['Production', 'Quality Control', 'Design', 'Management'];
-    
-    setWorkers(mockWorkers);
-    setDepartments(mockDepartments);
+    try {
+      // Get workers from biometric system
+      const response = await biometricService.getBiometricWorkers();
+      
+      if (response.data && Array.isArray(response.data)) {
+        const workers = response.data.map((worker: {id: number, name: string, department: string}) => ({
+          id: worker.id.toString(),
+          name: worker.name
+        }));
+        setWorkers(workers);
+        
+        // Extract unique departments
+        const uniqueDepartments = [...new Set(response.data.map((worker: {department: string}) => worker.department))];
+        setDepartments(uniqueDepartments.filter(Boolean));
+      }
+    } catch (error) {
+      console.error('Error loading workers:', error);
+      // Fallback to empty data
+      setWorkers([]);
+      setDepartments([]);
+    }
   };
 
   const syncBiometricData = async () => {
     try {
       setSyncing(true);
+      toast.loading(t('attendance.syncing'));
       
-      // In a real implementation, this would call the biometric sync endpoint
-      // For now, we'll simulate with a timeout
-      setTimeout(() => {
-        loadAttendanceData();
-        setSyncing(false);
-      }, 2000);
+      // Sync attendance data from biometric system
+      await biometricService.syncAttendance();
+      
+      // Reload data after sync
+      await loadAttendanceData();
+      
+      toast.success(t('attendance.syncSuccess'));
     } catch (error) {
       console.error('Error syncing biometric data:', error);
+      toast.error(t('attendance.syncError'));
+    } finally {
       setSyncing(false);
     }
   };
@@ -219,54 +173,11 @@ const Attendance: React.FC = () => {
     setFilters(prev => ({ ...prev, view }));
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'present': return 'bg-green-100 text-green-800';
-      case 'absent': return 'bg-red-100 text-red-800';
-      case 'late': return 'bg-yellow-100 text-yellow-800';
-      case 'half_day': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // Functions removed as they are not used with biometric data
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'present': return <CheckCircle size={16} className="text-green-600" />;
-      case 'absent': return <XCircle size={16} className="text-red-600" />;
-      case 'late': return <Clock size={16} className="text-yellow-600" />;
-      default: return <Clock size={16} className="text-gray-600" />;
-    }
-  };
-
-  // Prepare data for calendar view
-  const calendarData = workers.map(worker => {
-    const workerAttendance = attendance.filter(a => a.worker_id === parseInt(worker.id));
-    
-    return {
-      workerId: parseInt(worker.id),
-      workerName: worker.name,
-      days: workerAttendance.map(a => ({
-        date: a.attendance_date,
-        status: a.status as any,
-        checkIn: a.check_in_time,
-        checkOut: a.check_out_time,
-        totalHours: a.total_hours
-      }))
-    };
-  });
-
-  // Prepare data for chart view
-  const chartData = workers.map(worker => {
-    const workerAttendance = attendance.filter(a => a.worker_id === parseInt(worker.id));
-    
-    return {
-      name: worker.name,
-      present: workerAttendance.filter(a => a.status === 'present').length,
-      absent: workerAttendance.filter(a => a.status === 'absent').length,
-      late: workerAttendance.filter(a => a.status === 'late').length,
-      totalHours: workerAttendance.reduce((sum, a) => sum + a.total_hours, 0)
-    };
-  });
+  // Simplified data for biometric attendance (table view only for now)
+  const calendarData: any[] = []; // Disabled calendar view for biometric data
+  const chartData: any[] = []; // Disabled chart view for biometric data
 
   if (loading) {
     return (
@@ -305,8 +216,8 @@ const Attendance: React.FC = () => {
         <div className={`p-6 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('attendance.presentToday')}</p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.presentToday}</p>
+              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Check Ins</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.check_ins}</p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
               <CheckCircle className="text-green-600" size={24} />
@@ -317,8 +228,8 @@ const Attendance: React.FC = () => {
         <div className={`p-6 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('attendance.absentToday')}</p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.absentToday}</p>
+              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Check Outs</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.check_outs}</p>
             </div>
             <div className="p-3 bg-red-100 rounded-lg">
               <XCircle className="text-red-600" size={24} />
@@ -330,7 +241,7 @@ const Attendance: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('attendance.totalHours')}</p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.totalHours.toFixed(1)}h</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.total_hours.toFixed(1)}h</p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg">
               <Clock className="text-blue-600" size={24} />
@@ -341,8 +252,8 @@ const Attendance: React.FC = () => {
         <div className={`p-6 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('attendance.attendanceRate')}</p>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.attendanceRate.toFixed(0)}%</p>
+              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Late Arrivals</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.late_arrivals}</p>
             </div>
             <div className="p-3 bg-purple-100 rounded-lg">
               <TrendingUp className="text-purple-600" size={24} />
@@ -374,28 +285,28 @@ const Attendance: React.FC = () => {
               <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
                 <tr>
                   <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    {t('attendance.worker')}
+                    Worker
                   </th>
                   <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    {t('attendance.department')}
+                    Day
                   </th>
                   <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                     {t('attendance.date')}
                   </th>
                   <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    {t('attendance.status')}
+                    Action
                   </th>
                   <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    {t('attendance.checkIn')}
+                    Time
                   </th>
                   <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    {t('attendance.checkOut')}
+                    Verification
                   </th>
                   <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    {t('attendance.totalHours')}
+                    Punch Date
                   </th>
                   <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    {t('attendance.device')}
+                    Terminal
                   </th>
                 </tr>
               </thead>
@@ -404,35 +315,42 @@ const Attendance: React.FC = () => {
                   <tr key={record.id} className={`hover:${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                       <div>
-                        <div className="font-medium">{record.worker.name}</div>
-                        <div className="text-xs">{record.worker.role}</div>
+                        <div className="font-medium">{record.worker_name}</div>
+                        <div className="text-xs">{record.employee_code || 'N/A'}</div>
                       </div>
                     </td>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                      {record.worker.department}
+                      {record.day_of_week}
                     </td>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                      {record.attendance_date}
+                      {record.date}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
-                        {getStatusIcon(record.status)}
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(record.status)}`}>
-                          {t(`attendance.${record.status}`)}
+                        {record.punch_state === 0 ? <CheckCircle size={16} className="text-green-600" /> : <XCircle size={16} className="text-red-600" />}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          record.punch_state === 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {record.punch_state_display}
                         </span>
+                        {record.is_late && (
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Late
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                      {record.check_in_time || t('attendance.notAvailable')}
+                      {record.time}
                     </td>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                      {record.check_out_time || t('attendance.notAvailable')}
+                      {record.verification_type || t('attendance.notAvailable')}
                     </td>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {record.total_hours}h
+                      {new Date(record.punch_time).toLocaleDateString()}
                     </td>
                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                      {record.device_id || t('attendance.notAvailable')}
+                      {record.terminal_alias || t('attendance.notAvailable')}
                     </td>
                   </tr>
                 ))}

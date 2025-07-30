@@ -18,12 +18,12 @@ interface WorkerCardProps {
     biometric_id?: string;
     employee_code?: string;
   };
-  onToggleStatus: (id: number, isActive: boolean) => void;
   onEdit: (worker: any) => void;
+  onDelete: (id: number) => void;
   t: (key: string) => string;
 }
 
-const WorkerCard: React.FC<WorkerCardProps> = ({ worker, onToggleStatus, onEdit, t }) => {
+const WorkerCard: React.FC<WorkerCardProps> = ({ worker, onEdit, onDelete, t }) => {
   // Function to generate random gradient for avatar background
   const getAvatarGradient = (id: number) => {
     const colors = [
@@ -130,36 +130,28 @@ const WorkerCard: React.FC<WorkerCardProps> = ({ worker, onToggleStatus, onEdit,
 
         {/* Actions */}
         <div className="mt-6 flex justify-between items-center">
-          <div>
-            <button
-              onClick={() => onToggleStatus(worker.id, !worker.is_active)}
-              className={`px-3 py-1 rounded text-xs font-medium ${
-                worker.is_active 
-                  ? 'bg-red-100 text-red-800 hover:bg-red-200' 
-                  : 'bg-green-100 text-green-800 hover:bg-green-200'
-              }`}
-            >
-              {worker.is_active ? (
-                <span className="flex items-center gap-1"><X className="h-3 w-3" /> {t('workers.deactivate')}</span>
-              ) : (
-                <span className="flex items-center gap-1"><Check className="h-3 w-3" /> {t('workers.activate')}</span>
-              )}
-            </button>
-          </div>
-          
           <div className="flex space-x-2">
             <button
               onClick={() => onEdit(worker)}
               className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
+              title="تعديل"
             >
               <Edit className="h-4 w-4" />
             </button>
             <Link
               to={`/workers/${worker.id}`}
               className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full"
+              title="عرض التفاصيل"
             >
               <Eye className="h-4 w-4" />
             </Link>
+            <button
+              onClick={() => onDelete(worker.id)}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-full"
+              title="حذف"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>

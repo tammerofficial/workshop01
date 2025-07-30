@@ -226,6 +226,9 @@ Route::prefix('permissions')->group(function () {
     Route::get('/grouped', [PermissionController::class, 'getGroupedPermissions']);
 });
 
+// General Attendance Route (direct from biometric system)
+Route::get('attendance', [BiometricController::class, 'getBiometricAttendance']);
+
 // Biometric System Integration Routes
 Route::prefix('biometric')->group(function () {
     Route::post('/sync-workers', [BiometricController::class, 'syncWorkers']);
@@ -234,4 +237,15 @@ Route::prefix('biometric')->group(function () {
     Route::get('/worker/{id}/attendance', [BiometricController::class, 'getWorkerAttendance']);
     Route::get('/token-info', [BiometricController::class, 'getTokenInfo']);
     Route::get('/workers', [BiometricController::class, 'getBiometricWorkers']);
+    
+    // CRUD Operations for Employees
+    Route::post('/employees', [BiometricController::class, 'createEmployee']);
+    Route::get('/employees/{id}', [BiometricController::class, 'getEmployee']);
+    Route::put('/employees/{id}', [BiometricController::class, 'updateEmployee']);
+    Route::delete('/employees/{id}', [BiometricController::class, 'deleteEmployee']);
+    
+    // Support Data Routes
+    Route::get('/areas', [BiometricController::class, 'getAreas']);
+    Route::get('/departments', [BiometricController::class, 'getDepartments']);
+    Route::get('/positions', [BiometricController::class, 'getPositions']);
 }); 

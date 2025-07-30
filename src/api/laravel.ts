@@ -147,7 +147,19 @@ export const biometricService = {
   getAttendanceReport: (params?: any) => api.get('/biometric/attendance-report', { params }),
   getWorkerAttendance: (id: number, params?: any) => api.get(`/biometric/worker/${id}/attendance`, { params }),
   getTokenInfo: () => api.get('/biometric/token-info'),
-  getBiometricWorkers: () => api.get('/biometric/workers'), // جديد: جلب العمال من البصمة مباشرة
+  getBiometricWorkers: (pageSize = 50) => api.get(`/biometric/workers?page_size=${pageSize}`),
+  getBiometricAttendance: (params?: any) => api.get('/attendance', { params }),
+  
+  // CRUD Operations for Employees
+  createEmployee: (data: any) => api.post('/biometric/employees', data),
+  getEmployee: (id: number) => api.get(`/biometric/employees/${id}`),
+  updateEmployee: (id: number, data: any) => api.put(`/biometric/employees/${id}`, data),
+  deleteEmployee: (id: number) => api.delete(`/biometric/employees/${id}`),
+  
+  // Support Data
+  getAreas: () => api.get('/biometric/areas'),
+  getDepartments: () => api.get('/biometric/departments'),
+  getPositions: () => api.get('/biometric/positions'),
 };
 
 export default api; 
