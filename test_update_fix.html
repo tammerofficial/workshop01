@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Employee Update Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .info { color: #3b82f6; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        #log {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔧 Employee Update Fix Test</h1>
+        <p>This page tests the fixed employee update functionality with the correct biometric ID.</p>
+        
+        <div>
+            <button onclick="testGetEmployees()">1. Get All Employees</button>
+            <button onclick="testUpdateEmployee()">2. Test Update Employee (ID: 27)</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Test Log</h2>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            logElement.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        async function testGetEmployees() {
+            try {
+                log('🔍 Fetching employees from biometric API...', 'info');
+                
+                const response = await fetch(`${API_BASE}/biometric/workers?page_size=50`);
+                const data = await response.json();
+                
+                if (data.data && data.data.length > 0) {
+                    log(`✅ Found ${data.data.length} employees`, 'success');
+                    
+                    // Find employee with code 222
+                    const employee222 = data.data.find(emp => emp.employee_code === '222');
+                    if (employee222) {
+                        log(`📋 Employee 222 found:`, 'success');
+                        log(`   - Name: ${employee222.name}`, 'info');
+                        log(`   - Biometric ID: ${employee222.biometric_id}`, 'info');
+                        log(`   - Employee Code: ${employee222.employee_code}`, 'info');
+                        log(`   - Department: ${employee222.department}`, 'info');
+                    } else {
+                        log('❌ Employee with code 222 not found', 'error');
+                    }
+                } else {
+                    log('❌ No employees found', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Error fetching employees: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testUpdateEmployee() {
+            try {
+                log('🔄 Testing employee update with correct biometric ID (27)...', 'info');
+                
+                const updateData = {
+                    emp_code: "222",
+                    first_name: "asmaa nasser UPDATED",
+                    last_name: "Alshammari UPDATED",
+                    email: "updated@tammerofficial.com",
+                    mobile: "99007142",
+                    department: 2,
+                    area: [2],
+                    position: 1,
+                    hire_date: "2003-01-02"
+                };
+                
+                log(`📤 Sending update request to: ${API_BASE}/biometric/employees/27`, 'info');
+                log(`📋 Update data: ${JSON.stringify(updateData, null, 2)}`, 'info');
+                
+                const response = await fetch(`${API_BASE}/biometric/employees/27`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    log('✅ Employee updated successfully!', 'success');
+                    log(`📋 Updated data: ${JSON.stringify(result.data, null, 2)}`, 'success');
+                } else {
+                    log(`❌ Update failed: ${result.message || 'Unknown error'}`, 'error');
+                    log(`📋 Response: ${JSON.stringify(result, null, 2)}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Error updating employee: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-run tests on page load
+        window.onload = function() {
+            log('🚀 Employee Update Fix Test initialized', 'success');
+            log('👆 Click buttons above to run tests', 'info');
+        };
+    </script>
+</body>
+</html>

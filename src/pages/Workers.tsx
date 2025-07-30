@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Plus, Search, Trash2, User, Phone, Mail, Settings, Grid, List } from 'lucide-react';
+import { Plus, Search, Trash2, User, Phone, Mail, Settings, Grid, List, X, RefreshCw } from 'lucide-react';
 import { biometricService } from '../api/laravel';
 import toast from 'react-hot-toast';
 import { LanguageContext } from '../contexts/LanguageContext';
@@ -16,7 +16,7 @@ interface Worker {
   hire_date: string;
   is_active: boolean;
   skills: string[];
-  notes: string;
+  notes?: string;
   biometric_id?: string;
   employee_code?: string;
   biometric_data?: Record<string, unknown>;
@@ -32,6 +32,8 @@ const Workers = () => {
   // تم إزالة showCreateModal لأن البيانات تأتي من البصمة فقط
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
   const [areas, setAreas] = useState<{id: number, area_name: string, area_code: string}[]>([]);
   const [departments, setDepartments] = useState<{id: number, dept_name: string, dept_code: string}[]>([]);
   const [positions, setPositions] = useState<{id: number, position_name: string}[]>([]);
@@ -39,6 +41,18 @@ const Workers = () => {
   const [totalWorkers, setTotalWorkers] = useState(0);
 
   const [newWorker, setNewWorker] = useState({
+    emp_code: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    mobile: '',
+    department: '',
+    area: [] as number[],
+    position: '',
+    hire_date: ''
+  });
+
+  const [editWorkerData, setEditWorkerData] = useState({
     emp_code: '',
     first_name: '',
     last_name: '',
@@ -84,7 +98,39 @@ const Workers = () => {
     }
   };
 
+  const refreshSupportData = async () => {
+    try {
+      // مسح الـ cache وإعادة تحميل البيانات
+      localStorage.removeItem('biometric_areas');
+      localStorage.removeItem('biometric_departments');
+      localStorage.removeItem('biometric_positions');
+      localStorage.removeItem('biometric_cache_timestamp');
+      
+      toast.loading('Refreshing departments and positions...');
+      await loadSupportData();
+      toast.success('Departments and positions refreshed successfully!');
+    } catch (error) {
+      console.error('Error refreshing support data:', error);
+      toast.error('Error refreshing data');
+    }
+  };
+
   const loadSupportData = async () => {
+    // تحقق من وجود البيانات في cache محلي
+    const cachedAreas = localStorage.getItem('biometric_areas');
+    const cachedDepartments = localStorage.getItem('biometric_departments');
+    const cachedPositions = localStorage.getItem('biometric_positions');
+    const cacheTimestamp = localStorage.getItem('biometric_cache_timestamp');
+    
+    // استخدام cache إذا كان عمره أقل من 10 دقائق
+    const cacheAge = cacheTimestamp ? Date.now() - parseInt(cacheTimestamp) : Infinity;
+    if (cacheAge < 10 * 60 * 1000 && cachedAreas && cachedDepartments && cachedPositions) {
+      setAreas(JSON.parse(cachedAreas));
+      setDepartments(JSON.parse(cachedDepartments));
+      setPositions(JSON.parse(cachedPositions));
+      return;
+    }
+    
     try {
       const [areasResponse, departmentsResponse, positionsResponse] = await Promise.all([
         biometricService.getAreas(),
@@ -93,14 +139,23 @@ const Workers = () => {
       ]);
       
       if (areasResponse.data.success) {
-        setAreas(areasResponse.data.data);
+        const areasData = areasResponse.data.data;
+        setAreas(areasData);
+        localStorage.setItem('biometric_areas', JSON.stringify(areasData));
       }
       if (departmentsResponse.data.success) {
-        setDepartments(departmentsResponse.data.data);
+        const departmentsData = departmentsResponse.data.data;
+        setDepartments(departmentsData);
+        localStorage.setItem('biometric_departments', JSON.stringify(departmentsData));
       }
       if (positionsResponse.data.success) {
-        setPositions(positionsResponse.data.data);
+        const positionsData = positionsResponse.data.data;
+        setPositions(positionsData);
+        localStorage.setItem('biometric_positions', JSON.stringify(positionsData));
       }
+      
+      // حفظ timestamp للcache
+      localStorage.setItem('biometric_cache_timestamp', Date.now().toString());
     } catch (error) {
       console.error('Error loading support data:', error);
     }
@@ -147,6 +202,93 @@ const Workers = () => {
       }
     } catch (error) {
       console.error('Error creating worker:', error);
+      toast.error(t('common.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditWorker = (worker: Worker) => {
+    setEditingWorker(worker);
+    
+    // تحويل بيانات العامل إلى نموذج التعديل
+    const biometricData = worker.biometric_data as {
+      emp_code?: string;
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+      mobile?: string;
+      department?: { id: number };
+      area?: Array<{ id: number }>;
+      position?: { id: number };
+      hire_date?: string;
+    };
+    
+    setEditWorkerData({
+      emp_code: worker.employee_code || biometricData?.emp_code || '',
+      first_name: biometricData?.first_name || worker.name.split(' ')[0] || '',
+      last_name: biometricData?.last_name || worker.name.split(' ').slice(1).join(' ') || '',
+      email: worker.email || biometricData?.email || '',
+      mobile: worker.phone || biometricData?.mobile || '',
+      department: biometricData?.department?.id?.toString() || '',
+      area: biometricData?.area?.map(a => a.id) || [],
+      position: biometricData?.position?.id?.toString() || '',
+      hire_date: worker.hire_date || biometricData?.hire_date || ''
+    });
+    
+    setShowEditModal(true);
+  };
+
+  const handleUpdateWorker = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingWorker) return;
+
+    try {
+      setLoading(true);
+      
+      // إزالة emp_code من البيانات المُرسلة لأن نظام البصمة لا يدعم تحديثه
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { emp_code, ...editableData } = editWorkerData;
+      // emp_code is excluded from updates as it's not supported by the biometric system
+      
+      const workerData = {
+        ...editableData,
+        department: parseInt(editWorkerData.department),
+        area: editWorkerData.area,
+        position: editWorkerData.position ? parseInt(editWorkerData.position) : undefined,
+      };
+
+      // استخدام biometric_id للتحديث في نظام البصمة
+      const employeeId = editingWorker.biometric_id;
+      
+      if (!employeeId) {
+        toast.error(t('workers.biometricIdNotFound') || 'Employee biometric ID not found');
+        return;
+      }
+
+      const response = await biometricService.updateEmployee(Number(employeeId), workerData);
+      
+      if (response.data.success) {
+        toast.success(t('workers.updateSuccess'));
+        setShowEditModal(false);
+        setEditingWorker(null);
+        setEditWorkerData({
+          emp_code: '',
+          first_name: '',
+          last_name: '',
+          email: '',
+          mobile: '',
+          department: '',
+          area: [],
+          position: '',
+          hire_date: ''
+        });
+        loadWorkers(); // Refresh workers list
+      } else {
+        toast.error(response.data.message || t('common.error'));
+      }
+    } catch (error) {
+      console.error('Error updating worker:', error);
       toast.error(t('common.error'));
     } finally {
       setLoading(false);
@@ -347,7 +489,7 @@ const Workers = () => {
               <WorkerCard 
                 key={worker.id} 
                 worker={worker}
-                onEdit={() => {}} 
+                onEdit={handleEditWorker} 
                 onDelete={handleDeleteWorker}
                 t={t}
               />
@@ -580,6 +722,173 @@ const Workers = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Worker Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Edit Employee</h3>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingWorker(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              {/* Info Banner */}
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-blue-800">
+                      Employee Code cannot be changed due to biometric system constraints. All other information can be updated.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleUpdateWorker}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label htmlFor="edit_emp_code" className="block text-sm font-medium text-gray-700">
+                      Employee Code
+                      <span className="ml-1 text-xs text-yellow-600">(Cannot be changed)</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="edit_emp_code"
+                      value={editWorkerData.emp_code}
+                      readOnly
+                      className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm cursor-not-allowed opacity-75"
+                      title="Employee Code cannot be changed after creation due to biometric system constraints"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit_first_name" className="block text-sm font-medium text-gray-700">First Name</label>
+                    <input
+                      type="text"
+                      id="edit_first_name"
+                      value={editWorkerData.first_name}
+                      onChange={(e) => setEditWorkerData({...editWorkerData, first_name: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit_last_name" className="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input
+                      type="text"
+                      id="edit_last_name"
+                      value={editWorkerData.last_name}
+                      onChange={(e) => setEditWorkerData({...editWorkerData, last_name: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit_email" className="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                      type="email"
+                      id="edit_email"
+                      value={editWorkerData.email}
+                      onChange={(e) => setEditWorkerData({...editWorkerData, email: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit_mobile" className="block text-sm font-medium text-gray-700">Mobile</label>
+                    <input
+                      type="text"
+                      id="edit_mobile"
+                      value={editWorkerData.mobile}
+                      onChange={(e) => setEditWorkerData({...editWorkerData, mobile: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit_department" className="block text-sm font-medium text-gray-700">Department</label>
+                    <select
+                      id="edit_department"
+                      value={editWorkerData.department}
+                      onChange={(e) => setEditWorkerData({...editWorkerData, department: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      required
+                    >
+                      <option value="">Select Department</option>
+                      {departments.map((dept) => (
+                        <option key={dept.id} value={dept.id}>{dept.dept_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="edit_position" className="block text-sm font-medium text-gray-700">Position</label>
+                    <select
+                      id="edit_position"
+                      value={editWorkerData.position}
+                      onChange={(e) => setEditWorkerData({...editWorkerData, position: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Position</option>
+                      {positions.map((pos) => (
+                        <option key={pos.id} value={pos.id}>{pos.position_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="edit_hire_date" className="block text-sm font-medium text-gray-700">Hire Date</label>
+                    <input
+                      type="date"
+                      id="edit_hire_date"
+                      value={editWorkerData.hire_date}
+                      onChange={(e) => setEditWorkerData({...editWorkerData, hire_date: e.target.value})}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex justify-between">
+                  <button
+                    type="button"
+                    onClick={refreshSupportData}
+                    className="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center space-x-1"
+                  >
+                    <RefreshCw size={16} />
+                    <span>Refresh Data</span>
+                  </button>
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditingWorker(null);
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {loading ? 'Updating...' : 'Update Employee'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

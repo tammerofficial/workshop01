@@ -162,4 +162,19 @@ export const biometricService = {
   getPositions: () => api.get('/biometric/positions'),
 };
 
+// ERP Management Service
+export const erpService = {
+  // Department Management
+  getDepartments: () => api.get('/biometric/erp/departments'),
+  createDepartment: (data: any) => api.post('/biometric/erp/departments', data),
+  updateDepartment: (id: number, data: any) => api.put(`/biometric/erp/departments/${id}`, data),
+  deleteDepartment: (id: number) => api.delete(`/biometric/erp/departments/${id}`),
+  
+  // Position Management
+  getPositions: () => api.get('/biometric/erp/positions'),
+  createPosition: (data: any) => api.post('/biometric/erp/positions', data),
+  updatePosition: (id: number, data: any) => api.put(`/biometric/erp/positions/${id}`, data),
+  deletePosition: (id: number) => api.delete(`/biometric/erp/positions/${id}`),
+};
+
 export default api; 

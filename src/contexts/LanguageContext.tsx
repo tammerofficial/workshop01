@@ -836,6 +836,7 @@ const translations = {
     'workers.refreshed': 'Workers refreshed successfully',
     'workers.createSuccess': 'Employee created successfully in biometric system',
     'workers.updateSuccess': 'Employee updated successfully in biometric system',
+    'workers.biometricIdNotFound': 'Employee biometric ID not found',
     'workers.deleteSuccess': 'Employee deleted successfully from biometric system',
     
     // Attendance Translations
@@ -1776,6 +1777,7 @@ const translations = {
     'workers.refreshed': 'تم تحديث بيانات العمال بنجاح',
     'workers.createSuccess': 'تم إنشاء الموظف بنجاح في نظام البصمة',
     'workers.updateSuccess': 'تم تحديث الموظف بنجاح في نظام البصمة',
+    'workers.biometricIdNotFound': 'لم يتم العثور على معرف الموظف في نظام البصمة',
     'workers.deleteSuccess': 'تم حذف الموظف بنجاح من نظام البصمة',
     
     // Attendance Translations

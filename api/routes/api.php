@@ -226,13 +226,11 @@ Route::prefix('permissions')->group(function () {
     Route::get('/grouped', [PermissionController::class, 'getGroupedPermissions']);
 });
 
-// General Attendance Route (direct from biometric system)
-Route::get('attendance', [BiometricController::class, 'getBiometricAttendance']);
-
 // Biometric System Integration Routes
 Route::prefix('biometric')->group(function () {
     Route::post('/sync-workers', [BiometricController::class, 'syncWorkers']);
     Route::post('/sync-attendance', [BiometricController::class, 'syncAttendance']);
+    Route::get('/attendance', [BiometricController::class, 'getBiometricAttendance']);
     Route::get('/attendance-report', [BiometricController::class, 'getAttendanceReport']);
     Route::get('/worker/{id}/attendance', [BiometricController::class, 'getWorkerAttendance']);
     Route::get('/token-info', [BiometricController::class, 'getTokenInfo']);
@@ -248,4 +246,19 @@ Route::prefix('biometric')->group(function () {
     Route::get('/areas', [BiometricController::class, 'getAreas']);
     Route::get('/departments', [BiometricController::class, 'getDepartments']);
     Route::get('/positions', [BiometricController::class, 'getPositions']);
+    
+    // ERP Management Routes
+    Route::prefix('erp')->group(function () {
+        // Department Management
+        Route::get('/departments', [BiometricController::class, 'getDepartments']);
+        Route::post('/departments', [BiometricController::class, 'createDepartment']);
+        Route::put('/departments/{id}', [BiometricController::class, 'updateDepartment']);
+        Route::delete('/departments/{id}', [BiometricController::class, 'deleteDepartment']);
+        
+        // Position Management  
+        Route::get('/positions', [BiometricController::class, 'getPositions']);
+        Route::post('/positions', [BiometricController::class, 'createPosition']);
+        Route::put('/positions/{id}', [BiometricController::class, 'updatePosition']);
+        Route::delete('/positions/{id}', [BiometricController::class, 'deletePosition']);
+    });
 }); 

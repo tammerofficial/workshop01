@@ -595,4 +595,172 @@ class BiometricService
             return null;
         }
     }
+
+    /**
+     * Create department in biometric system
+     */
+    public function createDepartment($departmentData)
+    {
+        if (!$this->token && !$this->authenticate()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->post($this->departmentsUrl, $departmentData);
+            
+            if ($response->successful()) {
+                Log::info('Department created successfully in biometric system', [
+                    'department_data' => $departmentData,
+                    'response' => $response->json()
+                ]);
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to create department. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception creating department: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Update department in biometric system
+     */
+    public function updateDepartment($departmentId, $departmentData)
+    {
+        if (!$this->token && !$this->authenticate()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->put($this->departmentsUrl . $departmentId . '/', $departmentData);
+            
+            if ($response->successful()) {
+                Log::info('Department updated successfully in biometric system', [
+                    'department_id' => $departmentId,
+                    'department_data' => $departmentData,
+                    'response' => $response->json()
+                ]);
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to update department. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception updating department: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete department from biometric system
+     */
+    public function deleteDepartment($departmentId)
+    {
+        if (!$this->token && !$this->authenticate()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->delete($this->departmentsUrl . $departmentId . '/');
+            
+            if ($response->successful()) {
+                Log::info('Department deleted successfully from biometric system', [
+                    'department_id' => $departmentId
+                ]);
+                return true;
+            }
+            
+            throw new \Exception('Failed to delete department. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception deleting department: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Create position in biometric system
+     */
+    public function createPosition($positionData)
+    {
+        if (!$this->token && !$this->authenticate()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->post($this->positionsUrl, $positionData);
+            
+            if ($response->successful()) {
+                Log::info('Position created successfully in biometric system', [
+                    'position_data' => $positionData,
+                    'response' => $response->json()
+                ]);
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to create position. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception creating position: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Update position in biometric system
+     */
+    public function updatePosition($positionId, $positionData)
+    {
+        if (!$this->token && !$this->authenticate()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->put($this->positionsUrl . $positionId . '/', $positionData);
+            
+            if ($response->successful()) {
+                Log::info('Position updated successfully in biometric system', [
+                    'position_id' => $positionId,
+                    'position_data' => $positionData,
+                    'response' => $response->json()
+                ]);
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to update position. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception updating position: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete position from biometric system
+     */
+    public function deletePosition($positionId)
+    {
+        if (!$this->token && !$this->authenticate()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->delete($this->positionsUrl . $positionId . '/');
+            
+            if ($response->successful()) {
+                Log::info('Position deleted successfully from biometric system', [
+                    'position_id' => $positionId
+                ]);
+                return true;
+            }
+            
+            throw new \Exception('Failed to delete position. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception deleting position: ' . $e->getMessage());
+            throw $e;
+        }
+    }
 }

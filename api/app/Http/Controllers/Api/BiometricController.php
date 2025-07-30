@@ -776,4 +776,152 @@ class BiometricController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Create department in biometric system
+     */
+    public function createDepartment(Request $request)
+    {
+        try {
+            $request->validate([
+                'dept_name' => 'required|string|max:100',
+                'dept_code' => 'required|string|max:50',
+            ]);
+
+            $departmentData = $request->only(['dept_name', 'dept_code']);
+            $response = $this->biometricService->createDepartment($departmentData);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $response,
+                'message' => 'Department created successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating department: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update department in biometric system
+     */
+    public function updateDepartment(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'dept_name' => 'required|string|max:100',
+                'dept_code' => 'required|string|max:50',
+            ]);
+
+            $departmentData = $request->only(['dept_name', 'dept_code']);
+            $response = $this->biometricService->updateDepartment($id, $departmentData);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $response,
+                'message' => 'Department updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating department: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete department from biometric system
+     */
+    public function deleteDepartment($id)
+    {
+        try {
+            $response = $this->biometricService->deleteDepartment($id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Department deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting department: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create position in biometric system
+     */
+    public function createPosition(Request $request)
+    {
+        try {
+            $request->validate([
+                'position_name' => 'required|string|max:100',
+                'position_code' => 'required|string|max:50',
+            ]);
+
+            $positionData = $request->only(['position_name', 'position_code']);
+            $response = $this->biometricService->createPosition($positionData);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $response,
+                'message' => 'Position created successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating position: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update position in biometric system
+     */
+    public function updatePosition(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'position_name' => 'required|string|max:100',
+                'position_code' => 'required|string|max:50',
+            ]);
+
+            $positionData = $request->only(['position_name', 'position_code']);
+            $response = $this->biometricService->updatePosition($id, $positionData);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $response,
+                'message' => 'Position updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating position: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete position from biometric system
+     */
+    public function deletePosition($id)
+    {
+        try {
+            $response = $this->biometricService->deletePosition($id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Position deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting position: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { 
   LayoutDashboard, ShoppingBag, Package, Users, Calendar, 
   LineChart, Bell, Settings, Monitor, Workflow, Zap,
-  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck
+  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -37,6 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     { path: '/payroll', label: 'Payroll', icon: <TrendingUp size={20} /> },
     { path: '/attendance', label: 'Attendance', icon: <Clock size={20} /> },
     { path: '/analytics', label: 'Analytics', icon: <LineChart size={20} /> },
+    { path: '/erp', label: 'ERP Management', icon: <Building2 size={20} />, badge: 'NEW' },
   ];
 
   const otherItems = [

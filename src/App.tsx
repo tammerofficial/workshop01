@@ -50,6 +50,9 @@ import Login from './pages/auth/Login';
 import Logout from './pages/auth/Logout';
 import Unauthorized from './pages/auth/Unauthorized';
 
+// ERP pages
+import ERPManagement from './pages/ERPManagement';
+
 function App() {
   return (
     <ThemeProvider>
@@ -125,6 +128,13 @@ function App() {
                   <Route path="admin/backup" element={
                     <ProtectedRoute requiredRoles={['admin']}>
                       <Backup />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* ERP Management */}
+                  <Route path="erp" element={
+                    <ProtectedRoute allowedRoles={['system_super_admin', 'system_admin']}>
+                      <ERPManagement />
                     </ProtectedRoute>
                   } />
                 </Route>
