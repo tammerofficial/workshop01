@@ -23,6 +23,17 @@ interface WorkerFormData {
   employeeId: string;
   dateOfJoining: string;
   salary: string;
+  // Payroll fields
+  baseSalary: string;
+  hourlyRate: string;
+  overtimeRate: string;
+  standardHoursPerDay: string;
+  standardHoursPerWeek: string;
+  standardHoursPerMonth: string;
+  enableOvertime: boolean;
+  enableBonus: boolean;
+  bonusPercentage: string;
+  payrollStatus: 'active' | 'inactive' | 'suspended';
   skills: string[];
   emergencyContact: {
     name: string;
@@ -53,6 +64,17 @@ const EditWorker: React.FC = () => {
     employeeId: '',
     dateOfJoining: '',
     salary: '',
+    // Payroll fields with default values
+    baseSalary: '',
+    hourlyRate: '5.00',
+    overtimeRate: '7.50',
+    standardHoursPerDay: '8',
+    standardHoursPerWeek: '40',
+    standardHoursPerMonth: '160',
+    enableOvertime: true,
+    enableBonus: true,
+    bonusPercentage: '0',
+    payrollStatus: 'active',
     skills: [],
     emergencyContact: {
       name: '',
@@ -486,6 +508,198 @@ const EditWorker: React.FC = () => {
                         <option value="on leave">{t('On Leave')}</option>
                         <option value="unavailable">{t('Unavailable')}</option>
                       </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payroll Information */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                  <div className="flex items-center mb-6">
+                    <div className={`w-10 h-10 rounded-lg bg-green-500 flex items-center justify-center text-white ${isRTL ? 'ml-3' : 'mr-3'}`}>
+                      <span className="text-lg">💰</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t('Payroll Information')}</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Base Salary */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Base Salary')}
+                      </label>
+                      <div className="relative">
+                        <span className={`absolute top-2 text-gray-500 dark:text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`}>$</span>
+                        <input
+                          type="number"
+                          name="baseSalary"
+                          step="0.01"
+                          min="0"
+                          className={`w-full border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${isRTL ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2`}
+                          value={formData.baseSalary}
+                          onChange={handleInputChange}
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Hourly Rate */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Hourly Rate')}
+                      </label>
+                      <div className="relative">
+                        <span className={`absolute top-2 text-gray-500 dark:text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`}>$</span>
+                        <input
+                          type="number"
+                          name="hourlyRate"
+                          step="0.01"
+                          min="0"
+                          className={`w-full border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${isRTL ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2`}
+                          value={formData.hourlyRate}
+                          onChange={handleInputChange}
+                          placeholder="5.00"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Overtime Rate */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Overtime Rate')}
+                      </label>
+                      <div className="relative">
+                        <span className={`absolute top-2 text-gray-500 dark:text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`}>$</span>
+                        <input
+                          type="number"
+                          name="overtimeRate"
+                          step="0.01"
+                          min="0"
+                          className={`w-full border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${isRTL ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2`}
+                          value={formData.overtimeRate}
+                          onChange={handleInputChange}
+                          placeholder="7.50"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Standard Hours Per Day */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Daily Working Hours')}
+                      </label>
+                      <input
+                        type="number"
+                        name="standardHoursPerDay"
+                        min="1"
+                        max="24"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        value={formData.standardHoursPerDay}
+                        onChange={handleInputChange}
+                        placeholder="8"
+                      />
+                    </div>
+
+                    {/* Standard Hours Per Week */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Weekly Working Hours')}
+                      </label>
+                      <input
+                        type="number"
+                        name="standardHoursPerWeek"
+                        min="1"
+                        max="168"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        value={formData.standardHoursPerWeek}
+                        onChange={handleInputChange}
+                        placeholder="40"
+                      />
+                    </div>
+
+                    {/* Standard Hours Per Month */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Monthly Working Hours')}
+                      </label>
+                      <input
+                        type="number"
+                        name="standardHoursPerMonth"
+                        min="1"
+                        max="744"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        value={formData.standardHoursPerMonth}
+                        onChange={handleInputChange}
+                        placeholder="160"
+                      />
+                    </div>
+
+                    {/* Bonus Percentage */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Bonus Percentage')}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          name="bonusPercentage"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          className={`w-full border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${isRTL ? 'pl-8 pr-3' : 'pr-8 pl-3'} py-2`}
+                          value={formData.bonusPercentage}
+                          onChange={handleInputChange}
+                          placeholder="0"
+                        />
+                        <span className={`absolute top-2 text-gray-500 dark:text-gray-400 ${isRTL ? 'left-3' : 'right-3'}`}>%</span>
+                      </div>
+                    </div>
+
+                    {/* Payroll Status */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('Payroll Status')}
+                      </label>
+                      <select
+                        name="payrollStatus"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        value={formData.payrollStatus}
+                        onChange={handleInputChange}
+                      >
+                        <option value="active">{t('Active')}</option>
+                        <option value="inactive">{t('Inactive')}</option>
+                        <option value="suspended">{t('Suspended')}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Payroll Options */}
+                  <div className="mt-6 space-y-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="enableOvertime"
+                        name="enableOvertime"
+                        checked={formData.enableOvertime}
+                        onChange={(e) => setFormData(prev => ({ ...prev, enableOvertime: e.target.checked }))}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-600"
+                      />
+                      <label htmlFor="enableOvertime" className={`text-sm font-medium text-gray-700 dark:text-gray-300 ${isRTL ? 'mr-3' : 'ml-3'}`}>
+                        {t('Enable Overtime Calculation')}
+                      </label>
+                    </div>
+
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="enableBonus"
+                        name="enableBonus"
+                        checked={formData.enableBonus}
+                        onChange={(e) => setFormData(prev => ({ ...prev, enableBonus: e.target.checked }))}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-600"
+                      />
+                      <label htmlFor="enableBonus" className={`text-sm font-medium text-gray-700 dark:text-gray-300 ${isRTL ? 'mr-3' : 'ml-3'}`}>
+                        {t('Enable Bonus Calculation')}
+                      </label>
                     </div>
                   </div>
                 </div>

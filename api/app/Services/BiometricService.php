@@ -217,7 +217,7 @@ class BiometricService
     /**
      * Get attendance transactions for a specific date range
      */
-    public function getAttendanceTransactions($startDate = null, $endDate = null, $page = 1, $pageSize = 50, $employeeIds = [])
+    public function getAttendanceTransactions($startDate = null, $endDate = null, $page = 1, $pageSize = 50, $empCode = null, $department = null, $search = null, $status = null, $sortBy = 'punch_time', $sortDir = 'desc')
     {
         if (!$this->token && !$this->authenticate()) {
             return null; // Return null to indicate failure
@@ -236,8 +236,20 @@ class BiometricService
                 $query['end_date'] = $endDate;
             }
 
-            if (!empty($employeeIds)) {
-                $query['emp_code'] = implode(',', $employeeIds);
+            if ($empCode) {
+                $query['emp_code'] = $empCode;
+            }
+            if ($department) {
+                $query['department'] = $department;
+            }
+            if ($search) {
+                $query['search'] = $search;
+            }
+            if ($status) {
+                $query['status'] = $status;
+            }
+            if ($sortBy) {
+                $query['ordering'] = ($sortDir === 'desc' ? '-' : '') . $sortBy;
             }
 
             $response = Http::withToken($this->token)
@@ -1224,18 +1236,71 @@ class BiometricService
         }
 
         try {
-            $params = $filters;
-            $params['stats_only'] = true;
+            // Use the same transactions endpoint but get a larger sample for stats
+            $params = [
+                'page' => 1,
+                'page_size' => 1000, // Get more records for better stats
+            ];
             
-            $response = Http::withToken($this->token)->get($this->transactionReportUrl, $params);
+            // Add date filters if provided
+            if (isset($filters['start_date']) && !empty($filters['start_date'])) {
+                $params['start_date'] = $filters['start_date'];
+            }
+            if (isset($filters['end_date']) && !empty($filters['end_date'])) {
+                $params['end_date'] = $filters['end_date'];
+            }
+            
+            $response = Http::withToken($this->token)->get($this->transactionsUrl, $params);
             
             if ($response->successful()) {
                 $data = $response->json();
+                $transactions = $data['data'] ?? [];
+                $totalCount = $data['count'] ?? 0;
+                
+                // Calculate statistics from the actual transaction data
+                $checkIns = 0;
+                $checkOuts = 0;
+                $uniqueEmployees = [];
+                
+                foreach ($transactions as $transaction) {
+                    // Count unique employees
+                    $empCode = $transaction['emp_code'] ?? $transaction['emp'] ?? null;
+                    if ($empCode && !in_array($empCode, $uniqueEmployees)) {
+                        $uniqueEmployees[] = $empCode;
+                    }
+                    
+                    // Count check-ins and check-outs based on time and display
+                    $punchDisplay = strtolower($transaction['punch_state_display'] ?? '');
+                    $punchTime = $transaction['punch_time'] ?? '';
+                    
+                    // Extract time portion
+                    $timeOnly = date('H:i:s', strtotime($punchTime));
+                    
+                    // Count as check-in if contains "in" or if it's a morning punch (before 12:00)
+                    if (strpos($punchDisplay, 'in') !== false || 
+                        (strpos($punchDisplay, 'check') !== false && $timeOnly < '12:00:00')) {
+                        $checkIns++;
+                    }
+                    // Count as check-out if contains "out" or if it's an evening punch (after 12:00)
+                    elseif (strpos($punchDisplay, 'out') !== false || 
+                            (strpos($punchDisplay, 'check') !== false && $timeOnly >= '12:00:00')) {
+                        $checkOuts++;
+                    }
+                    // For unknown punches, determine based on time
+                    elseif ($punchDisplay === 'unknown' || empty($punchDisplay)) {
+                        if ($timeOnly < '12:00:00') {
+                            $checkIns++;
+                        } else {
+                            $checkOuts++;
+                        }
+                    }
+                }
+                
                 return [
-                    'total_transactions' => $data['count'] ?? 0,
-                    'check_ins' => $data['check_ins'] ?? 0,
-                    'check_outs' => $data['check_outs'] ?? 0,
-                    'unique_employees' => $data['unique_employees'] ?? 0,
+                    'total_transactions' => $totalCount,
+                    'check_ins' => $checkIns,
+                    'check_outs' => $checkOuts,
+                    'unique_employees' => count($uniqueEmployees),
                     'date_range' => [
                         'start' => $filters['start_date'] ?? null,
                         'end' => $filters['end_date'] ?? null

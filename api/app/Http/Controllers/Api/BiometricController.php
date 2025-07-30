@@ -435,12 +435,17 @@ class BiometricController extends Controller
             // Get filters from request first
             $startDate = $request->get('start_date');
             $endDate = $request->get('end_date');
-            $workerId = $request->get('worker_id');
+            $empCode = $request->get('emp_code');
+            $department = $request->get('department');
+            $search = $request->get('search');
+            $status = $request->get('status');
+            $sortBy = $request->get('sort_by', 'punch_time');
+            $sortDir = $request->get('sort_dir', 'desc');
             $page = $request->get('page', 1);
             $pageSize = $request->get('page_size', 10);
 
             // Get attendance transactions from biometric system
-            $apiResponse = $this->biometricService->getAttendanceTransactions($startDate, $endDate, $page, $pageSize);
+            $apiResponse = $this->biometricService->getAttendanceTransactions($startDate, $endDate, $page, $pageSize, $empCode, $department, $search, $status, $sortBy, $sortDir);
 
             // Check for failed API call
             if ($apiResponse === null || !isset($apiResponse['data'])) {
@@ -454,6 +459,34 @@ class BiometricController extends Controller
             }
             
             $transactions = $apiResponse['data'];
+            
+            // Apply additional filtering and sorting if needed (for unsupported params)
+            if ($status && !empty($transactions)) {
+                $transactions = array_filter($transactions, function($transaction) use ($status) {
+                    if ($status === 'check_in') {
+                        return stripos($transaction['punch_state_display'] ?? '', 'in') !== false;
+                    } elseif ($status === 'check_out') {
+                        return stripos($transaction['punch_state_display'] ?? '', 'out') !== false;
+                    } elseif ($status === 'late') {
+                        // This would need additional logic to determine if late
+                        return false; // For now, we'll skip this complex logic
+                    }
+                    return true;
+                });
+                // Re-index array
+                $transactions = array_values($transactions);
+            }
+            
+            // Apply sorting if needed
+            if ($sortBy && !empty($transactions)) {
+                usort($transactions, function($a, $b) use ($sortBy, $sortDir) {
+                    $valA = $a[$sortBy] ?? '';
+                    $valB = $b[$sortBy] ?? '';
+                    
+                    $comparison = strcmp($valA, $valB);
+                    return $sortDir === 'desc' ? -$comparison : $comparison;
+                });
+            }
 
             // Since we are now paginating via the API, we will transform the current page of data
             $attendanceData = [];
@@ -461,10 +494,6 @@ class BiometricController extends Controller
                 $punchTime = \Carbon\Carbon::parse($transaction['punch_time']);
                 
                 // Server-side filtering is now handled by the external API.
-                // We can keep client-side filtering logic if needed, but primary filtering is done.
-                if ($workerId && $transaction['emp'] != $workerId) {
-                    continue; // Optional: extra filtering on the current page
-                }
 
                 $attendanceData[] = [
                     'id' => $transaction['id'],
@@ -502,7 +531,12 @@ class BiometricController extends Controller
                 'filters' => [
                     'start_date' => $startDate,
                     'end_date' => $endDate,
-                    'worker_id' => $workerId
+                    'emp_code' => $empCode,
+                    'department' => $department,
+                    'search' => $search,
+                    'status' => $status,
+                    'sort_by' => $sortBy,
+                    'sort_dir' => $sortDir
                 ]
             ]);
 
@@ -540,6 +574,11 @@ class BiometricController extends Controller
         $uniqueWorkers = count(array_unique(array_column($attendanceData, 'worker_id')));
         $uniqueDates = count(array_unique(array_column($attendanceData, 'date')));
         
+        // Count different punch types based on punch_state_display
+        $checkIns = 0;
+        $checkOuts = 0;
+        $lateArrivals = 0;
+        
         // Group by worker and date to calculate working hours
         $dailyHours = [];
         $grouped = [];
@@ -550,26 +589,67 @@ class BiometricController extends Controller
                 $grouped[$key] = [];
             }
             $grouped[$key][] = $record;
-        }
-
-        $totalHours = 0;
-        foreach ($grouped as $dayRecords) {
-            $checkIn = null;
-            $checkOut = null;
             
-            foreach ($dayRecords as $record) {
-                if ($record['punch_state'] == 0) { // Check In
-                    $checkIn = $record['punch_time'];
-                }
-                if ($record['punch_state'] == 1) { // Check Out
-                    $checkOut = $record['punch_time'];
+            // Count punch types based on display text and time
+            $punchDisplay = strtolower($record['punch_state_display'] ?? '');
+            $punchTime = $record['time'] ?? '';
+            
+            // Count as check-in if contains "in" or if it's a morning punch (before 12:00)
+            if (strpos($punchDisplay, 'in') !== false || 
+                (strpos($punchDisplay, 'check') !== false && $punchTime < '12:00:00')) {
+                $checkIns++;
+                
+                // Check if late (after 08:30)
+                if ($punchTime > '08:30:00') {
+                    $lateArrivals++;
                 }
             }
             
-            if ($checkIn && $checkOut) {
-                $hours = (strtotime($checkOut) - strtotime($checkIn)) / 3600;
-                $totalHours += $hours;
-                $dailyHours[] = $hours;
+            // Count as check-out if contains "out" or if it's an evening punch (after 12:00)
+            if (strpos($punchDisplay, 'out') !== false || 
+                (strpos($punchDisplay, 'check') !== false && $punchTime >= '12:00:00')) {
+                $checkOuts++;
+            }
+            
+            // For unknown punches, try to determine based on time
+            if ($punchDisplay === 'unknown' || empty($punchDisplay)) {
+                if ($punchTime < '12:00:00') {
+                    $checkIns++;
+                    if ($punchTime > '08:30:00') {
+                        $lateArrivals++;
+                    }
+                } else {
+                    $checkOuts++;
+                }
+            }
+        }
+
+        // Calculate working hours by grouping check-ins and check-outs per day
+        $totalHours = 0;
+        foreach ($grouped as $dayRecords) {
+            // Sort records by time
+            usort($dayRecords, function($a, $b) {
+                return strcmp($a['time'], $b['time']);
+            });
+            
+            $dayHours = 0;
+            $lastCheckIn = null;
+            
+            foreach ($dayRecords as $record) {
+                $time = $record['time'];
+                
+                if ($time < '12:00:00') { // Morning punch (likely check-in)
+                    $lastCheckIn = $time;
+                } else if ($time >= '12:00:00' && $lastCheckIn) { // Evening punch (likely check-out)
+                    $hours = (strtotime($time) - strtotime($lastCheckIn)) / 3600;
+                    $dayHours += $hours;
+                    $lastCheckIn = null; // Reset for next pair
+                }
+            }
+            
+            if ($dayHours > 0) {
+                $totalHours += $dayHours;
+                $dailyHours[] = $dayHours;
             }
         }
 
@@ -581,9 +661,9 @@ class BiometricController extends Controller
             'total_days' => $uniqueDates,
             'total_hours' => round($totalHours, 2),
             'avg_hours_per_day' => round($avgHoursPerDay, 2),
-            'check_ins' => count(array_filter($attendanceData, fn($r) => $r['punch_state'] == 0)),
-            'check_outs' => count(array_filter($attendanceData, fn($r) => $r['punch_state'] == 1)),
-            'late_arrivals' => count(array_filter($attendanceData, fn($r) => $r['is_late']))
+            'check_ins' => $checkIns,
+            'check_outs' => $checkOuts,
+            'late_arrivals' => $lateArrivals
         ];
     }
 

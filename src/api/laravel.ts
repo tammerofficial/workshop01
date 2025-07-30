@@ -203,4 +203,16 @@ export const erpService = {
   getTransactionStats: (params?: Record<string, unknown>) => api.get('/biometric/erp/transaction-stats', { params }),
 };
 
+// Payroll Service
+export const payrollService = {
+  getAll: (params?: Record<string, unknown>) => api.get('/payroll', { params }),
+  getStats: (params?: Record<string, unknown>) => api.get('/payroll/stats', { params }),
+  getWorkers: () => api.get('/payroll/workers'),
+  getById: (id: number) => api.get(`/payroll/${id}`),
+  generatePayroll: (data: Record<string, unknown>) => api.post('/payroll/generate', data),
+  generateAllPayrolls: (data: Record<string, unknown>) => api.post('/payroll/generate-all', data),
+  updateStatus: (id: number, data: Record<string, unknown>) => api.patch(`/payroll/${id}/status`, data),
+  delete: (id: number) => api.delete(`/payroll/${id}`),
+};
+
 export default api; 

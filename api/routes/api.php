@@ -18,6 +18,8 @@ use App\Http\Controllers\Api\WooCommerceController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\BiometricController;
+use App\Http\Controllers\Api\PayrollController;
+use App\Http\Controllers\Api\WorkerSyncController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -62,6 +64,26 @@ Route::get('measurements/client/{clientId}', [MeasurementController::class, 'get
 Route::apiResource('invoices', InvoiceController::class);
 Route::patch('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markAsPaid']);
 Route::patch('invoices/{invoice}/status', [InvoiceController::class, 'updateStatus']);
+
+// Worker Sync Routes
+Route::prefix('worker-sync')->group(function () {
+    Route::post('/sync', [WorkerSyncController::class, 'syncWorkers']);
+    Route::get('/status', [WorkerSyncController::class, 'getSyncStatus']);
+    Route::post('/cleanup', [WorkerSyncController::class, 'cleanupInactiveWorkers']);
+    Route::post('/sync-specific', [WorkerSyncController::class, 'syncSpecificWorker']);
+});
+
+// Payroll Routes
+Route::prefix('payroll')->group(function () {
+    Route::get('/', [PayrollController::class, 'index']);
+    Route::get('/stats', [PayrollController::class, 'stats']);
+    Route::get('/workers', [PayrollController::class, 'getWorkers']);
+    Route::get('/{id}', [PayrollController::class, 'show']);
+    Route::post('/generate', [PayrollController::class, 'generatePayroll']);
+    Route::post('/generate-all', [PayrollController::class, 'generateAllPayrolls']);
+    Route::patch('/{id}/status', [PayrollController::class, 'updateStatus']);
+    Route::delete('/{id}', [PayrollController::class, 'destroy']);
+});
 
 // Production Routes (Original)
 Route::prefix('production')->group(function () {

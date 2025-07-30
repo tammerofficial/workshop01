@@ -3,19 +3,22 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   User, Phone, Mail, Award, Calendar, Clock, 
-  CheckCircle, AlertTriangle, BarChart, Loader
+  CheckCircle, AlertTriangle, BarChart, Loader, 
+  ClockIcon, UserCheck
 } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import { biometricService, taskService } from '../api/laravel';
-import { Worker, Task } from '../types';
 import toast from 'react-hot-toast';
 
 const WorkerDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'performance'>('overview');
-  const [worker, setWorker] = useState<any>(null);
-  const [workerTasks, setWorkerTasks] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'performance' | 'attendance'>('overview');
+  const [worker, setWorker] = useState<Record<string, unknown> | null>(null);
+  const [workerTasks, setWorkerTasks] = useState<Record<string, unknown>[]>([]);
+  const [attendance, setAttendance] = useState<Record<string, unknown>[]>([]);
+  const [attendanceStats, setAttendanceStats] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
   
   useEffect(() => {
     const fetchWorkerData = async () => {
@@ -24,7 +27,7 @@ const WorkerDetails: React.FC = () => {
         // جلب جميع العمال من نظام البصمة والبحث عن العامل المطلوب
         const workersRes = await biometricService.getBiometricWorkers(50);
         const workers = workersRes.data.data || workersRes.data;
-        const foundWorker = workers.find((w: any) => w.id.toString() === id || w.biometric_id?.toString() === id);
+        const foundWorker = workers.find((w: Record<string, unknown>) => (w.id as string)?.toString() === id || (w.biometric_id as string)?.toString() === id);
         
         if (foundWorker) {
           setWorker(foundWorker);
@@ -32,7 +35,7 @@ const WorkerDetails: React.FC = () => {
           // جلب المهام المرتبطة بهذا العامل
           try {
             const tasksRes = await taskService.getAll();
-            setWorkerTasks(tasksRes.data.filter((task: any) => task.worker_id === foundWorker.id));
+            setWorkerTasks(tasksRes.data.filter((task: Record<string, unknown>) => task.worker_id === foundWorker.id));
           } catch (taskError) {
             console.log('Tasks not available:', taskError);
             setWorkerTasks([]);
@@ -52,6 +55,114 @@ const WorkerDetails: React.FC = () => {
       fetchWorkerData();
     }
   }, [id]);
+
+  // دالة لجلب بيانات الحضور والانصراف
+  const fetchAttendanceData = async () => {
+    if (!worker?.employee_code && !worker?.emp_code) return;
+    
+    setAttendanceLoading(true);
+    try {
+      const empCode = worker.employee_code || worker.emp_code;
+      const endDate = new Date().toISOString().split('T')[0];
+      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      // جلب بيانات الحضور للعامل المحدد لآخر 30 يوم
+      const response = await biometricService.getBiometricAttendance({
+        emp_code: empCode,
+        start_date: startDate,
+        end_date: endDate,
+        page_size: 200
+      });
+      
+      if (response.data && response.data.success) {
+        const attendanceData = response.data.data || [];
+        setAttendance(attendanceData);
+        
+        // حساب الإحصائيات
+        calculateAttendanceStats(attendanceData);
+      }
+    } catch (error) {
+      console.error('Error loading attendance data:', error);
+      toast.error('Failed to load attendance data');
+    } finally {
+      setAttendanceLoading(false);
+    }
+  };
+
+  // دالة لحساب إحصائيات الحضور
+  const calculateAttendanceStats = (attendanceData: Record<string, unknown>[]) => {
+    const totalDays = attendanceData.length;
+    const uniqueDates = [...new Set(attendanceData.map(record => record.date))].length;
+    
+    let checkIns = 0;
+    let checkOuts = 0;
+    let lateArrivals = 0;
+    let earlyArrivals = 0;
+    let totalHours = 0;
+    
+    const dailyRecords = new Map();
+    
+    attendanceData.forEach(record => {
+      const date = record.date as string;
+      const time = record.time as string;
+      const punchState = (record.punch_state_display as string)?.toLowerCase() || '';
+      
+      if (!dailyRecords.has(date)) {
+        dailyRecords.set(date, { checkIn: null, checkOut: null, hours: 0 });
+      }
+      
+      if (punchState.includes('in') || time < '12:00:00') {
+        checkIns++;
+        if (time > '08:30:00') {
+          lateArrivals++;
+        } else if (time < '08:00:00') {
+          earlyArrivals++;
+        }
+        dailyRecords.get(date).checkIn = time;
+      } else if (punchState.includes('out') || time >= '12:00:00') {
+        checkOuts++;
+        dailyRecords.get(date).checkOut = time;
+      }
+    });
+    
+    // حساب ساعات العمل اليومية
+    dailyRecords.forEach(day => {
+      if (day.checkIn && day.checkOut) {
+        const inTime = new Date(`2000-01-01 ${day.checkIn}`);
+        const outTime = new Date(`2000-01-01 ${day.checkOut}`);
+        const hours = (outTime.getTime() - inTime.getTime()) / (1000 * 60 * 60);
+        if (hours > 0 && hours < 24) {
+          totalHours += hours;
+          day.hours = hours;
+        }
+      }
+    });
+    
+    const averageHours = totalHours / Math.max(uniqueDates, 1);
+    const punctualityRate = uniqueDates > 0 ? ((uniqueDates - lateArrivals) / uniqueDates) * 100 : 0;
+    const attendanceRate = uniqueDates > 0 ? (uniqueDates / 30) * 100 : 0; // افتراض 30 يوم عمل
+    
+    setAttendanceStats({
+      totalRecords: totalDays,
+      uniqueDates,
+      checkIns,
+      checkOuts,
+      lateArrivals,
+      earlyArrivals,
+      totalHours: Math.round(totalHours * 100) / 100,
+      averageHours: Math.round(averageHours * 100) / 100,
+      punctualityRate: Math.round(punctualityRate * 100) / 100,
+      attendanceRate: Math.round(attendanceRate * 100) / 100
+    });
+  };
+
+  // جلب بيانات الحضور عند تغيير التاب أو العامل
+  useEffect(() => {
+    if (activeTab === 'attendance' && worker) {
+      fetchAttendanceData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, worker]);
   
   if (loading) {
     return (
@@ -77,8 +188,8 @@ const WorkerDetails: React.FC = () => {
   return (
     <div>
       <PageHeader 
-        title={worker.name} 
-        subtitle={`${typeof worker.role === 'string' ? worker.role : worker.role?.position_name || 'Unknown'} - ${worker.department}`}
+        title={worker.name as string} 
+        subtitle={`${typeof worker.role === 'string' ? worker.role : (worker.role as Record<string, unknown>)?.position_name || 'Unknown'} - ${worker.department as string}`}
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -92,15 +203,15 @@ const WorkerDetails: React.FC = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="text-center mb-6">
               <img
-                src={worker.imageUrl}
-                alt={worker.name}
+                src={worker.imageUrl as string}
+                alt={worker.name as string}
                 className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
               />
-              <h2 className="text-xl font-semibold text-gray-900">{worker.name}</h2>
+              <h2 className="text-xl font-semibold text-gray-900">{worker.name as string}</h2>
               <p className="text-gray-500">
               {typeof worker.role === 'string' 
                 ? worker.role 
-                : worker.role?.position_name || 'Unknown'
+                : (worker.role as Record<string, unknown>)?.position_name || 'Unknown'
               }
             </p>
               
@@ -115,7 +226,7 @@ const WorkerDetails: React.FC = () => {
                   {worker.status === 'active' && <CheckCircle size={14} className="mr-1" />}
                   {worker.status === 'on leave' && <Calendar size={14} className="mr-1" />}
                   {worker.status === 'unavailable' && <AlertTriangle size={14} className="mr-1" />}
-                  {worker.status ? worker.status.charAt(0).toUpperCase() + worker.status.slice(1) : 'Unknown'}
+                  {worker.status ? (worker.status as string).charAt(0).toUpperCase() + (worker.status as string).slice(1) : 'Unknown'}
                 </span>
               </div>
             </div>
@@ -125,7 +236,7 @@ const WorkerDetails: React.FC = () => {
                 <Mail size={20} className="text-gray-400 mr-3" />
                 <div>
                   <p className="text-sm font-medium text-gray-500">Email</p>
-                  <p className="text-gray-900">{worker.email || worker.contactInfo?.email || 'N/A'}</p>
+                  <p className="text-gray-900">{worker.email as string || (worker.contactInfo as Record<string, unknown>)?.email as string || 'N/A'}</p>
                 </div>
               </div>
               
@@ -133,7 +244,7 @@ const WorkerDetails: React.FC = () => {
                 <Phone size={20} className="text-gray-400 mr-3" />
                 <div>
                   <p className="text-sm font-medium text-gray-500">Phone</p>
-                  <p className="text-gray-900">{worker.phone || worker.contactInfo?.phone || 'N/A'}</p>
+                  <p className="text-gray-900">{worker.phone as string || (worker.contactInfo as Record<string, unknown>)?.phone as string || 'N/A'}</p>
                 </div>
               </div>
               
@@ -142,8 +253,8 @@ const WorkerDetails: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-500">Skills</p>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {worker.skills && worker.skills.length > 0 ? (
-                      worker.skills.map((skill, index) => (
+                    {worker.skills && (worker.skills as string[]).length > 0 ? (
+                      (worker.skills as string[]).map((skill: string, index: number) => (
                         <span 
                           key={index}
                           className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800"
@@ -202,6 +313,16 @@ const WorkerDetails: React.FC = () => {
                 >
                   Performance
                 </button>
+                <button
+                  onClick={() => setActiveTab('attendance')}
+                  className={`py-4 px-6 text-sm font-medium ${
+                    activeTab === 'attendance'
+                      ? 'border-b-2 border-secondary text-secondary'
+                      : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Attendance
+                </button>
               </nav>
             </div>
             
@@ -216,7 +337,7 @@ const WorkerDetails: React.FC = () => {
                         <div>
                           <p className="text-sm font-medium text-gray-500">Completed Tasks</p>
                           <p className="text-xl font-semibold text-gray-900">
-                            {worker.performance?.completedTasks || workerTasks.filter(task => task.status === 'completed').length}
+                            {(worker.performance as Record<string, unknown>)?.completedTasks as number || workerTasks.filter(task => task.status === 'completed').length}
                           </p>
                         </div>
                       </div>
@@ -228,7 +349,7 @@ const WorkerDetails: React.FC = () => {
                         <div>
                           <p className="text-sm font-medium text-gray-500">Average Time</p>
                           <p className="text-xl font-semibold text-gray-900">
-                            {worker.performance?.averageTime || 'N/A'}
+                            {(worker.performance as Record<string, unknown>)?.averageTime as string || 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -240,7 +361,7 @@ const WorkerDetails: React.FC = () => {
                         <div>
                           <p className="text-sm font-medium text-gray-500">Efficiency</p>
                           <p className="text-xl font-semibold text-gray-900">
-                            {worker.performance?.efficiency || 'N/A'}%
+                            {(worker.performance as Record<string, unknown>)?.efficiency as string || 'N/A'}%
                           </p>
                         </div>
                       </div>
@@ -363,12 +484,12 @@ const WorkerDetails: React.FC = () => {
                         <div className="mt-1 relative pt-1">
                           <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
                             <div
-                              style={{ width: `${worker.performance?.efficiency || 0}%` }}
+                              style={{ width: `${(worker.performance as Record<string, unknown>)?.efficiency as number || 0}%` }}
                               className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-success"
                             ></div>
                           </div>
                           <p className="mt-2 text-sm font-semibold text-gray-700">
-                            {worker.performance?.efficiency || 'N/A'}%
+                            {(worker.performance as Record<string, unknown>)?.efficiency as string || 'N/A'}%
                           </p>
                         </div>
                       </div>
@@ -376,14 +497,14 @@ const WorkerDetails: React.FC = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-500">Tasks Completed</p>
                         <p className="mt-1 text-3xl font-semibold text-gray-900">
-                          {worker.performance?.completedTasks || workerTasks.filter(task => task.status === 'completed').length}
+                          {(worker.performance as Record<string, unknown>)?.completedTasks as number || workerTasks.filter(task => task.status === 'completed').length}
                         </p>
                       </div>
                       
                       <div>
                         <p className="text-sm font-medium text-gray-500">Average Time per Task</p>
                         <p className="mt-1 text-3xl font-semibold text-gray-900">
-                          {worker.performance?.averageTime || 'N/A'}
+                          {(worker.performance as Record<string, unknown>)?.averageTime as string || 'N/A'}
                           <span className="text-sm text-gray-500 ml-1">min</span>
                         </p>
                       </div>
@@ -393,8 +514,8 @@ const WorkerDetails: React.FC = () => {
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Skills Assessment</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {worker.skills && worker.skills.length > 0 ? (
-                        worker.skills.map((skill, index) => (
+                      {worker.skills && (worker.skills as string[]).length > 0 ? (
+                        (worker.skills as string[]).map((skill: string, index: number) => (
                           <div key={index} className="bg-gray-50 p-4 rounded-lg">
                             <div className="flex items-center justify-between">
                               <p className="text-sm font-medium text-gray-700">{skill}</p>
@@ -411,6 +532,242 @@ const WorkerDetails: React.FC = () => {
                       )}
                     </div>
                   </div>
+                </div>
+              )}
+
+              {activeTab === 'attendance' && (
+                <div className="space-y-6">
+                  {attendanceLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader className="animate-spin text-blue-500" size={40} />
+                      <span className="ml-4 text-lg text-gray-600">Loading Attendance Data...</span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* إحصائيات الحضور */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-lg text-white">
+                          <div className="flex items-center">
+                            <Calendar size={28} className="mr-3" />
+                            <div>
+                              <p className="text-blue-100 text-sm">Attendance Rate</p>
+                              <p className="text-2xl font-bold">
+                                {(attendanceStats?.attendanceRate as number) || 0}%
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-lg text-white">
+                          <div className="flex items-center">
+                            <UserCheck size={28} className="mr-3" />
+                            <div>
+                              <p className="text-green-100 text-sm">Punctuality Rate</p>
+                              <p className="text-2xl font-bold">
+                                {(attendanceStats?.punctualityRate as number) || 0}%
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 rounded-lg text-white">
+                          <div className="flex items-center">
+                            <ClockIcon size={28} className="mr-3" />
+                            <div>
+                              <p className="text-purple-100 text-sm">Avg Daily Hours</p>
+                              <p className="text-2xl font-bold">
+                                {(attendanceStats?.averageHours as number) || 0}h
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 rounded-lg text-white">
+                          <div className="flex items-center">
+                            <AlertTriangle size={28} className="mr-3" />
+                            <div>
+                              <p className="text-orange-100 text-sm">Late Arrivals</p>
+                              <p className="text-2xl font-bold">
+                                {(attendanceStats?.lateArrivals as number) || 0}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* مؤشرات التزام العامل */}
+                      <div className="bg-gray-50 p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Work Commitment Analysis</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          {/* معدل الحضور */}
+                          <div className="text-center">
+                            <div className="relative inline-flex items-center justify-center w-20 h-20">
+                              <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                                <path
+                                  className="text-gray-300"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  fill="none"
+                                  d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                                <path
+                                  className={`${
+                                    ((attendanceStats?.attendanceRate as number) || 0) >= 90 ? 'text-green-500' :
+                                    ((attendanceStats?.attendanceRate as number) || 0) >= 75 ? 'text-yellow-500' : 'text-red-500'
+                                  }`}
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  fill="none"
+                                  strokeDasharray={`${((attendanceStats?.attendanceRate as number) || 0)}, 100`}
+                                  d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                              </svg>
+                              <span className="absolute text-lg font-bold text-gray-700">
+                                {Math.round((attendanceStats?.attendanceRate as number) || 0)}%
+                              </span>
+                            </div>
+                            <p className="mt-2 text-sm font-medium text-gray-600">Attendance</p>
+                            <p className={`text-xs ${
+                              (attendanceStats?.attendanceRate || 0) >= 90 ? 'text-green-600' :
+                              (attendanceStats?.attendanceRate || 0) >= 75 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {(attendanceStats?.attendanceRate || 0) >= 90 ? 'Excellent' :
+                               (attendanceStats?.attendanceRate || 0) >= 75 ? 'Good' : 'Needs Improvement'}
+                            </p>
+                          </div>
+
+                          {/* معدل الالتزام بالوقت */}
+                          <div className="text-center">
+                            <div className="relative inline-flex items-center justify-center w-20 h-20">
+                              <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                                <path
+                                  className="text-gray-300"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  fill="none"
+                                  d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                                <path
+                                  className={`${
+                                    (attendanceStats?.punctualityRate || 0) >= 90 ? 'text-green-500' :
+                                    (attendanceStats?.punctualityRate || 0) >= 75 ? 'text-yellow-500' : 'text-red-500'
+                                  }`}
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  fill="none"
+                                  strokeDasharray={`${(attendanceStats?.punctualityRate || 0)}, 100`}
+                                  d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                              </svg>
+                              <span className="absolute text-lg font-bold text-gray-700">
+                                {Math.round(attendanceStats?.punctualityRate || 0)}%
+                              </span>
+                            </div>
+                            <p className="mt-2 text-sm font-medium text-gray-600">Punctuality</p>
+                            <p className={`text-xs ${
+                              (attendanceStats?.punctualityRate || 0) >= 90 ? 'text-green-600' :
+                              (attendanceStats?.punctualityRate || 0) >= 75 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {(attendanceStats?.punctualityRate || 0) >= 90 ? 'Very Punctual' :
+                               (attendanceStats?.punctualityRate || 0) >= 75 ? 'Usually On Time' : 'Often Late'}
+                            </p>
+                          </div>
+
+                          {/* ساعات العمل اليومية */}
+                          <div className="text-center">
+                            <div className="relative inline-flex items-center justify-center w-20 h-20">
+                              <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                                <path
+                                  className="text-gray-300"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  fill="none"
+                                  d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                                <path
+                                  className={`${
+                                    (attendanceStats?.averageHours || 0) >= 8 ? 'text-green-500' :
+                                    (attendanceStats?.averageHours || 0) >= 6 ? 'text-yellow-500' : 'text-red-500'
+                                  }`}
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  fill="none"
+                                  strokeDasharray={`${Math.min((attendanceStats?.averageHours || 0) * 12.5, 100)}, 100`}
+                                  d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831"
+                                />
+                              </svg>
+                              <span className="absolute text-lg font-bold text-gray-700">
+                                {(attendanceStats?.averageHours || 0).toFixed(1)}h
+                              </span>
+                            </div>
+                            <p className="mt-2 text-sm font-medium text-gray-600">Daily Hours</p>
+                            <p className={`text-xs ${
+                              (attendanceStats?.averageHours || 0) >= 8 ? 'text-green-600' :
+                              (attendanceStats?.averageHours || 0) >= 6 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {(attendanceStats?.averageHours || 0) >= 8 ? 'Full Time' :
+                               (attendanceStats?.averageHours || 0) >= 6 ? 'Adequate' : 'Below Standard'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* جدول سجلات الحضور الأخيرة */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Attendance Records</h3>
+                        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {attendance && attendance.length > 0 ? (
+                                  attendance.slice(0, 10).map((record, index) => (
+                                    <tr key={index} className="hover:bg-gray-50">
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {new Date(record.date as string).toLocaleDateString()}
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {record.time as string}
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {record.punch_state_display as string || 'Unknown'}
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                          (record.time as string) <= '08:30:00' ? 'bg-green-100 text-green-800' :
+                                          (record.time as string) <= '09:00:00' ? 'bg-yellow-100 text-yellow-800' :
+                                          'bg-red-100 text-red-800'
+                                        }`}>
+                                          {(record.time as string) <= '08:30:00' ? 'On Time' :
+                                           (record.time as string) <= '09:00:00' ? 'Slightly Late' : 'Late'}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  ))
+                                ) : (
+                                  <tr>
+                                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                      No attendance records found
+                                    </td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>

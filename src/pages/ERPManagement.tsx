@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Building2, Users, Plus, Edit2, Trash2, Save, X, UserX, Monitor, RotateCcw, Search, Calendar, FileText, Power, PowerOff } from 'lucide-react';
+import { Building2, Users, Plus, Edit2, Trash2, Save, X, UserX, Monitor, RotateCcw, Search, Calendar, FileText, Power, PowerOff, Activity, Wifi, WifiOff, Loader2 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { LanguageContext } from '../contexts/LanguageContext';
 import { erpService } from '../api/laravel';
@@ -39,6 +39,8 @@ interface Device {
   transfer_mode?: number;
   transfer_time?: number;
   last_activity?: string;
+  network_status?: 'online' | 'offline' | 'checking';
+  last_checked?: string;
 }
 
 const ERPManagement: React.FC = () => {
@@ -89,10 +91,27 @@ const ERPManagement: React.FC = () => {
   
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deviceStatusChecking, setDeviceStatusChecking] = useState(false);
+  const [lastStatusCheck, setLastStatusCheck] = useState<string>('');
 
   useEffect(() => {
     loadData();
   }, [activeTab]);
+
+  // Auto-check device status every 5 minutes for devices tab
+  useEffect(() => {
+    if (activeTab === 'devices') {
+      // Initial check
+      checkDevicesStatus();
+      
+      // Set up interval for every 5 minutes (300,000 ms)
+      const interval = setInterval(() => {
+        checkDevicesStatus();
+      }, 5 * 60 * 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, devices]);
 
   const loadData = async () => {
     try {
@@ -111,12 +130,19 @@ const ERPManagement: React.FC = () => {
       } else if (activeTab === 'resignations') {
         const response = await erpService.getResignations();
         if (response.data.success) {
-          setResignations(response.data.data || []);
+          // Handle different data structures
+          const resignData = response.data.data;
+          setResignations(Array.isArray(resignData) ? resignData : (resignData?.data || []));
         }
       } else if (activeTab === 'devices') {
         const response = await erpService.getDevices();
+        console.log('Devices API Response:', response.data);
         if (response.data.success) {
-          setDevices(response.data.data || []);
+          // Handle different data structures 
+          const deviceData = response.data.data;
+          const finalDevices = Array.isArray(deviceData) ? deviceData : (deviceData?.data || []);
+          console.log('Final devices data:', finalDevices);
+          setDevices(finalDevices);
         }
       }
     } catch (error) {
@@ -283,6 +309,95 @@ const ERPManagement: React.FC = () => {
     }
   };
 
+  // Check device network status via ping
+  const checkDeviceStatus = async (device: Device): Promise<'online' | 'offline'> => {
+    try {
+      // Create a simple ping-like check using fetch with a timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+      
+      // Try to reach the device via HTTP (many biometric devices have web interface)
+      const response = await fetch(`http://${device.ip_address}`, {
+        mode: 'no-cors', // Allow cross-origin to avoid CORS issues
+        signal: controller.signal,
+        cache: 'no-cache'
+      });
+      
+      clearTimeout(timeoutId);
+      return 'online';
+    } catch (error) {
+      // If fetch fails, try a simpler approach using image loading
+      return new Promise((resolve) => {
+        const img = new Image();
+        const timeout = setTimeout(() => {
+          resolve('offline');
+        }, 3000);
+        
+        img.onload = () => {
+          clearTimeout(timeout);
+          resolve('online');
+        };
+        
+        img.onerror = () => {
+          clearTimeout(timeout);
+          resolve('offline');
+        };
+        
+        // Try to load a tiny image from the device IP (most devices respond to this)
+        img.src = `http://${device.ip_address}/favicon.ico?t=${Date.now()}`;
+      });
+    }
+  };
+
+  // Check all devices status
+  const checkDevicesStatus = async () => {
+    if (devices.length === 0) return;
+    
+    setDeviceStatusChecking(true);
+    const currentTime = new Date().toLocaleString('ar-SA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    
+    try {
+      // Update all devices to checking status first
+      setDevices(prev => prev.map(device => ({
+        ...device,
+        network_status: 'checking' as const,
+        last_checked: currentTime
+      })));
+
+      // Check each device status
+      const statusPromises = devices.map(async (device) => {
+        const status = await checkDeviceStatus(device);
+        return {
+          ...device,
+          network_status: status,
+          last_checked: currentTime
+        };
+      });
+
+      const updatedDevices = await Promise.all(statusPromises);
+      setDevices(updatedDevices);
+      setLastStatusCheck(currentTime);
+      
+      // Show toast notification about the check
+      const onlineCount = updatedDevices.filter(d => d.network_status === 'online').length;
+      const offlineCount = updatedDevices.filter(d => d.network_status === 'offline').length;
+      
+      toast.success(`Device Status Updated: ${onlineCount} Online, ${offlineCount} Offline`);
+    } catch (error) {
+      console.error('Error checking device status:', error);
+      toast.error('Failed to check device status');
+    } finally {
+      setDeviceStatusChecking(false);
+    }
+  };
+
   // Filter data based on search
   const filteredData = () => {
     if (!searchTerm) {
@@ -322,16 +437,36 @@ const ERPManagement: React.FC = () => {
     return [];
   };
 
-  const getDeviceStateIcon = (state: number) => {
-    return state === 1 ? (
+  const getDeviceStateIcon = (device: Device) => {
+    // Show network status first, then API state
+    if (device.network_status === 'checking') {
+      return <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />;
+    } else if (device.network_status === 'online') {
+      return <Wifi className="w-4 h-4 text-green-500" />;
+    } else if (device.network_status === 'offline') {
+      return <WifiOff className="w-4 h-4 text-red-500" />;
+    }
+    
+    // Fallback to API state if network status not checked yet
+    return device.state === 1 ? (
       <Power className="w-4 h-4 text-green-500" />
     ) : (
       <PowerOff className="w-4 h-4 text-red-500" />
     );
   };
 
-  const getDeviceStateText = (state: number) => {
-    return state === 1 ? 'Online' : 'Offline';
+  const getDeviceStateText = (device: Device) => {
+    // Show network status first, then API state
+    if (device.network_status === 'checking') {
+      return 'Checking...';
+    } else if (device.network_status === 'online') {
+      return 'Connected';
+    } else if (device.network_status === 'offline') {
+      return 'Disconnected';
+    }
+    
+    // Fallback to API state if network status not checked yet
+    return device.state === 1 ? 'Online' : 'Offline';
   };
 
   if (loading) {
@@ -374,6 +509,45 @@ const ERPManagement: React.FC = () => {
         </nav>
       </div>
 
+      {/* Device Status Information */}
+      {activeTab === 'devices' && (
+        <div className={`rounded-lg p-4 ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-blue-50 border border-blue-200'}`}>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Activity className={`${isDark ? 'text-blue-400' : 'text-blue-600'}`} size={20} />
+                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  فحص حالة الأجهزة تلقائياً كل 5 دقائق
+                </span>
+              </div>
+              {lastStatusCheck && (
+                <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  آخر فحص: {lastStatusCheck}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center space-x-4">
+              {devices.length > 0 && (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <Wifi className="text-green-500" size={16} />
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      متصل: {devices.filter(d => d.network_status === 'online').length}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <WifiOff className="text-red-500" size={16} />
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      منقطع: {devices.filter(d => d.network_status === 'offline').length}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Search and Actions */}
       <div className="flex justify-between items-center">
         <div className="relative">
@@ -397,6 +571,26 @@ const ERPManagement: React.FC = () => {
             >
               <RotateCcw size={16} />
               <span>Reinstate ({selectedResignations.length})</span>
+            </button>
+          )}
+          
+          {/* Device Status Check Button */}
+          {activeTab === 'devices' && (
+            <button
+              onClick={checkDevicesStatus}
+              disabled={deviceStatusChecking}
+              className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
+                deviceStatusChecking 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-green-600 hover:bg-green-700'
+              } text-white`}
+            >
+              {deviceStatusChecking ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Activity size={16} />
+              )}
+              <span>{deviceStatusChecking ? 'جاري الفحص...' : 'فحص الحالة'}</span>
             </button>
           )}
           
@@ -554,9 +748,16 @@ const ERPManagement: React.FC = () => {
                         {item.ip_address}
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                        <div className="flex items-center space-x-2">
-                          {getDeviceStateIcon(item.state)}
-                          <span>{getDeviceStateText(item.state)}</span>
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex items-center space-x-2">
+                            {getDeviceStateIcon(item)}
+                            <span>{getDeviceStateText(item)}</span>
+                          </div>
+                          {item.last_checked && (
+                            <div className="text-xs text-gray-400">
+                              آخر فحص: {item.last_checked}
+                            </div>
+                          )}
                         </div>
                       </td>
                     </>

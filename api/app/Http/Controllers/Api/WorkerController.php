@@ -26,6 +26,17 @@ class WorkerController extends Controller
             'salary' => 'nullable|numeric|min:0',
             'hire_date' => 'required|date',
             'skills' => 'nullable|array',
+            // Payroll fields validation
+            'base_salary' => 'nullable|numeric|min:0',
+            'hourly_rate' => 'nullable|numeric|min:0',
+            'overtime_rate' => 'nullable|numeric|min:0',
+            'standard_hours_per_day' => 'nullable|integer|min:1|max:24',
+            'standard_hours_per_week' => 'nullable|integer|min:1|max:168',
+            'standard_hours_per_month' => 'nullable|integer|min:1|max:744',
+            'enable_overtime' => 'nullable|boolean',
+            'enable_bonus' => 'nullable|boolean',
+            'bonus_percentage' => 'nullable|numeric|min:0|max:100',
+            'payroll_status' => 'nullable|in:active,inactive,suspended',
         ]);
 
         $worker = Worker::create($request->all());
@@ -48,6 +59,17 @@ class WorkerController extends Controller
             'salary' => 'nullable|numeric|min:0',
             'hire_date' => 'required|date',
             'skills' => 'nullable|array',
+            // Payroll fields validation
+            'base_salary' => 'nullable|numeric|min:0',
+            'hourly_rate' => 'nullable|numeric|min:0',
+            'overtime_rate' => 'nullable|numeric|min:0',
+            'standard_hours_per_day' => 'nullable|integer|min:1|max:24',
+            'standard_hours_per_week' => 'nullable|integer|min:1|max:168',
+            'standard_hours_per_month' => 'nullable|integer|min:1|max:744',
+            'enable_overtime' => 'nullable|boolean',
+            'enable_bonus' => 'nullable|boolean',
+            'bonus_percentage' => 'nullable|numeric|min:0|max:100',
+            'payroll_status' => 'nullable|in:active,inactive,suspended',
         ]);
 
         $worker->update($request->all());

@@ -30,6 +30,10 @@ const translations = {
     'common.deleteConfirm': 'Are you sure you want to delete this item?',
     'common.previous': 'Previous',
     'common.next': 'Next',
+    'common.refresh': 'Refresh',
+    'common.status': 'Status',
+    'common.date': 'Date',
+    'common.actions': 'Actions',
     
     // Navigation
     'nav.dashboard': 'Dashboard',
@@ -44,6 +48,39 @@ const translations = {
     'nav.notifications': 'Notifications',
     'nav.settings': 'Settings',
     
+    // Payroll
+    'payroll.title': 'Payroll Management',
+    'payroll.description': 'Manage worker salaries and payments',
+    'payroll.createPayroll': 'Create Payroll',
+    'payroll.createAllPayrolls': 'Create All Payrolls',
+    'payroll.totalPayroll': 'Total Payroll',
+    'payroll.averageSalary': 'Average Salary',
+    'payroll.totalWorkers': 'Total Workers',
+    'payroll.totalHours': 'Total Hours',
+    'payroll.records': 'Payroll Records',
+    'payroll.payrollNumber': 'Payroll #',
+    'payroll.worker': 'Worker',
+    'payroll.hours': 'Hours',
+    'payroll.baseSalary': 'Base Salary',
+    'payroll.overtime': 'Overtime',
+    'payroll.bonus': 'Bonus',
+    'payroll.netSalary': 'Net Salary',
+
+    // Worker Payroll Fields
+    'Payroll Information': 'Payroll Information',
+    'Base Salary': 'Base Salary',
+    'Hourly Rate': 'Hourly Rate',
+    'Overtime Rate': 'Overtime Rate',
+    'Daily Working Hours': 'Daily Working Hours',
+    'Weekly Working Hours': 'Weekly Working Hours',
+    'Monthly Working Hours': 'Monthly Working Hours',
+    'Bonus Percentage': 'Bonus Percentage',
+    'Payroll Status': 'Payroll Status',
+    'Enable Overtime Calculation': 'Enable Overtime Calculation',
+    'Enable Bonus Calculation': 'Enable Bonus Calculation',
+    'Inactive': 'Inactive',
+    'Suspended': 'Suspended',
+
     // Settings Page
     'settings.title': 'Settings',
     'settings.description': 'Manage your application preferences and configurations',
@@ -1083,6 +1120,10 @@ const translations = {
     'common.back': 'العودة',
     'common.save': 'حفظ',
     'common.cancel': 'إلغاء',
+    'common.refresh': 'تحديث',
+    'common.status': 'الحالة',
+    'common.date': 'التاريخ',
+    'common.actions': 'الإجراءات',
     
     // Navigation
     'nav.dashboard': 'لوحة القيادة',
@@ -1096,6 +1137,39 @@ const translations = {
     'nav.advanced': 'الميزات المتقدمة',
     'nav.notifications': 'الإشعارات',
     'nav.settings': 'الإعدادات',
+    
+    // Payroll
+    'payroll.title': 'إدارة الرواتب',
+    'payroll.description': 'إدارة رواتب ومدفوعات العمال',
+    'payroll.createPayroll': 'إنشاء راتب',
+    'payroll.createAllPayrolls': 'إنشاء جميع الرواتب',
+    'payroll.totalPayroll': 'إجمالي الرواتب',
+    'payroll.averageSalary': 'متوسط الراتب',
+    'payroll.totalWorkers': 'إجمالي العمال',
+    'payroll.totalHours': 'إجمالي الساعات',
+    'payroll.records': 'سجلات الرواتب',
+    'payroll.payrollNumber': 'رقم الراتب',
+    'payroll.worker': 'العامل',
+    'payroll.hours': 'الساعات',
+    'payroll.baseSalary': 'الراتب الأساسي',
+    'payroll.overtime': 'الإضافي',
+    'payroll.bonus': 'البونص',
+    'payroll.netSalary': 'صافي الراتب',
+
+    // Worker Payroll Fields
+    'Payroll Information': 'معلومات الراتب',
+    'Base Salary': 'الراتب الأساسي',
+    'Hourly Rate': 'سعر الساعة',
+    'Overtime Rate': 'سعر الإضافي',
+    'Daily Working Hours': 'ساعات العمل اليومية',
+    'Weekly Working Hours': 'ساعات العمل الأسبوعية',
+    'Monthly Working Hours': 'ساعات العمل الشهرية',
+    'Bonus Percentage': 'نسبة البونص',
+    'Payroll Status': 'حالة الراتب',
+    'Enable Overtime Calculation': 'تفعيل حساب الإضافي',
+    'Enable Bonus Calculation': 'تفعيل حساب البونص',
+    'Inactive': 'غير نشط',
+    'Suspended': 'معلق',
     
     // Settings Page
     'settings.title': 'الإعدادات',

@@ -7,9 +7,13 @@ import toast from 'react-hot-toast';
 interface Transaction {
   id: number;
   emp_code: string;
+  first_name?: string;
+  last_name?: string;
   punch_time: string;
   punch_state: number;
+  punch_state_display?: string;
   verification_type: string;
+  verify_type_display?: string;
   terminal_sn: string;
   terminal_alias?: string;
   upload_time?: string;
@@ -69,26 +73,50 @@ const TransactionManagement: React.FC<TransactionManagementProps> = ({ activeTab
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Debounced effect for filters
   useEffect(() => {
-    if (activeTab === 'transactions') {
-      loadTransactions();
-    }
-    loadTransactionStats();
+    const timer = setTimeout(() => {
+      if (activeTab === 'transactions') {
+        loadTransactions();
+      }
+      loadTransactionStats();
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
   }, [activeTab, transactionFilters, dateRange]);
 
   const loadTransactions = async () => {
     try {
       setLoading(true);
-      const params = {
-        ...transactionFilters,
-        start_time: dateRange.startDate,
-        end_time: dateRange.endDate
+      
+      // Build params object, only include non-empty values
+      const params: Record<string, unknown> = {
+        page: transactionFilters.page,
+        page_size: transactionFilters.page_size
       };
+      
+      if (transactionFilters.emp_code && transactionFilters.emp_code.trim()) {
+        params.emp_code = transactionFilters.emp_code.trim();
+      }
+      if (transactionFilters.terminal_sn && transactionFilters.terminal_sn.trim()) {
+        params.terminal_sn = transactionFilters.terminal_sn.trim();
+      }
+      if (dateRange.startDate) {
+        params.start_time = dateRange.startDate;
+      }
+      if (dateRange.endDate) {
+        params.end_time = dateRange.endDate;
+      }
+      
+      console.log('Loading transactions with params:', params);
       const response = await erpService.getTransactions(params);
+      console.log('Transactions response:', response.data);
       
       if (response.data && response.data.success) {
+        console.log('Setting transactions:', response.data.data?.data || []);
         setTransactions(response.data.data?.data || []);
       } else {
+        console.log('Failed to load transactions:', response.data);
         setTransactions([]);
       }
     } catch (error) {
@@ -103,14 +131,19 @@ const TransactionManagement: React.FC<TransactionManagementProps> = ({ activeTab
   const loadTransactionStats = async () => {
     try {
       const params = {
-        start_date: dateRange.startDate,
-        end_date: dateRange.endDate
+        start_date: dateRange.startDate || undefined,
+        end_date: dateRange.endDate || undefined
       };
 
+      console.log('Loading transaction stats with params:', params);
       const response = await erpService.getTransactionStats(params);
+      console.log('Transaction stats response:', response.data);
       
       if (response.data && response.data.success) {
+        console.log('Setting transaction stats:', response.data.data);
         setTransactionStats(response.data.data);
+      } else {
+        console.log('Failed to get transaction stats:', response.data);
       }
     } catch (error) {
       console.error('Error loading transaction stats:', error);
@@ -335,6 +368,35 @@ const TransactionManagement: React.FC<TransactionManagementProps> = ({ activeTab
                 </select>
               </div>
             </div>
+            
+            {/* Filter Action Buttons */}
+            <div className="flex gap-4 mt-4">
+              <button
+                onClick={() => {
+                  loadTransactions();
+                  loadTransactionStats();
+                }}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Apply Filters
+              </button>
+              <button
+                onClick={() => {
+                  setTransactionFilters({
+                    emp_code: '',
+                    terminal_sn: '',
+                    page: 1,
+                    page_size: 50
+                  });
+                  setDateRange({ startDate: '', endDate: '' });
+                }}
+                className={`px-4 py-2 border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 ${
+                  isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700'
+                }`}
+              >
+                Clear Filters
+              </button>
+            </div>
           </div>
 
           {/* Transactions Table */}
@@ -345,6 +407,7 @@ const TransactionManagement: React.FC<TransactionManagementProps> = ({ activeTab
                   <tr>
                     <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>ID</th>
                     <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Employee Code</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Employee Name</th>
                     <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Punch Time</th>
                     <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Action</th>
                     <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Terminal</th>
@@ -355,7 +418,7 @@ const TransactionManagement: React.FC<TransactionManagementProps> = ({ activeTab
                 <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center">
+                      <td colSpan={8} className="px-6 py-12 text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
                       </td>
                     </tr>
@@ -368,12 +431,17 @@ const TransactionManagement: React.FC<TransactionManagementProps> = ({ activeTab
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                           {transaction.emp_code}
                         </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {transaction.first_name && transaction.last_name 
+                            ? `${transaction.first_name} ${transaction.last_name}` 
+                            : transaction.first_name || transaction.last_name || 'N/A'}
+                        </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                           {new Date(transaction.punch_time).toLocaleString()}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPunchStateColor(transaction.punch_state)}`}>
-                            {getPunchStateText(transaction.punch_state)}
+                            {transaction.punch_state_display || getPunchStateText(transaction.punch_state)}
                           </span>
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
@@ -383,7 +451,7 @@ const TransactionManagement: React.FC<TransactionManagementProps> = ({ activeTab
                           </div>
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {transaction.verification_type || 'N/A'}
+                          {transaction.verify_type_display || transaction.verification_type || 'N/A'}
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                           <div className="flex space-x-2">
@@ -407,7 +475,7 @@ const TransactionManagement: React.FC<TransactionManagementProps> = ({ activeTab
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center">
+                      <td colSpan={8} className="px-6 py-12 text-center">
                         <div className={`flex flex-col items-center space-y-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                           <Database size={48} className="opacity-50" />
                           <div>

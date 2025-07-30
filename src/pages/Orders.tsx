@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Plus, Search, Filter, Edit, Trash2, User, Calendar, DollarSign, Package, ShoppingCart, ExternalLink, Eye, Clock, MapPin, Phone, Mail } from 'lucide-react';
-import { orderService, clientService, workerService, categoryService } from '../api/laravel';
+import { orderService, clientService, workerService, categoryService, biometricService } from '../api/laravel';
 import { LanguageContext } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import toast from 'react-hot-toast';
