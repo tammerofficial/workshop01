@@ -238,6 +238,7 @@ class PayrollController extends Controller
             $regularHours = $totalHours - $overtimeHours;
             $payroll->base_salary = round($regularHours * $hourlyRate, 2);
             $payroll->overtime_pay = round($overtimeHours * $overtimeRate, 2);
+            
             $payroll->net_salary = round(
                 $payroll->base_salary + 
                 $payroll->overtime_pay + 

@@ -98,6 +98,13 @@ const EditWorker: React.FC = () => {
     'custom-made': ['Bespoke Tailoring', 'Hand Stitching', 'Pattern Drafting', 'Fitting', 'Alterations', 'Fabric Knowledge']
   };
 
+  // Auto-calculate hourly rate when salary or monthly hours change
+  const calculateHourlyRate = (salary: string, monthlyHours: string) => {
+    const salaryNum = parseFloat(salary) || 0;
+    const hoursNum = parseFloat(monthlyHours) || 160; // Default 160 hours per month
+    return hoursNum > 0 ? (salaryNum / hoursNum).toFixed(2) : '0.00';
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
@@ -111,10 +118,22 @@ const EditWorker: React.FC = () => {
         }
       }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setFormData(prev => {
+        const newData = { ...prev, [name]: value };
+        
+        // Auto-calculate hourly rate when salary or monthly hours change
+        if (name === 'salary' || name === 'standardHoursPerMonth') {
+          const salary = name === 'salary' ? value : prev.salary;
+          const monthlyHours = name === 'standardHoursPerMonth' ? value : prev.standardHoursPerMonth;
+          newData.hourlyRate = calculateHourlyRate(salary, monthlyHours);
+          
+          // Also calculate overtime rate (1.5x hourly rate)
+          const hourlyRateNum = parseFloat(newData.hourlyRate) || 0;
+          newData.overtimeRate = (hourlyRateNum * 1.5).toFixed(2);
+        }
+        
+        return newData;
+      });
     }
   };
 
@@ -542,10 +561,10 @@ const EditWorker: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Hourly Rate */}
+                    {/* Hourly Rate (Auto-calculated) */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {t('Hourly Rate')}
+                        {t('Hourly Rate')} <span className="text-xs text-blue-500">({t('Auto-calculated')})</span>
                       </label>
                       <div className="relative">
                         <span className={`absolute top-2 text-gray-500 dark:text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`}>$</span>
@@ -554,18 +573,21 @@ const EditWorker: React.FC = () => {
                           name="hourlyRate"
                           step="0.01"
                           min="0"
-                          className={`w-full border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${isRTL ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2`}
+                          readOnly
+                          className={`w-full border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-600 text-gray-700 dark:text-gray-300 cursor-not-allowed ${isRTL ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2`}
                           value={formData.hourlyRate}
-                          onChange={handleInputChange}
-                          placeholder="5.00"
+                          title={t('Calculated from: Monthly Salary ÷ Monthly Working Hours')}
                         />
                       </div>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {t('Formula')}: {formData.salary || '0'}$ ÷ {formData.standardHoursPerMonth || '160'}h = {formData.hourlyRate}$/h
+                      </p>
                     </div>
 
-                    {/* Overtime Rate */}
+                    {/* Overtime Rate (Auto-calculated) */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {t('Overtime Rate')}
+                        {t('Overtime Rate')} <span className="text-xs text-blue-500">({t('Auto-calculated')})</span>
                       </label>
                       <div className="relative">
                         <span className={`absolute top-2 text-gray-500 dark:text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`}>$</span>
@@ -574,12 +596,15 @@ const EditWorker: React.FC = () => {
                           name="overtimeRate"
                           step="0.01"
                           min="0"
-                          className={`w-full border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${isRTL ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2`}
+                          readOnly
+                          className={`w-full border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-600 text-gray-700 dark:text-gray-300 cursor-not-allowed ${isRTL ? 'pr-8 pl-3' : 'pl-8 pr-3'} py-2`}
                           value={formData.overtimeRate}
-                          onChange={handleInputChange}
-                          placeholder="7.50"
+                          title={t('Calculated as: Hourly Rate × 1.5')}
                         />
                       </div>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {t('Formula')}: {formData.hourlyRate}$ × 1.5 = {formData.overtimeRate}$/h
+                      </p>
                     </div>
 
                     {/* Standard Hours Per Day */}

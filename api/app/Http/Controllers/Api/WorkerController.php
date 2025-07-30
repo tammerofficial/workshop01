@@ -39,7 +39,12 @@ class WorkerController extends Controller
             'payroll_status' => 'nullable|in:active,inactive,suspended',
         ]);
 
-        $worker = Worker::create($request->all());
+        $data = $request->all();
+        
+        // Auto-calculate hourly rate if salary and hours are provided
+        $this->calculateHourlyRates($data);
+        
+        $worker = Worker::create($data);
         return response()->json($worker, 201);
     }
 
@@ -72,7 +77,12 @@ class WorkerController extends Controller
             'payroll_status' => 'nullable|in:active,inactive,suspended',
         ]);
 
-        $worker->update($request->all());
+        $data = $request->all();
+        
+        // Auto-calculate hourly rate if salary and hours are provided
+        $this->calculateHourlyRates($data);
+        
+        $worker->update($data);
         return response()->json($worker);
     }
 
@@ -92,5 +102,33 @@ class WorkerController extends Controller
     {
         $worker->update(['is_active' => false]);
         return response()->json(['message' => 'Worker deactivated successfully']);
+    }
+
+    /**
+     * Auto-calculate hourly rate and overtime rate based on salary and monthly hours
+     */
+    private function calculateHourlyRates(array &$data): void
+    {
+        // Calculate hourly rate if salary and monthly hours are provided
+        if (isset($data['salary']) && isset($data['standard_hours_per_month'])) {
+            $salary = (float) $data['salary'];
+            $monthlyHours = (float) $data['standard_hours_per_month'];
+            
+            if ($monthlyHours > 0) {
+                $data['hourly_rate'] = round($salary / $monthlyHours, 2);
+                
+                // Calculate overtime rate (1.5x hourly rate)
+                $data['overtime_rate'] = round($data['hourly_rate'] * 1.5, 2);
+            }
+        }
+        // If only salary is provided but no monthly hours, use default 160 hours
+        elseif (isset($data['salary']) && !isset($data['standard_hours_per_month'])) {
+            $salary = (float) $data['salary'];
+            $defaultMonthlyHours = 160; // Default monthly hours
+            
+            $data['hourly_rate'] = round($salary / $defaultMonthlyHours, 2);
+            $data['overtime_rate'] = round($data['hourly_rate'] * 1.5, 2);
+            $data['standard_hours_per_month'] = $defaultMonthlyHours;
+        }
     }
 } 

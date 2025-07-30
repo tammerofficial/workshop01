@@ -80,6 +80,10 @@ const translations = {
     'Enable Bonus Calculation': 'Enable Bonus Calculation',
     'Inactive': 'Inactive',
     'Suspended': 'Suspended',
+    'Auto-calculated': 'Auto-calculated',
+    'Formula': 'Formula',
+    'Calculated from: Monthly Salary ÷ Monthly Working Hours': 'Calculated from: Monthly Salary ÷ Monthly Working Hours',
+    'Calculated as: Hourly Rate × 1.5': 'Calculated as: Hourly Rate × 1.5',
 
     // Settings Page
     'settings.title': 'Settings',
@@ -1170,6 +1174,10 @@ const translations = {
     'Enable Bonus Calculation': 'تفعيل حساب البونص',
     'Inactive': 'غير نشط',
     'Suspended': 'معلق',
+    'Auto-calculated': 'محسوب تلقائياً',
+    'Formula': 'المعادلة',
+    'Calculated from: Monthly Salary ÷ Monthly Working Hours': 'محسوب من: الراتب الشهري ÷ ساعات العمل الشهرية',
+    'Calculated as: Hourly Rate × 1.5': 'محسوب كالتالي: سعر الساعة × 1.5',
     
     // Settings Page
     'settings.title': 'الإعدادات',
