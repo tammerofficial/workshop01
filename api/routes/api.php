@@ -260,5 +260,28 @@ Route::prefix('biometric')->group(function () {
         Route::post('/positions', [BiometricController::class, 'createPosition']);
         Route::put('/positions/{id}', [BiometricController::class, 'updatePosition']);
         Route::delete('/positions/{id}', [BiometricController::class, 'deletePosition']);
+        
+        // Resignation Management
+        Route::get('/resignations', [BiometricController::class, 'getResignations']);
+        Route::post('/resignations', [BiometricController::class, 'createResignation']);
+        Route::put('/resignations/{id}', [BiometricController::class, 'updateResignation']);
+        Route::delete('/resignations/{id}', [BiometricController::class, 'deleteResignation']);
+        Route::post('/resignations/reinstate', [BiometricController::class, 'reinstateEmployee']);
+        
+        // Device Management
+        Route::get('/devices', [BiometricController::class, 'getDevices']);
+        Route::post('/devices', [BiometricController::class, 'createDevice']);
+        Route::put('/devices/{id}', [BiometricController::class, 'updateDevice']);
+        Route::delete('/devices/{id}', [BiometricController::class, 'deleteDevice']);
+        
+        // Transaction Management
+        Route::get('/transactions', [BiometricController::class, 'getTransactions']);
+        Route::get('/transactions/{id}', [BiometricController::class, 'getTransaction']);
+        Route::delete('/transactions/{id}', [BiometricController::class, 'deleteTransaction']);
+        
+        // Transaction Reports
+        Route::get('/transaction-report', [BiometricController::class, 'getTransactionReport']);
+        Route::get('/transaction-report/export', [BiometricController::class, 'exportTransactionReport']);
+        Route::get('/transaction-stats', [BiometricController::class, 'getTransactionStats']);
     });
 }); 

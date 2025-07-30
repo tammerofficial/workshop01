@@ -432,47 +432,52 @@ class BiometricController extends Controller
     public function getBiometricAttendance(Request $request)
     {
         try {
-            // Get attendance transactions from biometric system
-            $transactions = $this->biometricService->getAttendanceTransactions();
-            
-            if (empty($transactions)) {
-                return response()->json([
-                    'success' => true,
-                    'data' => [],
-                    'message' => 'No attendance records found'
-                ]);
-            }
-
-            // Get filters from request
-            $startDate = $request->get('start_date', now()->subDays(30)->format('Y-m-d'));
-            $endDate = $request->get('end_date', now()->format('Y-m-d'));
+            // Get filters from request first
+            $startDate = $request->get('start_date');
+            $endDate = $request->get('end_date');
             $workerId = $request->get('worker_id');
+            $page = $request->get('page', 1);
+            $pageSize = $request->get('page_size', 10);
 
-            // Transform transactions to attendance format
+            // Get attendance transactions from biometric system
+            $apiResponse = $this->biometricService->getAttendanceTransactions($startDate, $endDate, $page, $pageSize);
+
+            // Check for failed API call
+            if ($apiResponse === null || !isset($apiResponse['data'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to fetch attendance data from the biometric system.',
+                    'data' => [],
+                    'pagination' => [],
+                    'stats' => []
+                ], 500);
+            }
+            
+            $transactions = $apiResponse['data'];
+
+            // Since we are now paginating via the API, we will transform the current page of data
             $attendanceData = [];
             foreach ($transactions as $transaction) {
                 $punchTime = \Carbon\Carbon::parse($transaction['punch_time']);
                 
-                // Apply date filter
-                if ($punchTime->format('Y-m-d') < $startDate || $punchTime->format('Y-m-d') > $endDate) {
-                    continue;
-                }
-
-                // Apply worker filter
-                if ($workerId && $transaction['emp_id'] != $workerId) {
-                    continue;
+                // Server-side filtering is now handled by the external API.
+                // We can keep client-side filtering logic if needed, but primary filtering is done.
+                if ($workerId && $transaction['emp'] != $workerId) {
+                    continue; // Optional: extra filtering on the current page
                 }
 
                 $attendanceData[] = [
                     'id' => $transaction['id'],
-                    'worker_id' => $transaction['emp_id'],
-                    'worker_name' => $transaction['emp_name'] ?? 'Unknown',
+                    'worker_id' => $transaction['emp'],
+                    'worker_name' => ($transaction['first_name'] ?? '') . ' ' . ($transaction['last_name'] ?? 'Unknown'),
                     'employee_code' => $transaction['emp_code'] ?? null,
                     'punch_time' => $punchTime->format('Y-m-d H:i:s'),
                     'punch_state' => $transaction['punch_state'], // 0=Check In, 1=Check Out, etc.
-                    'punch_state_display' => $this->getPunchStateDisplay($transaction['punch_state']),
-                    'verification_type' => $transaction['verification_type'] ?? null,
+                    'punch_state_display' => $transaction['punch_state_display'] ?? 'Unknown',
+                    'verification_type' => $transaction['verify_type_display'] ?? null,
                     'terminal_alias' => $transaction['terminal_alias'] ?? null,
+                    'department' => $transaction['department'] ?? null,
+                    'position' => $transaction['position'] ?? null,
                     'date' => $punchTime->format('Y-m-d'),
                     'time' => $punchTime->format('H:i:s'),
                     'day_of_week' => $punchTime->format('l'),
@@ -481,17 +486,18 @@ class BiometricController extends Controller
                 ];
             }
 
-            // Sort by punch time (most recent first)
-            usort($attendanceData, function($a, $b) {
-                return strtotime($b['punch_time']) - strtotime($a['punch_time']);
-            });
-
-            // Calculate statistics
+            // The external API gives us total count, so we use that for stats
             $stats = $this->calculateAttendanceStats($attendanceData);
-
+            
             return response()->json([
                 'success' => true,
                 'data' => $attendanceData,
+                'pagination' => [
+                    'total_records' => $apiResponse['count'] ?? 0,
+                    'total_pages' => ceil(($apiResponse['count'] ?? 0) / $pageSize),
+                    'current_page' => (int)$page,
+                    'page_size' => (int)$pageSize
+                ],
                 'stats' => $stats,
                 'filters' => [
                     'start_date' => $startDate,
@@ -921,6 +927,399 @@ class BiometricController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting position: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ===========================================
+    // RESIGNATION MANAGEMENT METHODS
+    // ===========================================
+
+    /**
+     * Get all resignations
+     */
+    public function getResignations()
+    {
+        try {
+            $resignations = $this->biometricService->getResignations();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $resignations
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching resignations: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create new resignation
+     */
+    public function createResignation(Request $request)
+    {
+        $request->validate([
+            'employee' => 'required|integer',
+            'resign_type' => 'required|string',
+            'resign_date' => 'required|date',
+            'reason' => 'nullable|string',
+            'description' => 'nullable|string',
+        ]);
+
+        try {
+            $resignation = $this->biometricService->createResignation($request->all());
+            
+            return response()->json([
+                'success' => true,
+                'data' => $resignation,
+                'message' => 'Resignation created successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating resignation: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update resignation
+     */
+    public function updateResignation(Request $request, $id)
+    {
+        $request->validate([
+            'employee' => 'sometimes|integer',
+            'resign_type' => 'sometimes|string',
+            'resign_date' => 'sometimes|date',
+            'reason' => 'nullable|string',
+            'description' => 'nullable|string',
+        ]);
+
+        try {
+            $resignation = $this->biometricService->updateResignation($id, $request->all());
+            
+            return response()->json([
+                'success' => true,
+                'data' => $resignation,
+                'message' => 'Resignation updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating resignation: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete resignation
+     */
+    public function deleteResignation($id)
+    {
+        try {
+            $this->biometricService->deleteResignation($id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Resignation deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting resignation: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reinstate employee
+     */
+    public function reinstateEmployee(Request $request)
+    {
+        $request->validate([
+            'resignation_ids' => 'required|array',
+            'resignation_ids.*' => 'integer',
+        ]);
+
+        try {
+            $result = $this->biometricService->reinstateEmployee($request->resignation_ids);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $result,
+                'message' => 'Employee reinstated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error reinstating employee: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ===========================================
+    // DEVICE MANAGEMENT METHODS
+    // ===========================================
+
+    /**
+     * Get all devices
+     */
+    public function getDevices()
+    {
+        try {
+            $devices = $this->biometricService->getDevices();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $devices
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching devices: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create new device
+     */
+    public function createDevice(Request $request)
+    {
+        $request->validate([
+            'sn' => 'required|string',
+            'alias' => 'required|string',
+            'ip_address' => 'required|ip',
+            'terminal_tz' => 'sometimes|string',
+            'state' => 'sometimes|integer',
+            'transfer_mode' => 'sometimes|integer',
+            'transfer_time' => 'sometimes|integer',
+        ]);
+
+        try {
+            $device = $this->biometricService->createDevice($request->all());
+            
+            return response()->json([
+                'success' => true,
+                'data' => $device,
+                'message' => 'Device created successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating device: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update device
+     */
+    public function updateDevice(Request $request, $id)
+    {
+        $request->validate([
+            'sn' => 'sometimes|string',
+            'alias' => 'sometimes|string',
+            'ip_address' => 'sometimes|ip',
+            'terminal_tz' => 'sometimes|string',
+            'state' => 'sometimes|integer',
+            'transfer_mode' => 'sometimes|integer',
+            'transfer_time' => 'sometimes|integer',
+        ]);
+
+        try {
+            $device = $this->biometricService->updateDevice($id, $request->all());
+            
+            return response()->json([
+                'success' => true,
+                'data' => $device,
+                'message' => 'Device updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating device: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete device
+     */
+    public function deleteDevice($id)
+    {
+        try {
+            $this->biometricService->deleteDevice($id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Device deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting device: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ===========================================
+    // TRANSACTION MANAGEMENT METHODS
+    // ===========================================
+
+    /**
+     * Get transactions with filtering
+     */
+    public function getTransactions(Request $request)
+    {
+        try {
+            $filters = $request->only([
+                'emp_code', 'terminal_sn', 'start_time', 'end_time', 
+                'page', 'page_size'
+            ]);
+            
+            $transactions = $this->biometricService->getTransactions($filters);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $transactions
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching transactions: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get single transaction
+     */
+    public function getTransaction($id)
+    {
+        try {
+            $transaction = $this->biometricService->getTransaction($id);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $transaction
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching transaction: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete transaction
+     */
+    public function deleteTransaction($id)
+    {
+        try {
+            $this->biometricService->deleteTransaction($id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting transaction: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ===========================================
+    // TRANSACTION REPORT METHODS
+    // ===========================================
+
+    /**
+     * Generate transaction report
+     */
+    public function getTransactionReport(Request $request)
+    {
+        try {
+            $filters = $request->only([
+                'page', 'page_size', 'start_date', 'end_date', 
+                'departments', 'areas', 'emp_codes'
+            ]);
+            
+            $report = $this->biometricService->getTransactionReport($filters);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $report
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating transaction report: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export transaction report
+     */
+    public function exportTransactionReport(Request $request)
+    {
+        $request->validate([
+            'format' => 'required|in:csv,txt,xls',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'departments' => 'nullable|string',
+            'areas' => 'nullable|string',
+            'emp_codes' => 'nullable|string'
+        ]);
+
+        try {
+            $filters = $request->only([
+                'start_date', 'end_date', 'departments', 'areas', 'emp_codes'
+            ]);
+            $format = $request->input('format', 'csv');
+            
+            $export = $this->biometricService->exportTransactionReport($filters, $format);
+            
+            $contentType = $export['content_type'] ?? 'application/octet-stream';
+            $filename = 'transaction_report_' . date('Y-m-d_H-i-s') . '.' . $format;
+            
+            return response($export['data'], 200)
+                ->header('Content-Type', $contentType)
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+                
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error exporting transaction report: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get transaction statistics
+     */
+    public function getTransactionStats(Request $request)
+    {
+        try {
+            $filters = $request->only([
+                'start_date', 'end_date', 'departments', 'areas', 'emp_codes'
+            ]);
+            
+            $stats = $this->biometricService->getTransactionStats($filters);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching transaction stats: ' . $e->getMessage()
             ], 500);
         }
     }

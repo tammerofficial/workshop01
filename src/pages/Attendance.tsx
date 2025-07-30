@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Clock, CheckCircle, XCircle, TrendingUp, RefreshCw } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, TrendingUp, RefreshCw, Database, BarChart3 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { LanguageContext } from '../contexts/LanguageContext';
 // Components removed as filters are now integrated directly
 import { biometricService } from '../api/laravel';
+import TransactionManagement from '../components/attendance/TransactionManagement';
 import toast from 'react-hot-toast';
 
 interface AttendanceRecord {
@@ -16,12 +17,16 @@ interface AttendanceRecord {
   punch_state_display: string;
   verification_type: string | null;
   terminal_alias: string | null;
+  department: string | null;
+  position: string | null;
   date: string;
   time: string;
   day_of_week: string;
   is_late: boolean;
   biometric_data: Record<string, unknown>;
 }
+
+// Transaction interfaces are defined in TransactionManagement component
 
 interface AttendanceStats {
   total_records: number;
@@ -37,11 +42,16 @@ interface AttendanceStats {
 const Attendance: React.FC = () => {
   const { isDark } = useTheme();
   const { t } = useContext(LanguageContext)!;
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'attendance' | 'transactions' | 'reports'>('attendance');
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [workers, setWorkers] = useState<{ id: string; name: string }[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
+  
+  // Transaction data is managed by TransactionManagement component
   // Calendar view disabled for biometric data
   // const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   
@@ -56,9 +66,19 @@ const Attendance: React.FC = () => {
     late_arrivals: 0
   });
 
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    pageSize: 50, // Increased from 10 to show more records per page
+    totalRecords: 0
+  });
+
+  const [dateRange, setDateRange] = useState({
+    startDate: '',
+    endDate: '',
+  });
+
   const [filters, setFilters] = useState({
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
     workerId: '',
     status: '',
     department: '',
@@ -67,21 +87,33 @@ const Attendance: React.FC = () => {
     view: 'table' as 'table' | 'calendar' | 'chart'
   });
 
+  // Transaction filters are managed by TransactionManagement component
+
+  // Handle filter changes and reset pagination
+  const handleFilterChange = (filterType: string, value: string) => {
+    setFilters(prev => ({ ...prev, [filterType]: value }));
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  };
+
   useEffect(() => {
     loadAttendanceData();
-    loadWorkers();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.startDate, filters.endDate, filters.workerId, filters.department, filters.status]);
+  }, [dateRange, filters.workerId, filters.department, filters.status, pagination.currentPage, pagination.pageSize]);
+
+  useEffect(() => {
+    loadWorkers();
+  }, []);
 
   const loadAttendanceData = async () => {
     try {
       setLoading(true);
       
-      // Get attendance data from biometric system
       const params = {
-        start_date: filters.startDate,
-        end_date: filters.endDate,
-        worker_id: filters.workerId || undefined
+        ...(dateRange.startDate && { start_date: dateRange.startDate }),
+        ...(dateRange.endDate && { end_date: dateRange.endDate }),
+        worker_id: filters.workerId || undefined,
+        page: pagination.currentPage,
+        page_size: pagination.pageSize
       };
       
       const response = await biometricService.getBiometricAttendance(params);
@@ -89,6 +121,14 @@ const Attendance: React.FC = () => {
       if (response.data.success) {
         setAttendance(response.data.data);
         setStats(response.data.stats);
+        if(response.data.pagination) {
+          setPagination({
+            currentPage: response.data.pagination.current_page,
+            totalPages: response.data.pagination.total_pages,
+            pageSize: response.data.pagination.page_size,
+            totalRecords: response.data.pagination.total_records
+          });
+        }
       } else {
         setAttendance([]);
         setStats({
@@ -171,10 +211,6 @@ const Attendance: React.FC = () => {
     }
   };
 
-  const handleFilterChange = (name: string, value: string) => {
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
   // Functions removed as they are not used with biometric data
 
   // Calendar and chart views disabled for biometric data
@@ -213,7 +249,34 @@ const Attendance: React.FC = () => {
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Tab Navigation */}
+      <div className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <nav className="-mb-px flex space-x-8">
+          {[
+            { key: 'attendance', label: 'Attendance Records', icon: Clock },
+            { key: 'transactions', label: 'Transaction Management', icon: Database },
+            { key: 'reports', label: 'Reports & Analytics', icon: BarChart3 }
+          ].map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key as 'attendance' | 'transactions' | 'reports')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                activeTab === key
+                  ? `border-blue-500 ${isDark ? 'text-blue-400' : 'text-blue-600'}`
+                  : `border-transparent ${isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} hover:border-gray-300`
+              }`}
+            >
+              <Icon size={16} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+        </div>
+
+      {/* Attendance Tab */}
+      {activeTab === 'attendance' && (
+        <div className="space-y-6">
+          {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className={`p-6 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center justify-between">
@@ -279,8 +342,11 @@ const Attendance: React.FC = () => {
             <div className="space-y-2">
               <input
                 type="date"
-                value={filters.startDate}
-                onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                value={dateRange.startDate}
+                onChange={(e) => {
+                  setDateRange({ ...dateRange, startDate: e.target.value });
+                  setPagination(prev => ({ ...prev, currentPage: 1 }));
+                }}
                 className={`w-full px-3 py-2 border rounded-md ${
                   isDark 
                     ? 'bg-gray-700 border-gray-600 text-white' 
@@ -289,8 +355,11 @@ const Attendance: React.FC = () => {
               />
               <input
                 type="date"
-                value={filters.endDate}
-                onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                value={dateRange.endDate}
+                onChange={(e) => {
+                  setDateRange({ ...dateRange, endDate: e.target.value });
+                  setPagination(prev => ({ ...prev, currentPage: 1 }));
+                }}
                 className={`w-full px-3 py-2 border rounded-md ${
                   isDark 
                     ? 'bg-gray-700 border-gray-600 text-white' 
@@ -391,7 +460,8 @@ const Attendance: React.FC = () => {
           <button
             onClick={() => {
               const today = new Date().toISOString().split('T')[0];
-              setFilters(prev => ({ ...prev, startDate: today, endDate: today }));
+              setDateRange({ startDate: today, endDate: today });
+              setPagination(prev => ({ ...prev, currentPage: 1 }));
             }}
             className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
           >
@@ -402,7 +472,8 @@ const Attendance: React.FC = () => {
               const yesterday = new Date();
               yesterday.setDate(yesterday.getDate() - 1);
               const dateStr = yesterday.toISOString().split('T')[0];
-              setFilters(prev => ({ ...prev, startDate: dateStr, endDate: dateStr }));
+              setDateRange({ startDate: dateStr, endDate: dateStr });
+              setPagination(prev => ({ ...prev, currentPage: 1 }));
             }}
             className="px-3 py-1 text-sm bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
           >
@@ -413,11 +484,11 @@ const Attendance: React.FC = () => {
               const now = new Date();
               const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
               const weekEnd = new Date();
-              setFilters(prev => ({ 
-                ...prev, 
+              setDateRange({ 
                 startDate: weekStart.toISOString().split('T')[0], 
                 endDate: weekEnd.toISOString().split('T')[0] 
-              }));
+              });
+              setPagination(prev => ({ ...prev, currentPage: 1 }));
             }}
             className="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
           >
@@ -428,15 +499,24 @@ const Attendance: React.FC = () => {
               const now = new Date();
               const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
               const monthEnd = new Date();
-              setFilters(prev => ({ 
-                ...prev, 
+              setDateRange({ 
                 startDate: monthStart.toISOString().split('T')[0], 
                 endDate: monthEnd.toISOString().split('T')[0] 
-              }));
+              });
+              setPagination(prev => ({ ...prev, currentPage: 1 }));
             }}
             className="px-3 py-1 text-sm bg-purple-100 text-purple-800 rounded-full hover:bg-purple-200 transition-colors"
           >
             This Month
+          </button>
+          <button
+            onClick={() => {
+              setDateRange({ startDate: '', endDate: '' });
+              setPagination(prev => ({ ...prev, currentPage: 1 }));
+            }}
+            className="px-3 py-1 text-sm bg-red-100 text-red-800 rounded-full hover:bg-red-200 transition-colors"
+          >
+            All Records
           </button>
         </div>
 
@@ -492,140 +572,145 @@ const Attendance: React.FC = () => {
             <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
               {t('attendance.attendanceRecords')}
             </h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                <tr>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    Worker
-                  </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    Day
-                  </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    {t('attendance.date')}
-                  </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    Action
-                  </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    Time
-                  </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    Verification
-                  </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    Punch Date
-                  </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                    Terminal
-                  </th>
-                </tr>
-              </thead>
-              <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                {attendance.length > 0 ? (
-                  attendance
-                    .filter(record => {
-                      // Search filter
-                      if (filters.search && !record.worker_name.toLowerCase().includes(filters.search.toLowerCase()) && 
-                          !(record.employee_code && record.employee_code.toLowerCase().includes(filters.search.toLowerCase()))) {
-                        return false;
-                      }
-                      
-                      // Status filter
-                      if (filters.status) {
-                        if (filters.status === 'present' && record.punch_state !== 0) return false;
-                        if (filters.status === 'absent' && record.punch_state === 0) return false;
-                        if (filters.status === 'late' && !record.is_late) return false;
-                      }
-                      
-                      return true;
-                    })
-                    .sort((a, b) => {
-                      if (filters.sortBy === 'date_desc') {
-                        return new Date(b.punch_time).getTime() - new Date(a.punch_time).getTime();
-                      } else if (filters.sortBy === 'date_asc') {
-                        return new Date(a.punch_time).getTime() - new Date(b.punch_time).getTime();
-                      } else if (filters.sortBy === 'name') {
-                        return a.worker_name.localeCompare(b.worker_name);
-                      }
-                      return 0;
-                    })
-                    .map((record) => (
-                    <tr key={record.id} className={`hover:${isDark ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                        <div>
-                          <div className="font-medium">{record.worker_name}</div>
-                          <div className="text-xs opacity-75">{record.employee_code || 'N/A'}</div>
-                        </div>
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                        <span className="capitalize">{record.day_of_week}</span>
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                        {record.date}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          {record.punch_state === 0 ? 
-                            <CheckCircle size={16} className="text-green-600" /> : 
-                            <XCircle size={16} className="text-red-600" />
-                          }
-                          <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                            record.punch_state === 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {record.punch_state_display}
-                          </span>
-                          {record.is_late && (
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                              Late
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {record.time}
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                        <span className="capitalize">
-                          {record.verification_type || t('attendance.notAvailable')}
-                        </span>
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                        {new Date(record.punch_time).toLocaleDateString()}
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                        <span className="truncate max-w-32">
-                          {record.terminal_alias || t('attendance.notAvailable')}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center">
-                      <div className={`flex flex-col items-center space-y-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        <Clock size={48} className="opacity-50" />
-                        <div>
-                          <h3 className="text-lg font-medium">No Attendance Records Found</h3>
-                          <p className="text-sm">Try adjusting your filters or date range to see attendance data.</p>
-                        </div>
-                        <button
-                          onClick={syncBiometricData}
-                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                        >
-                          Sync Attendance Data
-                        </button>
-                      </div>
+        </div>
+        <div className="overflow-x-auto">
+                    <table className="w-full">
+            <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
+              <tr>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Worker</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Punch Time</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Action</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Verification</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Terminal</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Department</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>Position</th>
+              </tr>
+            </thead>
+            <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              {attendance.length > 0 ? (
+                attendance.map((record) => (
+                  <tr key={record.id} className={`hover:${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {record.worker_name}
+                      <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{record.employee_code}</div>
                     </td>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{record.punch_time}</td>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{record.punch_state_display}</td>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{record.verification_type}</td>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{record.terminal_alias}</td>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{record.department}</td>
+                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{record.position}</td>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <div className={`flex flex-col items-center space-y-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <Clock size={48} className="opacity-50" />
+                      <div>
+                        <h3 className="text-lg font-medium">{t('attendance.noRecordsFound')}</h3>
+                        <p className="text-sm">{t('attendance.adjustFilters')}</p>
+                      </div>
+                      <button
+                        onClick={syncBiometricData}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
+                      >
+                        <RefreshCw size={16} />
+                        <span>{t('attendance.syncNow')}</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          <div className="p-4 flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                Showing <span className="font-medium">{(pagination.currentPage - 1) * pagination.pageSize + 1}</span> to <span className="font-medium">{Math.min(pagination.currentPage * pagination.pageSize, pagination.totalRecords)}</span> of <span className="font-medium">{pagination.totalRecords}</span> results
+              </p>
+              <div className="flex items-center space-x-2">
+                <label className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Show:
+                </label>
+                <select
+                  value={pagination.pageSize}
+                  onChange={(e) => setPagination(prev => ({ ...prev, pageSize: Number(e.target.value), currentPage: 1 }))}
+                  className={`px-2 py-1 border rounded text-sm ${
+                    isDark 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>per page</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+                disabled={pagination.currentPage === 1}
+                className={`px-3 py-2 border rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600' 
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Previous
+              </button>
+              
+              {/* Page Numbers */}
+              <div className="flex space-x-1">
+                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (pagination.totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (pagination.currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                    pageNum = pagination.totalPages - 4 + i;
+                  } else {
+                    pageNum = pagination.currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setPagination(prev => ({ ...prev, currentPage: pageNum }))}
+                      className={`px-3 py-2 border rounded-md text-sm ${
+                        pagination.currentPage === pageNum
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : isDark 
+                            ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600' 
+                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+                disabled={pagination.currentPage === pagination.totalPages}
+                className={`px-3 py-2 border rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600' 
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Calendar and Chart views are disabled for biometric data */}
       {filters.view === 'calendar' && (
@@ -651,8 +736,19 @@ const Attendance: React.FC = () => {
           </p>
         </div>
       )}
+        </div>
+      )}
+      
+      {/* Transaction Management Tabs */}
+      {(activeTab === 'transactions' || activeTab === 'reports') && (
+        <TransactionManagement 
+          activeTab={activeTab as 'transactions' | 'reports'} 
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+        />
+      )}
     </div>
   );
 };
 
-export default Attendance;
+export default Attendance; 

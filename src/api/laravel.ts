@@ -34,8 +34,8 @@ api.interceptors.response.use(
 export const workerService = {
   getAll: () => api.get('/workers'),
   getById: (id: number) => api.get(`/workers/${id}`),
-  create: (data: any) => api.post('/workers', data),
-  update: (id: number, data: any) => api.put(`/workers/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/workers', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/workers/${id}`, data),
   delete: (id: number) => api.delete(`/workers/${id}`),
   activate: (id: number) => api.patch(`/workers/${id}/activate`),
   deactivate: (id: number) => api.patch(`/workers/${id}/deactivate`),
@@ -44,8 +44,8 @@ export const workerService = {
 export const materialService = {
   getAll: () => api.get('/materials'),
   getById: (id: number) => api.get(`/materials/${id}`),
-  create: (data: any) => api.post('/materials', data),
-  update: (id: number, data: any) => api.put(`/materials/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/materials', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/materials/${id}`, data),
   delete: (id: number) => api.delete(`/materials/${id}`),
   getLowStock: () => api.get('/materials/low-stock'),
 };
@@ -53,8 +53,8 @@ export const materialService = {
 export const orderService = {
   getAll: () => api.get('/orders'),
   getById: (id: number) => api.get(`/orders/${id}`),
-  create: (data: any) => api.post('/orders', data),
-  update: (id: number, data: any) => api.put(`/orders/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/orders', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/orders/${id}`, data),
   delete: (id: number) => api.delete(`/orders/${id}`),
   assignWorker: (id: number, workerId: number) => 
     api.patch(`/orders/${id}/assign-worker`, { worker_id: workerId }),
@@ -68,24 +68,24 @@ export const clientService = {
   getAll: () => api.get('/clients'),
   getClients: () => api.get('/clients').then(response => response.data),
   getById: (id: number) => api.get(`/clients/${id}`),
-  create: (data: any) => api.post('/clients', data),
-  update: (id: number, data: any) => api.put(`/clients/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/clients', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/clients/${id}`, data),
   delete: (id: number) => api.delete(`/clients/${id}`),
 };
 
 export const categoryService = {
   getAll: () => api.get('/categories'),
   getById: (id: number) => api.get(`/categories/${id}`),
-  create: (data: any) => api.post('/categories', data),
-  update: (id: number, data: any) => api.put(`/categories/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/categories', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/categories/${id}`, data),
   delete: (id: number) => api.delete(`/categories/${id}`),
 };
 
 export const invoiceService = {
   getAll: () => api.get('/invoices'),
   getById: (id: number) => api.get(`/invoices/${id}`),
-  create: (data: any) => api.post('/invoices', data),
-  update: (id: number, data: any) => api.put(`/invoices/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/invoices', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/invoices/${id}`, data),
   delete: (id: number) => api.delete(`/invoices/${id}`),
   markAsPaid: (id: number) => api.patch(`/invoices/${id}/mark-paid`),
   updateStatus: (id: number, status: string) => api.patch(`/invoices/${id}/status`, { status })
@@ -94,8 +94,8 @@ export const invoiceService = {
 export const taskService = {
   getAll: () => api.get('/tasks'),
   getById: (id: number) => api.get(`/tasks/${id}`),
-  create: (data: any) => api.post('/tasks', data),
-  update: (id: number, data: any) => api.put(`/tasks/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/tasks', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/tasks/${id}`, data),
   delete: (id: number) => api.delete(`/tasks/${id}`),
   start: (id: number) => api.patch(`/tasks/${id}/start`),
   complete: (id: number) => api.patch(`/tasks/${id}/complete`),
@@ -104,8 +104,8 @@ export const taskService = {
 export const measurementService = {
   getAll: () => api.get('/measurements'),
   getById: (id: number) => api.get(`/measurements/${id}`),
-  create: (data: any) => api.post('/measurements', data),
-  update: (id: number, data: any) => api.put(`/measurements/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/measurements', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/measurements/${id}`, data),
   delete: (id: number) => api.delete(`/measurements/${id}`),
   getByClient: (clientId: number) => api.get(`/measurements/client/${clientId}`),
 };
@@ -127,8 +127,8 @@ export const wooCommerceService = {
 export const roleService = {
   getAll: () => api.get('/roles'),
   getById: (id: number) => api.get(`/roles/${id}`),
-  create: (data: any) => api.post('/roles', data),
-  update: (id: number, data: any) => api.put(`/roles/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/roles', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/roles/${id}`, data),
   delete: (id: number) => api.delete(`/roles/${id}`),
   getPermissions: () => api.get('/roles/permissions/available'),
   getDefaultRoles: () => api.get('/roles/defaults'),
@@ -143,17 +143,17 @@ export const permissionService = {
 // Biometric Service
 export const biometricService = {
   syncWorkers: () => api.post('/biometric/sync-workers'),
-  syncAttendance: (data?: any) => api.post('/biometric/sync-attendance', data),
-  getAttendanceReport: (params?: any) => api.get('/biometric/attendance-report', { params }),
-  getWorkerAttendance: (id: number, params?: any) => api.get(`/biometric/worker/${id}/attendance`, { params }),
+  syncAttendance: (data?: Record<string, unknown>) => api.post('/biometric/sync-attendance', data),
+  getAttendanceReport: (params?: Record<string, unknown>) => api.get('/biometric/attendance-report', { params }),
+  getWorkerAttendance: (id: number, params?: Record<string, unknown>) => api.get(`/biometric/worker/${id}/attendance`, { params }),
   getTokenInfo: () => api.get('/biometric/token-info'),
   getBiometricWorkers: (pageSize = 50) => api.get(`/biometric/workers?page_size=${pageSize}`),
-  getBiometricAttendance: (params?: any) => api.get('/attendance', { params }),
+  getBiometricAttendance: (params?: Record<string, unknown>) => api.get('/biometric/attendance', { params }),
   
   // CRUD Operations for Employees
-  createEmployee: (data: any) => api.post('/biometric/employees', data),
+  createEmployee: (data: Record<string, unknown>) => api.post('/biometric/employees', data),
   getEmployee: (id: number) => api.get(`/biometric/employees/${id}`),
-  updateEmployee: (id: number, data: any) => api.put(`/biometric/employees/${id}`, data),
+  updateEmployee: (id: number, data: Record<string, unknown>) => api.put(`/biometric/employees/${id}`, data),
   deleteEmployee: (id: number) => api.delete(`/biometric/employees/${id}`),
   
   // Support Data
@@ -166,15 +166,41 @@ export const biometricService = {
 export const erpService = {
   // Department Management
   getDepartments: () => api.get('/biometric/erp/departments'),
-  createDepartment: (data: any) => api.post('/biometric/erp/departments', data),
-  updateDepartment: (id: number, data: any) => api.put(`/biometric/erp/departments/${id}`, data),
+  createDepartment: (data: Record<string, unknown>) => api.post('/biometric/erp/departments', data),
+  updateDepartment: (id: number, data: Record<string, unknown>) => api.put(`/biometric/erp/departments/${id}`, data),
   deleteDepartment: (id: number) => api.delete(`/biometric/erp/departments/${id}`),
   
   // Position Management
   getPositions: () => api.get('/biometric/erp/positions'),
-  createPosition: (data: any) => api.post('/biometric/erp/positions', data),
-  updatePosition: (id: number, data: any) => api.put(`/biometric/erp/positions/${id}`, data),
+  createPosition: (data: Record<string, unknown>) => api.post('/biometric/erp/positions', data),
+  updatePosition: (id: number, data: Record<string, unknown>) => api.put(`/biometric/erp/positions/${id}`, data),
   deletePosition: (id: number) => api.delete(`/biometric/erp/positions/${id}`),
+  
+  // Resignation Management
+  getResignations: () => api.get('/biometric/erp/resignations'),
+  createResignation: (data: Record<string, unknown>) => api.post('/biometric/erp/resignations', data),
+  updateResignation: (id: number, data: Record<string, unknown>) => api.put(`/biometric/erp/resignations/${id}`, data),
+  deleteResignation: (id: number) => api.delete(`/biometric/erp/resignations/${id}`),
+  reinstateEmployee: (resignationIds: number[]) => api.post('/biometric/erp/resignations/reinstate', { resignation_ids: resignationIds }),
+  
+  // Device Management
+  getDevices: () => api.get('/biometric/erp/devices'),
+  createDevice: (data: Record<string, unknown>) => api.post('/biometric/erp/devices', data),
+  updateDevice: (id: number, data: Record<string, unknown>) => api.put(`/biometric/erp/devices/${id}`, data),
+  deleteDevice: (id: number) => api.delete(`/biometric/erp/devices/${id}`),
+  
+  // Transaction Management
+  getTransactions: (params?: Record<string, unknown>) => api.get('/biometric/erp/transactions', { params }),
+  getTransaction: (id: number) => api.get(`/biometric/erp/transactions/${id}`),
+  deleteTransaction: (id: number) => api.delete(`/biometric/erp/transactions/${id}`),
+  
+  // Transaction Reports
+  getTransactionReport: (params?: Record<string, unknown>) => api.get('/biometric/erp/transaction-report', { params }),
+  exportTransactionReport: (params: Record<string, unknown>) => api.get('/biometric/erp/transaction-report/export', { 
+    params, 
+    responseType: 'blob' 
+  }),
+  getTransactionStats: (params?: Record<string, unknown>) => api.get('/biometric/erp/transaction-stats', { params }),
 };
 
 export default api; 

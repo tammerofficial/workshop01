@@ -14,6 +14,9 @@ class BiometricService
     protected $departmentsUrl = 'https://staff.hudaaljarallah.net/personnel/api/departments/';
     protected $areasUrl = 'http://staff.hudaaljarallah.net/personnel/api/areas/';
     protected $positionsUrl = 'http://staff.hudaaljarallah.net/personnel/api/positions/';
+    protected $resignationsUrl = 'http://staff.hudaaljarallah.net/personnel/api/resignations/';
+    protected $devicesUrl = 'http://staff.hudaaljarallah.net/iclock/api/terminals/';
+    protected $transactionReportUrl = 'http://staff.hudaaljarallah.net/att/api/transactionReport/';
     protected $username = 'superadmin';
     protected $password = 'Alhuda@123';
     protected $token = null;
@@ -109,6 +112,20 @@ class BiometricService
     }
 
     /**
+     * Ensure valid token exists, authenticate if necessary
+     */
+    protected function ensureValidToken()
+    {
+        // If token exists and not expired, return true
+        if ($this->token && $this->loadTokenFromFile()) {
+            return true;
+        }
+        
+        // If no token or expired, authenticate
+        return $this->authenticate();
+    }
+
+    /**
      * Authenticate with the biometric API and get a token
      */
     public function authenticate()
@@ -200,20 +217,24 @@ class BiometricService
     /**
      * Get attendance transactions for a specific date range
      */
-    public function getAttendanceTransactions($startDate = null, $endDate = null, $employeeIds = [])
+    public function getAttendanceTransactions($startDate = null, $endDate = null, $page = 1, $pageSize = 50, $employeeIds = [])
     {
         if (!$this->token && !$this->authenticate()) {
-            return [];
+            return null; // Return null to indicate failure
         }
-
-        $startDate = $startDate ?? Carbon::now()->subDays(7)->format('Y-m-d');
-        $endDate = $endDate ?? Carbon::now()->format('Y-m-d');
 
         try {
             $query = [
-                'start_date' => $startDate,
-                'end_date' => $endDate,
+                'page' => $page,
+                'page_size' => $pageSize,
             ];
+            
+            if ($startDate) {
+                $query['start_date'] = $startDate;
+            }
+            if ($endDate) {
+                $query['end_date'] = $endDate;
+            }
 
             if (!empty($employeeIds)) {
                 $query['emp_code'] = implode(',', $employeeIds);
@@ -223,10 +244,10 @@ class BiometricService
                 ->get($this->transactionsUrl, $query);
 
             if ($response->successful()) {
-                return $response->json('data');
+                // Return the entire response object which includes 'data' and pagination info
+                return $response->json();
             }
             
-            // If token is invalid (401/403), clear it and try to re-authenticate
             if (in_array($response->status(), [401, 403])) {
                 Log::warning('Token appears invalid, attempting re-authentication');
                 $this->clearToken();
@@ -236,7 +257,7 @@ class BiometricService
                         ->get($this->transactionsUrl, $query);
                         
                     if ($response->successful()) {
-                        return $response->json('data');
+                        return $response->json();
                     }
                 }
             }
@@ -247,12 +268,12 @@ class BiometricService
                 'query' => $query
             ]);
             
-            return [];
+            return null; // Return null on failure
         } catch (\Exception $e) {
             Log::error('Exception fetching attendance transactions', [
                 'message' => $e->getMessage()
             ]);
-            return [];
+            return null; // Return null on exception
         }
     }
 
@@ -760,6 +781,471 @@ class BiometricService
             throw new \Exception('Failed to delete position. Status: ' . $response->status());
         } catch (\Exception $e) {
             Log::error('Exception deleting position: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    // ===========================================
+    // RESIGNATION MANAGEMENT METHODS
+    // ===========================================
+
+    /**
+     * Get all resignations
+     */
+    public function getResignations()
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)->get($this->resignationsUrl);
+            
+            if ($response->successful()) {
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to get resignations. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception getting resignations: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Create new resignation
+     */
+    public function createResignation($resignationData)
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)->post($this->resignationsUrl, $resignationData);
+            
+            if ($response->successful()) {
+                Log::info('Resignation created successfully in biometric system', [
+                    'resignation_data' => $resignationData,
+                    'response' => $response->json()
+                ]);
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to create resignation. Status: ' . $response->status() . '. Response: ' . $response->body());
+        } catch (\Exception $e) {
+            Log::error('Exception creating resignation: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Update resignation
+     */
+    public function updateResignation($resignationId, $resignationData)
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->put($this->resignationsUrl . $resignationId . '/', $resignationData);
+            
+            if ($response->successful()) {
+                Log::info('Resignation updated successfully in biometric system', [
+                    'resignation_id' => $resignationId,
+                    'resignation_data' => $resignationData,
+                    'response' => $response->json()
+                ]);
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to update resignation. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception updating resignation: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete resignation
+     */
+    public function deleteResignation($resignationId)
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->delete($this->resignationsUrl . $resignationId . '/');
+            
+            if ($response->successful()) {
+                Log::info('Resignation deleted successfully from biometric system', [
+                    'resignation_id' => $resignationId
+                ]);
+                return true;
+            }
+            
+            throw new \Exception('Failed to delete resignation. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception deleting resignation: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Reinstate employee from resignation
+     */
+    public function reinstateEmployee($resignationIds)
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->post($this->resignationsUrl . 'reinstate/', ['resignation_ids' => $resignationIds]);
+            
+            if ($response->successful()) {
+                Log::info('Employee reinstated successfully in biometric system', [
+                    'resignation_ids' => $resignationIds,
+                    'response' => $response->json()
+                ]);
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to reinstate employee. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception reinstating employee: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    // ===========================================
+    // DEVICE MANAGEMENT METHODS
+    // ===========================================
+
+    /**
+     * Get all devices
+     */
+    public function getDevices()
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)->get($this->devicesUrl);
+            
+            if ($response->successful()) {
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to get devices. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception getting devices: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Create new device
+     */
+    public function createDevice($deviceData)
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)->post($this->devicesUrl, $deviceData);
+            
+            if ($response->successful()) {
+                Log::info('Device created successfully in biometric system', [
+                    'device_data' => $deviceData,
+                    'response' => $response->json()
+                ]);
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to create device. Status: ' . $response->status() . '. Response: ' . $response->body());
+        } catch (\Exception $e) {
+            Log::error('Exception creating device: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Update device
+     */
+    public function updateDevice($deviceId, $deviceData)
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->put($this->devicesUrl . $deviceId . '/', $deviceData);
+            
+            if ($response->successful()) {
+                Log::info('Device updated successfully in biometric system', [
+                    'device_id' => $deviceId,
+                    'device_data' => $deviceData,
+                    'response' => $response->json()
+                ]);
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to update device. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception updating device: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete device
+     */
+    public function deleteDevice($deviceId)
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->delete($this->devicesUrl . $deviceId . '/');
+            
+            if ($response->successful()) {
+                Log::info('Device deleted successfully from biometric system', [
+                    'device_id' => $deviceId
+                ]);
+                return true;
+            }
+            
+            throw new \Exception('Failed to delete device. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception deleting device: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    // ===========================================
+    // TRANSACTION MANAGEMENT METHODS
+    // ===========================================
+
+    /**
+     * Get transactions with advanced filtering
+     */
+    public function getTransactions($filters = [])
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $params = [];
+            
+            // Apply filters
+            if (isset($filters['emp_code'])) {
+                $params['emp_code'] = $filters['emp_code'];
+            }
+            if (isset($filters['terminal_sn'])) {
+                $params['terminal_sn'] = $filters['terminal_sn'];
+            }
+            if (isset($filters['start_time'])) {
+                $params['start_time'] = $filters['start_time'];
+            }
+            if (isset($filters['end_time'])) {
+                $params['end_time'] = $filters['end_time'];
+            }
+            if (isset($filters['page'])) {
+                $params['page'] = $filters['page'];
+            }
+            if (isset($filters['page_size'])) {
+                $params['page_size'] = $filters['page_size'];
+            }
+
+            $response = Http::withToken($this->token)->get($this->transactionsUrl, $params);
+            
+            if ($response->successful()) {
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to get transactions. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception getting transactions: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Get single transaction by ID
+     */
+    public function getTransaction($transactionId)
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)->get($this->transactionsUrl . $transactionId . '/');
+            
+            if ($response->successful()) {
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to get transaction. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception getting transaction: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete transaction
+     */
+    public function deleteTransaction($transactionId)
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->delete($this->transactionsUrl . $transactionId . '/');
+            
+            if ($response->successful()) {
+                Log::info('Transaction deleted successfully from biometric system', [
+                    'transaction_id' => $transactionId
+                ]);
+                return true;
+            }
+            
+            throw new \Exception('Failed to delete transaction. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception deleting transaction: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    // ===========================================
+    // TRANSACTION REPORT METHODS
+    // ===========================================
+
+    /**
+     * Generate transaction report
+     */
+    public function getTransactionReport($filters = [])
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $params = [];
+            
+            // Apply report filters
+            if (isset($filters['page'])) {
+                $params['page'] = $filters['page'];
+            }
+            if (isset($filters['page_size'])) {
+                $params['page_size'] = $filters['page_size'];
+            }
+            if (isset($filters['start_date'])) {
+                $params['start_date'] = $filters['start_date'];
+            }
+            if (isset($filters['end_date'])) {
+                $params['end_date'] = $filters['end_date'];
+            }
+            if (isset($filters['departments'])) {
+                $params['departments'] = $filters['departments'];
+            }
+            if (isset($filters['areas'])) {
+                $params['areas'] = $filters['areas'];
+            }
+            if (isset($filters['emp_codes'])) {
+                $params['emp_codes'] = $filters['emp_codes'];
+            }
+
+            $response = Http::withToken($this->token)->get($this->transactionReportUrl, $params);
+            
+            if ($response->successful()) {
+                return $response->json();
+            }
+            
+            throw new \Exception('Failed to generate transaction report. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception generating transaction report: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Export transaction report in different formats
+     */
+    public function exportTransactionReport($filters = [], $format = 'csv')
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $params = $filters;
+            $params['format'] = $format; // csv, txt, xls
+            
+            $response = Http::withToken($this->token)->get($this->transactionReportUrl . 'export/', $params);
+            
+            if ($response->successful()) {
+                return [
+                    'data' => $response->body(),
+                    'content_type' => $response->header('Content-Type'),
+                    'filename' => $response->header('Content-Disposition')
+                ];
+            }
+            
+            throw new \Exception('Failed to export transaction report. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception exporting transaction report: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Get transaction statistics
+     */
+    public function getTransactionStats($filters = [])
+    {
+        if (!$this->ensureValidToken()) {
+            throw new \Exception('Failed to authenticate with biometric system');
+        }
+
+        try {
+            $params = $filters;
+            $params['stats_only'] = true;
+            
+            $response = Http::withToken($this->token)->get($this->transactionReportUrl, $params);
+            
+            if ($response->successful()) {
+                $data = $response->json();
+                return [
+                    'total_transactions' => $data['count'] ?? 0,
+                    'check_ins' => $data['check_ins'] ?? 0,
+                    'check_outs' => $data['check_outs'] ?? 0,
+                    'unique_employees' => $data['unique_employees'] ?? 0,
+                    'date_range' => [
+                        'start' => $filters['start_date'] ?? null,
+                        'end' => $filters['end_date'] ?? null
+                    ]
+                ];
+            }
+            
+            throw new \Exception('Failed to get transaction stats. Status: ' . $response->status());
+        } catch (\Exception $e) {
+            Log::error('Exception getting transaction stats: ' . $e->getMessage());
             throw $e;
         }
     }
