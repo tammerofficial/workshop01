@@ -166,13 +166,37 @@ export const productService = {
 
   // WooCommerce sync
   async syncWooCommerce() {
-    const response = await api.post('/products/sync-woocommerce');
+    const response = await api.post('/products/woocommerce/sync-all');
     return response.data;
   },
 
   // Test WooCommerce connection
   async testWooCommerceConnection() {
-    const response = await api.post('/products/test-woocommerce');
+    const response = await api.get('/products/woocommerce/test-connection');
+    return response.data;
+  },
+
+  // Get WooCommerce stats
+  async getWooCommerceStats() {
+    const response = await api.get('/products/woocommerce/stats');
+    return response.data;
+  },
+
+  // Import WooCommerce products batch
+  async importWooCommerceBatch(page = 1, batchSize = 50, updateExisting = false) {
+    const response = await api.post('/products/woocommerce/import-batch', {
+      page,
+      batch_size: batchSize,
+      update_existing: updateExisting
+    });
+    return response.data;
+  },
+
+  // Get WooCommerce products preview
+  async getWooCommercePreview(page = 1, perPage = 20) {
+    const response = await api.get('/products/woocommerce/preview', {
+      params: { page, per_page: perPage }
+    });
     return response.data;
   }
 };

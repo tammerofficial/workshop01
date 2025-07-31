@@ -86,6 +86,22 @@ interface Order {
     id: number;
     name: string;
   } | null;
+  // Dynamic status fields from production tracking
+  dynamic_status?: string;
+  dynamic_status_ar?: string;
+  current_stage_name?: string;
+  current_stage_name_ar?: string;
+  current_stage_id?: number;
+  stage_progress?: number;
+  production_summary?: {
+    total_stages: number;
+    completed_stages: number;
+    current_stage?: {
+      id: number;
+      name: string;
+      status: string;
+    } | null;
+  };
 }
 
 const Orders = () => {
@@ -227,6 +243,18 @@ const Orders = () => {
       case 'in_progress': return 'bg-blue-100 text-blue-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getDynamicStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'in_stage': return 'bg-blue-100 text-blue-800';
+      case 'between_stages': return 'bg-purple-100 text-purple-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -448,9 +476,22 @@ const Orders = () => {
 
             {/* Status and Priority */}
             <div className="flex items-center justify-between mb-4">
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                {getStatusText(order.status)}
-              </span>
+              <div className="flex flex-col space-y-1">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getDynamicStatusColor(order.dynamic_status || order.status)}`}>
+                  {isRTL ? (order.current_stage_name_ar || order.dynamic_status_ar || getStatusText(order.status)) : (order.current_stage_name || getStatusText(order.status))}
+                </span>
+                {order.stage_progress !== undefined && (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-16 bg-gray-200 rounded-full h-1.5">
+                      <div 
+                        className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
+                        style={{ width: `${order.stage_progress}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-xs text-gray-500">{order.stage_progress}%</span>
+                  </div>
+                )}
+              </div>
               <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(order.priority)}`}>
                 {getPriorityText(order.priority)}
               </span>

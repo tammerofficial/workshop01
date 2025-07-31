@@ -32,6 +32,7 @@ class Order extends Model
         'notes',
         'specifications',
         'woocommerce_id',
+        'progress',
     ];
 
     protected $casts = [

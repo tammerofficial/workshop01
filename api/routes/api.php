@@ -23,6 +23,10 @@ use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\BiometricController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\WorkerSyncController;
+use App\Http\Controllers\Api\ProductionTrackingController;
+use App\Http\Controllers\Api\ProductionFlowController;
+use App\Http\Controllers\Api\StationController;
+use App\Http\Controllers\Api\NotificationController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -35,8 +39,14 @@ Route::get('dashboard/recent-tasks', [DashboardController::class, 'getRecentTask
 
 // Workers Routes
 Route::apiResource('workers', WorkerController::class);
+Route::get('workers/available', [WorkerController::class, 'getAvailable']);
 Route::patch('workers/{worker}/activate', [WorkerController::class, 'activate']);
 Route::patch('workers/{worker}/deactivate', [WorkerController::class, 'deactivate']);
+
+// Stations Routes
+Route::get('stations', [StationController::class, 'index']);
+Route::get('stations/available', [StationController::class, 'getAvailable']);
+
 
 // Materials Routes
 Route::apiResource('materials', MaterialController::class);
@@ -44,8 +54,29 @@ Route::get('materials/low-stock', [MaterialController::class, 'lowStock']);
 
 // Products Routes
 Route::get('products/materials-for-bom', [ProductController::class, 'getMaterialsForBOM']);
+Route::get('products/production-stages', [ProductController::class, 'getProductionStages']);
+Route::get('products/available-workers', [ProductController::class, 'getAvailableWorkers']);
 Route::get('products/{product}/manufacturing-requirements', [ProductController::class, 'getManufacturingRequirements']);
+Route::get('products/{product}/production-requirements', [ProductController::class, 'getProductionRequirements']);
+Route::get('products/{product}/complete-data', [ProductController::class, 'getCompleteProductData']);
 Route::post('products/{product}/reserve-materials', [ProductController::class, 'reserveMaterials']);
+Route::post('products/{product}/production-stages', [ProductController::class, 'updateProductionStages']);
+Route::post('products/{product}/worker-requirements', [ProductController::class, 'updateWorkerRequirements']);
+Route::post('products/{product}/auto-assign-workers', [ProductController::class, 'autoAssignWorkers']);
+Route::post('products/check-production-readiness', [ProductController::class, 'checkProductionReadiness']);
+
+// WooCommerce Integration Routes
+Route::prefix('products/woocommerce')->group(function () {
+    Route::get('test-connection', [ProductController::class, 'testWooCommerceConnection']);
+    Route::get('stats', [ProductController::class, 'getWooCommerceStats']);
+    Route::get('preview', [ProductController::class, 'getWooCommerceProductsPreview']);
+    Route::post('import-batch', [ProductController::class, 'importWooCommerceProducts']);
+    Route::post('sync-all', [ProductController::class, 'syncAllWooCommerceProducts']);
+    Route::post('import-specific', [ProductController::class, 'importSpecificWooCommerceProduct']);
+    Route::post('run-command', [ProductController::class, 'runWooCommerceImportCommand']);
+    Route::get('import-progress', [ProductController::class, 'getImportProgress']);
+});
+
 Route::apiResource('products', ProductController::class);
 
 // WooCommerce Products Sync
@@ -320,4 +351,26 @@ Route::prefix('biometric')->group(function () {
         Route::get('/transaction-report/export', [BiometricController::class, 'exportTransactionReport']);
         Route::get('/transaction-stats', [BiometricController::class, 'getTransactionStats']);
     });
+});
+
+// Production Tracking Routes (Detailed)
+Route::prefix('production-tracking')->group(function () {
+    Route::get('/', [ProductionTrackingController::class, 'index']);
+    Route::get('/statistics', [ProductionTrackingController::class, 'getStatistics']);
+    Route::get('/alerts', [ProductionTrackingController::class, 'getAlerts']);
+    Route::get('/worker-analysis', [ProductionTrackingController::class, 'getWorkerAnalysis']);
+    Route::get('/orders/{order}', [ProductionTrackingController::class, 'show']);
+    Route::post('/orders/{order}/initialize', [ProductionTrackingController::class, 'initializeOrderStages']);
+    Route::patch('/stages/{trackingId}/status', [ProductionTrackingController::class, 'updateStageStatus']);
+});
+
+// Production Flow Routes (Overview)
+Route::prefix('production-flow')->group(function () {
+    Route::get('/', [ProductionFlowController::class, 'getFlow']);
+    Route::get('/statistics', [ProductionFlowController::class, 'getStatistics']);
+    Route::get('/stages/{stageId}/orders', [ProductionFlowController::class, 'getOrdersByStage']);
+    Route::post('/orders/{order}/start', [ProductionFlowController::class, 'startProduction']);
+    Route::post('/orders/{order}/move-next', [ProductionFlowController::class, 'moveToNextStage']);
+    Route::post('/orders/{order}/move-to-stage', [ProductionFlowController::class, 'moveToStage']);
+    Route::get('/orders/{order}/cost-report', [ProductionFlowController::class, 'generateCostReport']);
 }); 

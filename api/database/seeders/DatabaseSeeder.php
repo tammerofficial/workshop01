@@ -42,6 +42,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ProductionStagesSeeder::class,
             StationsSeeder::class,
+            ProductionStageSeeder::class,
+            OrderProductionTrackingSeeder::class,
         ]);
     }
 }

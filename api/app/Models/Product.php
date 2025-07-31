@@ -73,6 +73,18 @@ class Product extends Model
         return $this->hasMany(ProductBillOfMaterial::class, 'material_id');
     }
 
+    // Production stage requirements for this product
+    public function stageRequirements()
+    {
+        return $this->hasMany(ProductStageRequirement::class);
+    }
+
+    // Worker requirements for this product
+    public function workerRequirements()
+    {
+        return $this->hasMany(ProductWorkerRequirement::class);
+    }
+
     // Material transactions for this product
     public function materialTransactions()
     {
@@ -190,6 +202,179 @@ class Product extends Model
     public function isFinishedProduct()
     {
         return in_array($this->product_type, ['simple', 'variable']);
+    }
+
+    // Calculate total production time from stage requirements
+    public function calculateTotalProductionTime()
+    {
+        $stages = $this->stageRequirements()->active()->ordered()->get();
+        $totalHours = 0;
+        $parallelGroups = [];
+
+        foreach ($stages as $stage) {
+            if ($stage->is_parallel && $stage->parallel_stages) {
+                // معالجة المراحل المتوازية
+                $groupKey = implode('-', sort($stage->parallel_stages));
+                if (!isset($parallelGroups[$groupKey])) {
+                    $parallelGroups[$groupKey] = $stage->getTotalEstimatedTime();
+                } else {
+                    $parallelGroups[$groupKey] = max($parallelGroups[$groupKey], $stage->getTotalEstimatedTime());
+                }
+            } else {
+                // مراحل متسلسلة
+                $totalHours += $stage->getTotalEstimatedTime();
+            }
+        }
+
+        // إضافة أطول مرحلة من كل مجموعة متوازية
+        $totalHours += array_sum($parallelGroups);
+
+        return $totalHours;
+    }
+
+    // Get total worker requirements
+    public function getTotalWorkerRequirements()
+    {
+        $stages = $this->stageRequirements()->active()->with('workerRequirements.worker')->get();
+        $workerSummary = [];
+
+        foreach ($stages as $stage) {
+            foreach ($stage->workerRequirements as $workerReq) {
+                $workerId = $workerReq->worker_id;
+                $workerName = $workerReq->worker->name ?? 'Unknown';
+                
+                if (!isset($workerSummary[$workerId])) {
+                    $workerSummary[$workerId] = [
+                        'worker_id' => $workerId,
+                        'worker_name' => $workerName,
+                        'total_hours' => 0,
+                        'stages' => [],
+                        'is_critical' => false
+                    ];
+                }
+
+                $workerSummary[$workerId]['total_hours'] += $workerReq->getAdjustedHours($stage->estimated_hours);
+                $workerSummary[$workerId]['stages'][] = [
+                    'stage_name' => $stage->productionStage->name ?? 'Unknown',
+                    'hours' => $workerReq->getAdjustedHours($stage->estimated_hours),
+                    'is_primary' => $workerReq->is_primary,
+                    'can_supervise' => $workerReq->can_supervise
+                ];
+
+                if ($stage->is_critical) {
+                    $workerSummary[$workerId]['is_critical'] = true;
+                }
+            }
+        }
+
+        return array_values($workerSummary);
+    }
+
+    // Calculate total production cost
+    public function calculateProductionCost()
+    {
+        $materialCost = $this->calculatePurchasePriceFromBOM();
+        $laborCost = 0;
+
+        $stages = $this->stageRequirements()->active()->with('workerRequirements.worker')->get();
+        
+        foreach ($stages as $stage) {
+            $stageCost = $stage->calculateStageCost();
+            $laborCost += $stageCost;
+        }
+
+        return [
+            'material_cost' => $materialCost,
+            'labor_cost' => $laborCost,
+            'total_cost' => $materialCost + $laborCost,
+            'suggested_price' => ($materialCost + $laborCost) * 1.3 // 30% markup
+        ];
+    }
+
+    // Check production readiness
+    public function checkProductionReadiness($quantity = 1)
+    {
+        $issues = [];
+
+        // تحقق من توفر المواد
+        $materialShortages = $this->checkMaterialAvailability($quantity);
+        if (!empty($materialShortages)) {
+            $issues['materials'] = $materialShortages;
+        }
+
+        // تحقق من توفر العمال
+        $workerAvailability = $this->checkWorkerAvailability();
+        if (!empty($workerAvailability['unavailable'])) {
+            $issues['workers'] = $workerAvailability['unavailable'];
+        }
+
+        // تحقق من اكتمال تعريف المراحل
+        $stageCount = $this->stageRequirements()->active()->count();
+        if ($stageCount == 0) {
+            $issues['stages'] = 'No production stages defined for this product';
+        }
+
+        return [
+            'ready' => empty($issues),
+            'issues' => $issues,
+            'estimated_completion_hours' => $this->calculateTotalProductionTime()
+        ];
+    }
+
+    // Check worker availability for all stages
+    public function checkWorkerAvailability()
+    {
+        $available = [];
+        $unavailable = [];
+
+        $stages = $this->stageRequirements()->active()->get();
+        
+        foreach ($stages as $stage) {
+            $availableWorkers = ProductWorkerRequirement::getAvailableWorkersForStage($this->id, $stage->production_stage_id);
+            $requiredCount = $stage->required_workers;
+            
+            if ($availableWorkers->count() >= $requiredCount) {
+                $available[$stage->productionStage->name] = $availableWorkers->take($requiredCount);
+            } else {
+                $unavailable[$stage->productionStage->name] = [
+                    'required' => $requiredCount,
+                    'available' => $availableWorkers->count(),
+                    'shortage' => $requiredCount - $availableWorkers->count()
+                ];
+            }
+        }
+
+        return [
+            'available' => $available,
+            'unavailable' => $unavailable
+        ];
+    }
+
+    // Auto-assign workers for production
+    public function autoAssignWorkers($orderId)
+    {
+        $assignments = [];
+        $stages = $this->stageRequirements()->active()->ordered()->get();
+
+        foreach ($stages as $stage) {
+            $requiredWorkers = $stage->required_workers;
+            $availableWorkers = ProductWorkerRequirement::getAvailableWorkersForStage($this->id, $stage->production_stage_id);
+
+            for ($i = 0; $i < $requiredWorkers && $i < $availableWorkers->count(); $i++) {
+                $workerReq = $availableWorkers[$i];
+                
+                $assignments[] = [
+                    'order_id' => $orderId,
+                    'production_stage_id' => $stage->production_stage_id,
+                    'worker_id' => $workerReq->worker_id,
+                    'estimated_hours' => $workerReq->getAdjustedHours($stage->estimated_hours),
+                    'hourly_rate' => $workerReq->hourly_rate ?? $workerReq->worker->hourly_rate ?? 0,
+                    'is_primary' => $workerReq->is_primary
+                ];
+            }
+        }
+
+        return $assignments;
     }
 
     // Sync with WooCommerce

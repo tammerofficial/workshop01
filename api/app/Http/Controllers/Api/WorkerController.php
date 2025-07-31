@@ -153,4 +153,15 @@ class WorkerController extends Controller
             $data['standard_hours_per_month'] = $defaultMonthlyHours;
         }
     }
+    
+    /**
+     * Get available workers
+     */
+    public function getAvailable(): JsonResponse
+    {
+        $workers = Worker::where('is_active', true)
+                         ->where('status', 'available')
+                         ->get();
+        return response()->json($workers);
+    }
 } 

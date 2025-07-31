@@ -2,381 +2,423 @@
 
 namespace App\Services;
 
+use GuzzleHttp\Client as HttpClient;
 use App\Models\Product;
 use App\Models\Category;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class WooCommerceProductService
 {
+    private $client;
     private $baseUrl;
     private $consumerKey;
     private $consumerSecret;
 
     public function __construct()
     {
-        $this->baseUrl = config('woocommerce.base_url');
-        $this->consumerKey = config('woocommerce.consumer_key');
-        $this->consumerSecret = config('woocommerce.consumer_secret');
+        $this->baseUrl = 'https://hudaaljarallah.net';
+        $this->consumerKey = 'ck_3a5c739c20336c33cbee2453cccf56a6441ef6fe';
+        $this->consumerSecret = 'cs_b091ba4fb33a6e4b10612c536db882fe0fa8c6aa';
+
+        $this->client = new HttpClient([
+            'base_uri' => $this->baseUrl,
+            'timeout' => 60,
+            'verify' => false,
+        ]);
     }
 
     /**
-     * Sync all products from WooCommerce
+     * اختبار الاتصال بـ WooCommerce
      */
-    public function syncAllProducts()
+    public function testConnection()
     {
         try {
-            $page = 1;
-            $perPage = 100;
-            $totalSynced = 0;
+            $response = $this->client->get('/wp-json/wc/v3/system_status', [
+                'auth' => [$this->consumerKey, $this->consumerSecret],
+                'query' => ['_fields' => 'environment']
+            ]);
 
-            do {
-                $response = $this->makeRequest('GET', 'products', [
-                    'per_page' => $perPage,
-                    'page' => $page,
-                    'status' => 'any'
-                ]);
-
-                if ($response->successful()) {
-                    $products = $response->json();
-                    
-                    foreach ($products as $wooProduct) {
-                        $this->syncSingleProduct($wooProduct);
-                        $totalSynced++;
-                    }
-
-                    $page++;
-                } else {
-                    Log::error('WooCommerce API Error: ' . $response->body());
-                    break;
-                }
-
-            } while (count($products) == $perPage);
-
+            $data = json_decode($response->getBody(), true);
+            
             return [
                 'success' => true,
-                'message' => "Successfully synced {$totalSynced} products from WooCommerce",
-                'total_synced' => $totalSynced
+                'message' => 'اتصال ناجح بـ WooCommerce',
+                'store_info' => [
+                    'url' => $this->baseUrl,
+                    'wp_version' => $data['environment']['wp_version'] ?? 'غير محدد',
+                    'wc_version' => $data['environment']['wc_version'] ?? 'غير محدد'
+                ]
             ];
-
         } catch (\Exception $e) {
-            Log::error('WooCommerce Sync Error: ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Error syncing products: ' . $e->getMessage()
+                'message' => 'فشل الاتصال: ' . $e->getMessage()
             ];
         }
     }
 
     /**
-     * Sync single product from WooCommerce
+     * الحصول على عدد المنتجات الإجمالي
      */
-    public function syncSingleProduct($wooProduct)
+    public function getTotalProductsCount()
     {
         try {
-            // Check if product already exists
-            $existingProduct = Product::where('woocommerce_id', $wooProduct['id'])->first();
+            $cacheKey = 'wc_total_products_count';
+            
+            return Cache::remember($cacheKey, 300, function () { // 5 دقائق cache
+                $response = $this->client->get('/wp-json/wc/v3/products', [
+                    'auth' => [$this->consumerKey, $this->consumerSecret],
+                    'query' => ['page' => 1, 'per_page' => 1]
+                ]);
 
-            // Determine product type based on WooCommerce data
-            $productType = $this->determineProductType($wooProduct);
+                $headers = $response->getHeaders();
+                
+                // Try multiple header format variations
+                if (isset($headers['X-WP-Total'])) {
+                    return (int)$headers['X-WP-Total'][0];
+                } elseif (isset($headers['x-wp-total'])) {
+                    return (int)$headers['x-wp-total'][0];
+                } elseif (isset($headers['X-Wp-Total'])) {
+                    return (int)$headers['X-Wp-Total'][0];
+                }
+                
+                // Fallback: count products manually
+                $allResponse = $this->client->get('/wp-json/wc/v3/products', [
+                    'auth' => [$this->consumerKey, $this->consumerSecret],
+                    'query' => ['page' => 1, 'per_page' => 100]
+                ]);
+                
+                $products = json_decode($allResponse->getBody(), true);
+                return count($products);
+            });
+        } catch (\Exception $e) {
+            Log::error('Error getting WooCommerce products count: ' . $e->getMessage());
+            return 0;
+        }
+    }
 
-            // Get or create category
-            $categoryId = null;
-            if (!empty($wooProduct['categories'])) {
-                $categoryId = $this->syncCategory($wooProduct['categories'][0]);
-            }
-
-            $productData = [
-                'name' => $wooProduct['name'],
-                'description' => strip_tags($wooProduct['description'] ?? $wooProduct['short_description'] ?? ''),
-                'sku' => $wooProduct['sku'] ?: 'WC-' . $wooProduct['id'],
-                'price' => floatval($wooProduct['price'] ?? $wooProduct['regular_price'] ?? 0),
-                'purchase_price' => floatval($wooProduct['meta_data']['_purchase_price'] ?? 0),
-                'stock_quantity' => intval($wooProduct['stock_quantity'] ?? 0),
-                'manage_stock' => $wooProduct['manage_stock'] ?? false,
-                'product_type' => $productType,
-                'category_id' => $categoryId,
-                'woocommerce_id' => $wooProduct['id'],
-                'woocommerce_data' => $wooProduct,
-                'image_url' => $wooProduct['images'][0]['src'] ?? null,
-                'is_active' => $wooProduct['status'] === 'publish',
-                'manufacturing_time_days' => intval($this->getMetaValue($wooProduct, '_manufacturing_time_days') ?? 0),
-                'production_hours' => intval($this->getMetaValue($wooProduct, '_production_hours') ?? 0),
-                'auto_calculate_purchase_price' => boolval($this->getMetaValue($wooProduct, '_auto_calculate_purchase_price') ?? false)
+    /**
+     * جلب المنتجات مع pagination
+     */
+    public function getProducts($page = 1, $perPage = 50, $filters = [])
+    {
+        try {
+            $query = [
+                'page' => $page,
+                'per_page' => $perPage,
+                'orderby' => 'id',
+                'order' => 'asc'
             ];
 
-            if ($existingProduct) {
-                $existingProduct->update($productData);
-                $product = $existingProduct;
-            } else {
-                $product = Product::create($productData);
+            // إضافة filters
+            if (isset($filters['status'])) {
+                $query['status'] = $filters['status'];
+            }
+            if (isset($filters['category'])) {
+                $query['category'] = $filters['category'];
+            }
+            if (isset($filters['search'])) {
+                $query['search'] = $filters['search'];
             }
 
-            // Sync Bill of Materials if exists
-            $this->syncProductBOM($product, $wooProduct);
+            $response = $this->client->get('/wp-json/wc/v3/products', [
+                'auth' => [$this->consumerKey, $this->consumerSecret],
+                'query' => $query
+            ]);
 
-            return $product;
+            $products = json_decode($response->getBody(), true);
+            $headers = $response->getHeaders();
 
+            return [
+                'products' => $products,
+                'total' => isset($headers['X-WP-Total']) ? (int)$headers['X-WP-Total'][0] : count($products),
+                'total_pages' => isset($headers['X-WP-TotalPages']) ? (int)$headers['X-WP-TotalPages'][0] : 1,
+                'current_page' => $page,
+                'per_page' => $perPage
+            ];
         } catch (\Exception $e) {
-            Log::error('Error syncing product ID ' . $wooProduct['id'] . ': ' . $e->getMessage());
+            Log::error('Error fetching WooCommerce products: ' . $e->getMessage());
             throw $e;
         }
     }
 
     /**
-     * Sync category from WooCommerce
+     * سحب منتج واحد
      */
-    private function syncCategory($wooCategory)
+    public function getProduct($productId)
     {
         try {
-            $existingCategory = Category::where('woocommerce_id', $wooCategory['id'])->first();
+            $response = $this->client->get("/wp-json/wc/v3/products/{$productId}", [
+                'auth' => [$this->consumerKey, $this->consumerSecret]
+            ]);
 
-            $categoryData = [
-                'name' => $wooCategory['name'],
-                'description' => $wooCategory['description'] ?? '',
-                'woocommerce_id' => $wooCategory['id'],
-                'is_active' => true
-            ];
-
-            if ($existingCategory) {
-                $existingCategory->update($categoryData);
-                return $existingCategory->id;
-            } else {
-                $category = Category::create($categoryData);
-                return $category->id;
-            }
-
+            return json_decode($response->getBody(), true);
         } catch (\Exception $e) {
-            Log::error('Error syncing category: ' . $e->getMessage());
-            return null;
+            Log::error("Error fetching WooCommerce product {$productId}: " . $e->getMessage());
+            throw $e;
         }
     }
 
     /**
-     * Sync Product Bill of Materials from WooCommerce meta data
+     * سحب فئات المنتجات
      */
-    private function syncProductBOM($product, $wooProduct)
+    public function getCategories($page = 1, $perPage = 100)
     {
         try {
-            $bomData = $this->getMetaValue($wooProduct, '_bill_of_materials');
-            
-            if (!$bomData || !is_array($bomData)) {
-                return;
-            }
-
-            // Clear existing BOM
-            $product->billOfMaterials()->delete();
-
-            foreach ($bomData as $bomItem) {
-                // Find the material product
-                $material = Product::where('woocommerce_id', $bomItem['material_wc_id'] ?? null)
-                    ->orWhere('sku', $bomItem['material_sku'] ?? null)
-                    ->first();
-
-                if ($material) {
-                    $product->billOfMaterials()->create([
-                        'material_id' => $material->id,
-                        'quantity_required' => floatval($bomItem['quantity_required'] ?? 1),
-                        'unit' => $bomItem['unit'] ?? 'piece',
-                        'cost_per_unit' => floatval($bomItem['cost_per_unit'] ?? $material->purchase_price ?? 0),
-                        'is_optional' => boolval($bomItem['is_optional'] ?? false),
-                        'notes' => $bomItem['notes'] ?? ''
-                    ]);
-                }
-            }
-
-            // Recalculate purchase price if auto calculation is enabled
-            if ($product->auto_calculate_purchase_price) {
-                $product->calculatePurchasePriceFromBOM();
-                $product->save();
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Error syncing BOM for product ' . $product->id . ': ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Determine product type based on WooCommerce data
-     */
-    private function determineProductType($wooProduct)
-    {
-        // Check if it's marked as raw material
-        if ($this->getMetaValue($wooProduct, '_product_type') === 'raw_material') {
-            return 'raw_material';
-        }
-
-        // Check if it's marked as product part
-        if ($this->getMetaValue($wooProduct, '_product_type') === 'product_part') {
-            return 'product_part';
-        }
-
-        // Check by category
-        foreach ($wooProduct['categories'] ?? [] as $category) {
-            $categoryName = strtolower($category['name']);
-            if (str_contains($categoryName, 'raw material') || str_contains($categoryName, 'خامات')) {
-                return 'raw_material';
-            }
-            if (str_contains($categoryName, 'product part') || str_contains($categoryName, 'قطع')) {
-                return 'product_part';
-            }
-        }
-
-        // Default to simple product
-        return $wooProduct['type'] ?? 'simple';
-    }
-
-    /**
-     * Get meta value from WooCommerce product
-     */
-    private function getMetaValue($wooProduct, $metaKey)
-    {
-        foreach ($wooProduct['meta_data'] ?? [] as $meta) {
-            if ($meta['key'] === $metaKey) {
-                return $meta['value'];
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Push product updates back to WooCommerce
-     */
-    public function pushProductToWooCommerce($product)
-    {
-        try {
-            if (!$product->woocommerce_id) {
-                return $this->createProductInWooCommerce($product);
-            }
-
-            $productData = [
-                'name' => $product->name,
-                'description' => $product->description,
-                'sku' => $product->sku,
-                'regular_price' => (string) $product->price,
-                'stock_quantity' => $product->stock_quantity,
-                'manage_stock' => $product->manage_stock,
-                'status' => $product->is_active ? 'publish' : 'draft',
-                'meta_data' => [
-                    ['key' => '_purchase_price', 'value' => (string) $product->purchase_price],
-                    ['key' => '_manufacturing_time_days', 'value' => (string) $product->manufacturing_time_days],
-                    ['key' => '_production_hours', 'value' => (string) $product->production_hours],
-                    ['key' => '_auto_calculate_purchase_price', 'value' => $product->auto_calculate_purchase_price ? 'yes' : 'no'],
-                    ['key' => '_product_type', 'value' => $product->product_type],
-                    ['key' => '_bill_of_materials', 'value' => $this->prepareBOMForWooCommerce($product)]
+            $response = $this->client->get('/wp-json/wc/v3/products/categories', [
+                'auth' => [$this->consumerKey, $this->consumerSecret],
+                'query' => [
+                    'page' => $page,
+                    'per_page' => $perPage,
+                    'orderby' => 'name',
+                    'order' => 'asc'
                 ]
-            ];
+            ]);
 
-            $response = $this->makeRequest('PUT', "products/{$product->woocommerce_id}", $productData);
-
-            return $response->successful();
-
+            return json_decode($response->getBody(), true);
         } catch (\Exception $e) {
-            Log::error('Error pushing product to WooCommerce: ' . $e->getMessage());
-            return false;
+            Log::error('Error fetching WooCommerce categories: ' . $e->getMessage());
+            throw $e;
         }
     }
 
     /**
-     * Create new product in WooCommerce
+     * استيراد منتج واحد إلى قاعدة البيانات
      */
-    private function createProductInWooCommerce($product)
+    public function importSingleProduct($productData, $updateExisting = false)
     {
         try {
-            $productData = [
-                'name' => $product->name,
-                'description' => $product->description,
-                'sku' => $product->sku,
-                'type' => $product->product_type === 'simple' ? 'simple' : 'simple',
-                'regular_price' => (string) $product->price,
-                'stock_quantity' => $product->stock_quantity,
-                'manage_stock' => $product->manage_stock,
-                'status' => $product->is_active ? 'publish' : 'draft',
-                'meta_data' => [
-                    ['key' => '_purchase_price', 'value' => (string) $product->purchase_price],
-                    ['key' => '_manufacturing_time_days', 'value' => (string) $product->manufacturing_time_days],
-                    ['key' => '_production_hours', 'value' => (string) $product->production_hours],
-                    ['key' => '_auto_calculate_purchase_price', 'value' => $product->auto_calculate_purchase_price ? 'yes' : 'no'],
-                    ['key' => '_product_type', 'value' => $product->product_type],
-                    ['key' => '_bill_of_materials', 'value' => $this->prepareBOMForWooCommerce($product)]
-                ]
-            ];
+            $sku = 'WC-' . $productData['id'];
+            $existingProduct = Product::where('sku', $sku)->first();
 
-            $response = $this->makeRequest('POST', 'products', $productData);
-
-            if ($response->successful()) {
-                $wooProduct = $response->json();
-                $product->update(['woocommerce_id' => $wooProduct['id']]);
-                return true;
-            }
-
-            return false;
-
-        } catch (\Exception $e) {
-            Log::error('Error creating product in WooCommerce: ' . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Prepare BOM data for WooCommerce
-     */
-    private function prepareBOMForWooCommerce($product)
-    {
-        $bomData = [];
-
-        foreach ($product->billOfMaterials as $bom) {
-            $bomData[] = [
-                'material_wc_id' => $bom->material->woocommerce_id,
-                'material_sku' => $bom->material->sku,
-                'quantity_required' => $bom->quantity_required,
-                'unit' => $bom->unit,
-                'cost_per_unit' => $bom->cost_per_unit,
-                'is_optional' => $bom->is_optional,
-                'notes' => $bom->notes
-            ];
-        }
-
-        return $bomData;
-    }
-
-    /**
-     * Make HTTP request to WooCommerce API
-     */
-    private function makeRequest($method, $endpoint, $data = [])
-    {
-        $url = rtrim($this->baseUrl, '/') . "/wp-json/wc/v3/{$endpoint}";
-
-        return Http::withBasicAuth($this->consumerKey, $this->consumerSecret)
-            ->timeout(30)
-            ->$method($url, $data);
-    }
-
-    /**
-     * Test WooCommerce connection
-     */
-    public function testConnection()
-    {
-        try {
-            $response = $this->makeRequest('GET', 'products', ['per_page' => 1]);
-            
-            if ($response->successful()) {
-                return [
-                    'success' => true,
-                    'message' => 'WooCommerce connection successful'
-                ];
-            } else {
+            if ($existingProduct && !$updateExisting) {
                 return [
                     'success' => false,
-                    'message' => 'WooCommerce connection failed: ' . $response->body()
+                    'message' => 'المنتج موجود مسبقاً',
+                    'action' => 'skipped'
+                ];
+            }
+
+            $productArray = [
+                'name' => $productData['name'],
+                'description' => $this->cleanDescription($productData['description'] ?? $productData['short_description'] ?? ''),
+                'sku' => $sku,
+                'product_type' => $this->mapProductType($productData['type']),
+                'price' => floatval($productData['price'] ?? 0),
+                'purchase_price' => floatval($productData['regular_price'] ?? $productData['price'] ?? 0),
+                'stock_quantity' => intval($productData['stock_quantity'] ?? 0),
+                'manage_stock' => $productData['manage_stock'] ?? false,
+                'auto_calculate_purchase_price' => false,
+                'production_hours' => 0,
+                'manufacturing_time_days' => 0,
+                'woocommerce_id' => $productData['id'],
+                'woocommerce_data' => $productData,
+                'image_url' => $productData['images'][0]['src'] ?? null,
+                'is_active' => $productData['status'] === 'publish',
+                'category_id' => $this->getOrCreateCategory($productData['categories'] ?? [])
+            ];
+
+            if ($existingProduct) {
+                $existingProduct->update($productArray);
+                return [
+                    'success' => true,
+                    'message' => 'تم تحديث المنتج بنجاح',
+                    'action' => 'updated',
+                    'product' => $existingProduct->fresh()
+                ];
+            } else {
+                $product = Product::create($productArray);
+                return [
+                    'success' => true,
+                    'message' => 'تم إنشاء المنتج بنجاح',
+                    'action' => 'created',
+                    'product' => $product
                 ];
             }
 
         } catch (\Exception $e) {
+            Log::error('Error importing product: ' . $e->getMessage(), ['product_data' => $productData]);
             return [
                 'success' => false,
-                'message' => 'WooCommerce connection error: ' . $e->getMessage()
+                'message' => 'خطأ في استيراد المنتج: ' . $e->getMessage(),
+                'action' => 'error'
             ];
         }
+    }
+
+    /**
+     * استيراد دفعة من المنتجات
+     */
+    public function importProductsBatch($page = 1, $batchSize = 50, $updateExisting = false)
+    {
+        try {
+            $result = $this->getProducts($page, $batchSize);
+            $products = $result['products'];
+            
+            $stats = [
+                'total_fetched' => count($products),
+                'created' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'errors' => 0
+            ];
+
+            foreach ($products as $productData) {
+                $importResult = $this->importSingleProduct($productData, $updateExisting);
+                $stats[$importResult['action']]++;
+            }
+
+            return [
+                'success' => true,
+                'stats' => $stats,
+                'has_more' => $page < $result['total_pages'],
+                'pagination' => [
+                    'current_page' => $page,
+                    'total_pages' => $result['total_pages'],
+                    'total_products' => $result['total']
+                ]
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Error importing products batch: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'خطأ في استيراد دفعة المنتجات: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * مزامنة جميع المنتجات
+     */
+    public function syncAllProducts($batchSize = 50, $updateExisting = false)
+    {
+        try {
+            $totalCount = $this->getTotalProductsCount();
+            $totalPages = ceil($totalCount / $batchSize);
+            
+            $overallStats = [
+                'total_products' => $totalCount,
+                'total_fetched' => 0,
+                'created' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'errors' => 0,
+                'processed_pages' => 0
+            ];
+
+            for ($page = 1; $page <= $totalPages; $page++) {
+                $batchResult = $this->importProductsBatch($page, $batchSize, $updateExisting);
+                
+                if ($batchResult['success']) {
+                    $stats = $batchResult['stats'];
+                    $overallStats['total_fetched'] += $stats['total_fetched'];
+                    $overallStats['created'] += $stats['created'];
+                    $overallStats['updated'] += $stats['updated'];
+                    $overallStats['skipped'] += $stats['skipped'];
+                    $overallStats['errors'] += $stats['errors'];
+                }
+                
+                $overallStats['processed_pages'] = $page;
+
+                // استراحة قصيرة بين الدفعات
+                usleep(200000); // 0.2 ثانية
+            }
+
+            return [
+                'success' => true,
+                'message' => 'تمت مزامنة جميع المنتجات بنجاح',
+                'stats' => $overallStats
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Error syncing all products: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'خطأ في مزامنة المنتجات: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * تنظيف وصف المنتج
+     */
+    private function cleanDescription($description)
+    {
+        $clean = strip_tags($description);
+        return substr($clean, 0, 1000);
+    }
+
+    /**
+     * تحويل نوع المنتج من WooCommerce إلى نظامنا
+     */
+    private function mapProductType($wcType)
+    {
+        $typeMap = [
+            'simple' => 'simple',
+            'variable' => 'variable',
+            'grouped' => 'simple',
+            'external' => 'simple'
+        ];
+
+        return $typeMap[$wcType] ?? 'simple';
+    }
+
+    /**
+     * الحصول على أو إنشاء فئة
+     */
+    private function getOrCreateCategory($categories)
+    {
+        if (empty($categories)) {
+            return $this->getDefaultCategory()->id;
+        }
+
+        $categoryName = $categories[0]['name'] ?? 'غير محدد';
+        
+        $category = Category::firstOrCreate(
+            ['name' => $categoryName],
+            [
+                'description' => 'فئة مستوردة من WooCommerce',
+                'woocommerce_id' => $categories[0]['id'] ?? null,
+                'is_active' => true
+            ]
+        );
+
+        return $category->id;
+    }
+
+    /**
+     * الحصول على الفئة الافتراضية
+     */
+    private function getDefaultCategory()
+    {
+        return Category::firstOrCreate(
+            ['name' => 'منتجات WooCommerce'],
+            [
+                'description' => 'منتجات مستوردة من WooCommerce',
+                'is_active' => true
+            ]
+        );
+    }
+
+    /**
+     * الحصول على إحصائيات الاستيراد
+     */
+    public function getImportStats()
+    {
+        $totalWcProducts = $this->getTotalProductsCount();
+        $importedProducts = Product::whereNotNull('woocommerce_id')->count();
+        $lastImport = Product::whereNotNull('woocommerce_id')
+            ->latest('updated_at')
+            ->first();
+
+        return [
+            'total_wc_products' => $totalWcProducts,
+            'imported_products' => $importedProducts,
+            'not_imported' => $totalWcProducts - $importedProducts,
+            'last_import_date' => $lastImport ? $lastImport->updated_at : null,
+            'import_percentage' => $totalWcProducts > 0 ? round(($importedProducts / $totalWcProducts) * 100, 2) : 0
+        ];
     }
 }
