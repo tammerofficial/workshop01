@@ -17,8 +17,10 @@ class Worker extends Model
         'department',
         'specialty', // تخصص العامل (design, cutting, sewing, fitting, finishing, quality_check)
         'salary',
+        'salary_kwd', // الراتب بالدينار الكويتي
         'base_salary', // الراتب الأساسي
         'hourly_rate', // معدل الساعة
+        'hourly_rate_kwd', // معدل الساعة بالدينار الكويتي
         'overtime_rate', // معدل الإضافي
         'standard_hours_per_day', // ساعات العمل اليومية
         'standard_hours_per_week', // ساعات العمل الأسبوعية
@@ -43,8 +45,10 @@ class Worker extends Model
         'last_payroll_date' => 'date',
         'is_active' => 'boolean',
         'salary' => 'decimal:2',
+        'salary_kwd' => 'decimal:3',
         'base_salary' => 'decimal:2',
         'hourly_rate' => 'decimal:2',
+        'hourly_rate_kwd' => 'decimal:3',
         'overtime_rate' => 'decimal:2',
         'bonus_percentage' => 'decimal:2',
         'enable_overtime' => 'boolean',

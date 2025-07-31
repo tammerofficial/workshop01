@@ -24,6 +24,8 @@ class WorkerController extends Controller
             'role' => 'required|string',
             'department' => 'required|string',
             'salary' => 'nullable|numeric|min:0',
+            'salary_kwd' => 'nullable|numeric|min:0',
+            'hourly_rate_kwd' => 'nullable|numeric|min:0',
             'hire_date' => 'required|date',
             'skills' => 'nullable|array',
             // Payroll fields validation
@@ -62,6 +64,8 @@ class WorkerController extends Controller
             'role' => 'required|string',
             'department' => 'required|string',
             'salary' => 'nullable|numeric|min:0',
+            'salary_kwd' => 'nullable|numeric|min:0',
+            'hourly_rate_kwd' => 'nullable|numeric|min:0',
             'hire_date' => 'required|date',
             'skills' => 'nullable|array',
             // Payroll fields validation
@@ -128,6 +132,24 @@ class WorkerController extends Controller
             
             $data['hourly_rate'] = round($salary / $defaultMonthlyHours, 2);
             $data['overtime_rate'] = round($data['hourly_rate'] * 1.5, 2);
+            $data['standard_hours_per_month'] = $defaultMonthlyHours;
+        }
+
+        // Calculate KWD hourly rate if salary_kwd and monthly hours are provided
+        if (isset($data['salary_kwd']) && isset($data['standard_hours_per_month'])) {
+            $salaryKWD = (float) $data['salary_kwd'];
+            $monthlyHours = (float) $data['standard_hours_per_month'];
+            
+            if ($monthlyHours > 0) {
+                $data['hourly_rate_kwd'] = round($salaryKWD / $monthlyHours, 3); // 3 decimals for KWD
+            }
+        }
+        // If only salary_kwd is provided but no monthly hours, use default 160 hours
+        elseif (isset($data['salary_kwd']) && !isset($data['standard_hours_per_month'])) {
+            $salaryKWD = (float) $data['salary_kwd'];
+            $defaultMonthlyHours = 160; // Default monthly hours
+            
+            $data['hourly_rate_kwd'] = round($salaryKWD / $defaultMonthlyHours, 3);
             $data['standard_hours_per_month'] = $defaultMonthlyHours;
         }
     }

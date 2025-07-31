@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Plus, Search, Trash2, User, Phone, Mail, Settings, Grid, List, X, RefreshCw } from 'lucide-react';
 import { biometricService } from '../api/laravel';
+import { cachedWorkerService, cacheWarmup } from '../api/cachedLaravel';
+import { useCache } from '../contexts/CacheContext';
 import toast from 'react-hot-toast';
 import { LanguageContext } from '../contexts/LanguageContext';
 import WorkerCard from '../components/workers/WorkerCard';
@@ -24,6 +26,7 @@ interface Worker {
 
 const Workers = () => {
   const { t } = useContext(LanguageContext)!;
+  const cache = useCache();
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,12 +73,38 @@ const Workers = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadWorkers = async () => {
+  const loadWorkers = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      const response = await biometricService.getBiometricWorkers(50);
-      setWorkers(response.data.data || response.data);
-      setTotalWorkers(response.data.count || response.data.length);
+      
+      // Try to get from cache first unless force refresh
+      if (!forceRefresh) {
+        const cachedWorkers = cache.getCachedWorkers();
+        if (cachedWorkers) {
+          setWorkers(cachedWorkers);
+          setTotalWorkers(cachedWorkers.length);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fetch from API
+      const response = await cache.fetchWithCache(
+        'biometric_workers', 
+        async () => {
+          const apiResponse = await biometricService.getBiometricWorkers(50);
+          return apiResponse.data.data || apiResponse.data;
+        },
+        forceRefresh ? 0 : 5 * 60 * 1000 // 5 minutes cache, or no cache if force refresh
+      );
+      
+      const workersData = Array.isArray(response) ? response : response.data || response;
+      setWorkers(workersData);
+      setTotalWorkers(workersData.length);
+      
+      // Cache the workers
+      cache.setCachedWorkers(workersData);
+      
     } catch (error) {
       console.error('Error loading workers:', error);
       toast.error(t('common.error'));
@@ -86,15 +115,18 @@ const Workers = () => {
 
   const refreshWorkers = async () => {
     try {
-      setLoading(true);
       toast.loading(t('workers.refreshing'));
-      await loadWorkers();
+      
+      // Invalidate cache and force refresh
+      cache.invalidateWorkers();
+      await loadWorkers(true);
+      
+      toast.dismiss();
       toast.success(t('workers.refreshed'));
     } catch (error) {
       console.error('Error refreshing workers:', error);
+      toast.dismiss();
       toast.error(t('common.error'));
-    } finally {
-      setLoading(false);
     }
   };
 

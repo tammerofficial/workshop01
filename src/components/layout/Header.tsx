@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { mockNotifications } from '../../data/mockData';
 import DepartmentToggle from './DepartmentToggle';
+import CacheStatus from '../cache/CacheStatus';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -66,6 +67,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
             placeholder={t('common.search') + '...'}
           />
         </div>
+
+        {/* Cache Status */}
+        <CacheStatus className="hidden md:block" />
 
         {/* Theme Toggle */}
         <button

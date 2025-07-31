@@ -5,11 +5,14 @@ import ModernOrdersChart from '../components/dashboard/ModernOrdersChart';
 import ModernWorkerChart from '../components/dashboard/ModernWorkerChart';
 import ModernRecentActivity from '../components/dashboard/ModernRecentActivity';
 import { dashboardService, wooCommerceService } from '../api/laravel';
+import { cacheWarmup } from '../api/cachedLaravel';
+import { useCache } from '../contexts/CacheContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const { t, isRTL } = useLanguage();
+  const cache = useCache();
   const [stats, setStats] = useState({
     workers_count: 0,
     orders_count: 0,
@@ -29,17 +32,51 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadDashboardData();
+    // Warm up cache for dashboard
+    cacheWarmup.warmupForPage('dashboard');
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (forceRefresh = false) => {
     try {
+      setLoading(true);
+      
+      // Try to get from cache first
+      if (!forceRefresh) {
+        const cachedStats = cache.getCachedData('dashboard_stats');
+        const cachedOrders = cache.getCachedData('dashboard_orders');
+        
+        if (cachedStats && cachedOrders) {
+          setStats(cachedStats);
+          setRecentOrders(cachedOrders);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fetch from API with caching
       const [statsResponse, ordersResponse] = await Promise.all([
-        dashboardService.getStats(),
-        dashboardService.getRecentOrders(),
+        cache.fetchWithCache(
+          'dashboard_stats',
+          () => dashboardService.getStats(),
+          2 * 60 * 1000 // 2 minutes cache for stats
+        ),
+        cache.fetchWithCache(
+          'dashboard_orders',
+          () => dashboardService.getRecentOrders(),
+          1 * 60 * 1000 // 1 minute cache for recent orders
+        )
       ]);
 
-      setStats(statsResponse.data);
-      setRecentOrders(ordersResponse.data);
+      const statsData = statsResponse.data || statsResponse;
+      const ordersData = ordersResponse.data || ordersResponse;
+      
+      setStats(statsData);
+      setRecentOrders(ordersData);
+      
+      // Cache the data
+      cache.setCachedData('dashboard_stats', statsData, 2 * 60 * 1000);
+      cache.setCachedData('dashboard_orders', ordersData, 1 * 60 * 1000);
+      
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast.error(t('common.error'));
@@ -55,7 +92,11 @@ const Dashboard = () => {
       const response = await wooCommerceService.importAll();
       toast.success(t('dashboard.importSuccess'), { id: 'import-toast' });
       
-      await loadDashboardData();
+      // Invalidate cache and refresh
+      cache.invalidatePattern('dashboard_');
+      cache.invalidatePattern('api_orders');
+      cache.invalidatePattern('api_clients');
+      await loadDashboardData(true);
       
       const imported = response.data.imported;
       toast.success(t('dashboard.importResults', {

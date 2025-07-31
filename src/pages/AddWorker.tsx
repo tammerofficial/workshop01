@@ -29,6 +29,9 @@ const AddWorker = () => {
     employeeId: '',
     dateOfJoining: new Date().toISOString().split('T')[0],
     salary: '',
+    salaryKWD: '',
+    hourlyRateKWD: '',
+    standardHoursPerMonth: '160',
     skills: [] as string[],
     emergencyContact: {
       name: '',
@@ -39,6 +42,13 @@ const AddWorker = () => {
     status: 'active',
     imageFile: null as File | null,
   });
+
+  // Auto-calculate KWD hourly rate when salaryKWD or monthly hours change
+  const calculateHourlyRateKWD = (salaryKWD: string, monthlyHours: string) => {
+    const salaryNum = parseFloat(salaryKWD) || 0;
+    const hoursNum = parseFloat(monthlyHours) || 160; // Default 160 hours per month
+    return hoursNum > 0 ? (salaryNum / hoursNum).toFixed(3) : '0.000'; // 3 decimal places for KWD
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -53,10 +63,18 @@ const AddWorker = () => {
         }
       }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setFormData(prev => {
+        const newData = { ...prev, [name]: value };
+        
+        // Auto-calculate KWD hourly rate when salaryKWD or monthly hours change
+        if (name === 'salaryKWD' || name === 'standardHoursPerMonth') {
+          const salaryKWD = name === 'salaryKWD' ? value : prev.salaryKWD;
+          const monthlyHours = name === 'standardHoursPerMonth' ? value : prev.standardHoursPerMonth;
+          newData.hourlyRateKWD = calculateHourlyRateKWD(salaryKWD, monthlyHours);
+        }
+        
+        return newData;
+      });
     }
   };
 
@@ -149,6 +167,9 @@ const AddWorker = () => {
         employee_id: formData.employeeId,
         date_of_joining: formData.dateOfJoining,
         salary: parseFloat(formData.salary) || 0,
+        salary_kwd: parseFloat(formData.salaryKWD) || 0,
+        hourly_rate_kwd: parseFloat(formData.hourlyRateKWD) || 0,
+        standard_hours_per_month: parseInt(formData.standardHoursPerMonth) || 160,
         skills: formData.skills,
         emergency_contact: JSON.stringify(formData.emergencyContact),
         notes: formData.notes,
@@ -269,8 +290,23 @@ const AddWorker = () => {
                     <input type="date" name="dateOfJoining" className="w-full form-input" value={formData.dateOfJoining} onChange={handleInputChange} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('addWorker.salary')}</label>
-                    <input type="number" name="salary" className="w-full form-input" value={formData.salary} onChange={handleInputChange} />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('addWorker.salary')} (USD)</label>
+                    <input type="number" step="0.01" name="salary" className="w-full form-input" value={formData.salary} onChange={handleInputChange} placeholder="0.00" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('addWorker.salaryKWD')} (KWD)</label>
+                    <input type="number" step="0.001" name="salaryKWD" className="w-full form-input" value={formData.salaryKWD} onChange={handleInputChange} placeholder="0.000" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('addWorker.monthlyHours')}</label>
+                    <input type="number" name="standardHoursPerMonth" className="w-full form-input" value={formData.standardHoursPerMonth} onChange={handleInputChange} placeholder="160" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('addWorker.hourlyRateKWD')} <span className="text-xs text-blue-500">({t('Auto-calculated')})</span></label>
+                    <input type="number" step="0.001" name="hourlyRateKWD" className="w-full form-input bg-gray-50 cursor-not-allowed" value={formData.hourlyRateKWD} readOnly title={t('Calculated from: Monthly Salary KWD ÷ Monthly Working Hours')} />
+                    <p className="mt-1 text-xs text-gray-500">
+                      {t('Formula')}: {formData.salaryKWD || '0'}KWD ÷ {formData.standardHoursPerMonth || '160'}h = {formData.hourlyRateKWD}KWD/h
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('addWorker.status')}</label>

@@ -11,6 +11,8 @@ import DepartmentAwareComponent from '../components/common/DepartmentAwareCompon
 import { useDepartment } from '../contexts/DepartmentContext';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useCache } from '../contexts/CacheContext';
+import { biometricService } from '../api/laravel';
 
 interface WorkerFormData {
   firstName: string;
@@ -50,9 +52,15 @@ const EditWorker: React.FC = () => {
   const navigate = useNavigate();
   const { departmentInfo } = useDepartment();
   const { t, isRTL } = useLanguage();
+  const cache = useCache();
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [newSkill, setNewSkill] = useState('');
+  
+  // Dynamic data from API
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [positions, setPositions] = useState<any[]>([]);
+  const [loadingDepartments, setLoadingDepartments] = useState(true);
   const [formData, setFormData] = useState<WorkerFormData>({
     firstName: '',
     lastName: '',
@@ -96,6 +104,73 @@ const EditWorker: React.FC = () => {
     wedding: ['Bridal Alterations', 'Beadwork', 'Embroidery', 'Veil Making', 'Corsetry', 'Hand Sewing'],
     'ready-to-wear': ['Machine Sewing', 'Pattern Making', 'Cutting', 'Pressing', 'Quality Control', 'Production Planning'],
     'custom-made': ['Bespoke Tailoring', 'Hand Stitching', 'Pattern Drafting', 'Fitting', 'Alterations', 'Fabric Knowledge']
+  };
+
+  // Load departments and positions from API with caching
+  const loadDepartmentsAndPositions = async (forceRefresh = false) => {
+    try {
+      setLoadingDepartments(true);
+      
+      // Try to get from cache first
+      if (!forceRefresh) {
+        const cachedDepartments = cache.getCachedData('biometric_departments');
+        const cachedPositions = cache.getCachedData('biometric_positions');
+        
+        if (cachedDepartments && cachedPositions) {
+          setDepartments(cachedDepartments);
+          setPositions(cachedPositions);
+          setLoadingDepartments(false);
+          return;
+        }
+      }
+
+      // Fetch from API with caching
+      const [departmentsResponse, positionsResponse] = await Promise.all([
+        cache.fetchWithCache(
+          'biometric_departments',
+          () => biometricService.getBiometricDepartments(),
+          15 * 60 * 1000 // 15 minutes cache
+        ),
+        cache.fetchWithCache(
+          'biometric_positions',
+          () => biometricService.getBiometricPositions(),
+          15 * 60 * 1000 // 15 minutes cache
+        )
+      ]);
+
+      const departmentsData = departmentsResponse.data?.data || departmentsResponse.data || departmentsResponse || [];
+      const positionsData = positionsResponse.data?.data || positionsResponse.data || positionsResponse || [];
+
+      setDepartments(departmentsData);
+      setPositions(positionsData);
+
+      // Cache the data
+      cache.setCachedData('biometric_departments', departmentsData, 15 * 60 * 1000);
+      cache.setCachedData('biometric_positions', positionsData, 15 * 60 * 1000);
+
+    } catch (error) {
+      console.error('Error loading departments and positions:', error);
+      toast.error(t('Error loading departments and positions'));
+      
+      // Fallback to hardcoded roles if API fails
+      const fallbackDepartments = [
+        { id: 'wedding', name: 'Wedding', name_ar: 'زفاف' },
+        { id: 'ready-to-wear', name: 'Ready to Wear', name_ar: 'جاهز للارتداء' },
+        { id: 'custom-made', name: 'Custom Made', name_ar: 'مفصل حسب الطلب' }
+      ];
+      setDepartments(fallbackDepartments);
+      
+      // Use hardcoded roles as fallback
+      const allPositions = Object.values(roles).flat().map((role, index) => ({
+        id: index + 1,
+        position_name: role,
+        position_name_ar: role,
+        department_id: null
+      }));
+      setPositions(allPositions);
+    } finally {
+      setLoadingDepartments(false);
+    }
   };
 
   // Auto-calculate hourly rate when salary or monthly hours change
@@ -247,6 +322,11 @@ const EditWorker: React.FC = () => {
     <DepartmentAwareComponent>
       {({ workers, loading: workersLoading }) => {
         const worker = workers.find(w => w.id === id);
+
+        useEffect(() => {
+          // Load departments and positions on component mount
+          loadDepartmentsAndPositions();
+        }, []);
 
         useEffect(() => {
           if (worker) {

@@ -411,19 +411,19 @@ const Payroll: React.FC = () => {
       {showGenerateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className={`p-6 rounded-xl shadow-lg max-w-md w-full mx-4 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>إنشاء راتب جديد</h3>
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('payroll.createNew')}</h3>
             
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  العامل
+                  {t('payroll.worker')}
                 </label>
                 <select
                   value={generateForm.worker_id}
                   onChange={(e) => setGenerateForm({...generateForm, worker_id: e.target.value})}
                   className={`w-full p-3 border rounded-lg ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
                 >
-                  <option value="">اختر العامل</option>
+                  <option value="">{t('payroll.selectWorker')}</option>
                   {workers.map((worker) => (
                     <option key={worker.id} value={worker.id}>
                       {worker.name} - {worker.role}
@@ -434,7 +434,7 @@ const Payroll: React.FC = () => {
 
               <div>
                 <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  تاريخ الراتب
+                  {t('payroll.payrollDate')}
                 </label>
                 <input
                   type="date"
@@ -447,7 +447,7 @@ const Payroll: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    معدل الساعة
+                    {t('Hourly Rate')}
                   </label>
                   <input
                     type="number"
@@ -459,7 +459,7 @@ const Payroll: React.FC = () => {
                 </div>
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    معدل العمل الإضافي
+                    {t('Overtime Rate')}
                   </label>
                   <input
                     type="number"
@@ -474,7 +474,7 @@ const Payroll: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    المكافأة
+                    {t('payroll.bonus')}
                   </label>
                   <input
                     type="number"
@@ -486,7 +486,7 @@ const Payroll: React.FC = () => {
                 </div>
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    الخصومات
+                    {t('payroll.deductions')}
                   </label>
                   <input
                     type="number"
@@ -500,7 +500,7 @@ const Payroll: React.FC = () => {
 
               <div>
                 <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  ملاحظات
+                  {t('notes')}
                 </label>
                 <textarea
                   value={generateForm.notes}
@@ -516,13 +516,13 @@ const Payroll: React.FC = () => {
                 onClick={() => setShowGenerateModal(false)}
                 className={`px-4 py-2 rounded-lg ${isDark ? 'bg-gray-600 text-white' : 'bg-gray-200 text-gray-700'}`}
               >
-                إلغاء
+                {t('cancel')}
               </button>
               <button
                 onClick={handleGeneratePayroll}
                 className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
               >
-                إنشاء الراتب
+                {t('payroll.createPayroll')}
               </button>
             </div>
           </div>
@@ -533,12 +533,12 @@ const Payroll: React.FC = () => {
       {showAllGenerateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className={`p-6 rounded-xl shadow-lg max-w-md w-full mx-4 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>إنشاء رواتب لجميع العمال</h3>
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>{t('payroll.createAllPayrolls')}</h3>
             
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  تاريخ الراتب
+                  {t('payroll.payrollDate')}
                 </label>
                 <input
                   type="date"
@@ -551,7 +551,7 @@ const Payroll: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    معدل الساعة
+                    {t('Hourly Rate')}
                   </label>
                   <input
                     type="number"
@@ -563,7 +563,7 @@ const Payroll: React.FC = () => {
                 </div>
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    معدل العمل الإضافي
+                    {t('Overtime Rate')}
                   </label>
                   <input
                     type="number"
@@ -578,7 +578,7 @@ const Payroll: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    نسبة المكافأة (%)
+                    {t('Bonus Percentage')} (%)
                   </label>
                   <input
                     type="number"
@@ -590,7 +590,7 @@ const Payroll: React.FC = () => {
                 </div>
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    نسبة الخصومات (%)
+                    {t('payroll.deductionsPercentage')} (%)
                   </label>
                   <input
                     type="number"
@@ -608,13 +608,13 @@ const Payroll: React.FC = () => {
                 onClick={() => setShowAllGenerateModal(false)}
                 className={`px-4 py-2 rounded-lg ${isDark ? 'bg-gray-600 text-white' : 'bg-gray-200 text-gray-700'}`}
               >
-                إلغاء
+                {t('cancel')}
               </button>
               <button
                 onClick={handleGenerateAllPayrolls}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
-                إنشاء جميع الرواتب
+                {t('payroll.createAllPayrolls')}
               </button>
             </div>
           </div>

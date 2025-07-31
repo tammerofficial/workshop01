@@ -5,6 +5,7 @@ import { DepartmentProvider } from './contexts/DepartmentContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { CacheProvider } from './contexts/CacheContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
@@ -58,8 +59,9 @@ function App() {
     <ThemeProvider>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <LanguageProvider>
-          <AuthProvider>
-            <DepartmentProvider>
+          <CacheProvider>
+            <AuthProvider>
+              <DepartmentProvider>
               <Toaster position="top-right" />
               <Routes>
                 {/* Auth Routes */}
@@ -142,8 +144,9 @@ function App() {
                 {/* Redirect to login for any unknown routes */}
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
-            </DepartmentProvider>
-          </AuthProvider>
+              </DepartmentProvider>
+            </AuthProvider>
+          </CacheProvider>
         </LanguageProvider>
       </Router>
     </ThemeProvider>
