@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Save, ArrowLeft, User, Award, Upload, X, Plus, Camera, Briefcase, Shield } from 'lucide-react';
@@ -7,16 +7,22 @@ import toast from 'react-hot-toast';
 import PageHeader from '../components/common/PageHeader';
 import { LanguageContext } from '../contexts/LanguageContext';
 import { DepartmentContext } from '../contexts/DepartmentContext';
-import { workerService } from '../api/laravel';
+import { useCache } from '../contexts/CacheContext';
+import { workerService, biometricService } from '../api/laravel';
 import { roles, commonSkills } from '../data/mockData';
 
 const AddWorker = () => {
   const { t } = useContext(LanguageContext)!;
   const { departmentInfo } = useContext(DepartmentContext)!;
+  const cache = useCache();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [newSkill, setNewSkill] = useState('');
+  
+  // Dynamic data from API
+  const [positions, setPositions] = useState<any[]>([]);
+  const [loadingPositions, setLoadingPositions] = useState(true);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -43,12 +49,62 @@ const AddWorker = () => {
     imageFile: null as File | null,
   });
 
+  // Load positions from API with caching
+  const loadPositions = async (forceRefresh = false) => {
+    try {
+      setLoadingPositions(true);
+      
+      // Try to get from cache first
+      if (!forceRefresh) {
+        const cachedPositions = cache.getCachedData('biometric_positions');
+        if (cachedPositions) {
+          setPositions(cachedPositions);
+          setLoadingPositions(false);
+          return;
+        }
+      }
+
+      // Fetch from API with caching
+      const positionsResponse = await cache.fetchWithCache(
+        'biometric_positions',
+        () => biometricService.getBiometricPositions(),
+        15 * 60 * 1000 // 15 minutes cache
+      );
+
+      const positionsData = positionsResponse.data?.data || positionsResponse.data || positionsResponse || [];
+      setPositions(positionsData);
+
+      // Cache the data
+      cache.setCachedData('biometric_positions', positionsData, 15 * 60 * 1000);
+
+    } catch (error) {
+      console.error('Error loading positions:', error);
+      toast.error(t('Error loading positions'));
+      
+      // Fallback to hardcoded roles if API fails
+      const allPositions = Object.values(roles).flat().map((role, index) => ({
+        id: index + 1,
+        position_name: role,
+        position_name_ar: role,
+        department_id: null
+      }));
+      setPositions(allPositions);
+    } finally {
+      setLoadingPositions(false);
+    }
+  };
+
   // Auto-calculate KWD hourly rate when salaryKWD or monthly hours change
   const calculateHourlyRateKWD = (salaryKWD: string, monthlyHours: string) => {
     const salaryNum = parseFloat(salaryKWD) || 0;
     const hoursNum = parseFloat(monthlyHours) || 160; // Default 160 hours per month
     return hoursNum > 0 ? (salaryNum / hoursNum).toFixed(3) : '0.000'; // 3 decimal places for KWD
   };
+
+  // Load positions on component mount
+  useEffect(() => {
+    loadPositions();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -267,12 +323,42 @@ const AddWorker = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('addWorker.role')} *</label>
-                    <select name="role" required className="w-full form-input" value={formData.role} onChange={handleInputChange}>
-                      <option value="">{t('addWorker.selectRole')}</option>
-                      {roles[departmentInfo.id as keyof typeof roles].map((role: string) => (
-                        <option key={role} value={role}>{role}</option>
+                    <select 
+                      name="role" 
+                      required 
+                      disabled={loadingPositions}
+                      className="w-full form-input disabled:opacity-50" 
+                      value={formData.role} 
+                      onChange={handleInputChange}
+                    >
+                      <option value="">
+                        {loadingPositions ? t('Loading positions...') : t('addWorker.selectRole')}
+                      </option>
+                      {!loadingPositions && positions.map(position => (
+                        <option key={position.id || position.position_name} value={position.position_name}>
+                          {position.position_name_ar || position.position_name}
+                        </option>
                       ))}
                     </select>
+                    {loadingPositions && (
+                      <div className="mt-1 text-sm text-blue-500 flex items-center">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500 mr-2"></div>
+                        {t('Loading latest positions...')}
+                      </div>
+                    )}
+                    {!loadingPositions && (
+                      <button
+                        type="button"
+                        onClick={() => loadPositions(true)}
+                        className="mt-2 text-sm text-blue-600 hover:text-blue-700 flex items-center"
+                        title={t('Refresh positions list')}
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        {t('Refresh positions')}
+                      </button>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('addWorker.department')}</label>

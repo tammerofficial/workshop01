@@ -512,15 +512,39 @@ const EditWorker: React.FC = () => {
                       <select
                         name="role"
                         required
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        disabled={loadingDepartments}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50"
                         value={formData.role}
                         onChange={handleInputChange}
                       >
-                        <option value="">{t('Select a role')}</option>
-                        {roles[departmentInfo.id as keyof typeof roles].map(role => (
-                          <option key={role} value={role}>{role}</option>
+                        <option value="">
+                          {loadingDepartments ? t('Loading positions...') : t('Select a role')}
+                        </option>
+                        {!loadingDepartments && positions.map(position => (
+                          <option key={position.id || position.position_name} value={position.position_name}>
+                            {isRTL ? (position.position_name_ar || position.position_name) : position.position_name}
+                          </option>
                         ))}
                       </select>
+                                              {loadingDepartments && (
+                        <div className="mt-1 text-sm text-blue-500 flex items-center">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500 mr-2"></div>
+                          {t('Loading latest positions...')}
+                        </div>
+                      )}
+                      {!loadingDepartments && (
+                        <button
+                          type="button"
+                          onClick={() => loadDepartmentsAndPositions(true)}
+                          className="mt-2 text-sm text-blue-600 hover:text-blue-700 flex items-center"
+                          title={t('Refresh positions list')}
+                        >
+                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          {t('Refresh positions')}
+                        </button>
+                      )}
                     </div>
 
                     <div>
