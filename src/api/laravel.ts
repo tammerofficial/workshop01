@@ -7,7 +7,7 @@ const getApiBaseUrl = () => {
     return `${window.location.origin}/api`;
   }
   // In development, use local Laravel server
-  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8004/api';
 };
 
 // Create axios instance for Laravel API

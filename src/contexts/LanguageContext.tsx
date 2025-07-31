@@ -172,6 +172,15 @@ const translations = {
     'View and manage worker information': 'View and manage worker information',
     'Refresh': 'Refresh',
     'Back': 'Back',
+    'Check In': 'Check In',
+    'Check Out': 'Check Out',
+    'Date': 'Date',
+    'Time': 'Time',
+    'Action': 'Action',
+    'Device': 'Device',
+    'Showing latest 50 records of': 'Showing latest 50 records of',
+    'total records': 'total records',
+    'Request timeout. Please try again.': 'Request timeout. Please try again.',
 
     // Settings Page
     'settings.title': 'Settings',
@@ -1358,6 +1367,15 @@ const translations = {
     'View and manage worker information': 'عرض وإدارة معلومات العامل',
     'Refresh': 'تحديث',
     'Back': 'رجوع',
+    'Check In': 'دخول',
+    'Check Out': 'خروج',
+    'Date': 'التاريخ',
+    'Time': 'الوقت',
+    'Action': 'الإجراء',
+    'Device': 'الجهاز',
+    'Showing latest 50 records of': 'عرض آخر 50 سجل من أصل',
+    'total records': 'سجل إجمالي',
+    'Request timeout. Please try again.': 'انتهت مهلة الطلب. يرجى المحاولة مرة أخرى.',
     
     // Settings Page
     'settings.title': 'الإعدادات',

@@ -14,6 +14,8 @@ class Collection extends Model
         'description',
         'season', // spring, summer, fall, winter
         'year',
+        'color',
+        'image_url',
         'is_active'
     ];
 
@@ -31,5 +33,32 @@ class Collection extends Model
     public function orders()
     {
         return $this->hasManyThrough(Order::class, Product::class);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeBySeason($query, $season)
+    {
+        return $query->where('season', $season);
+    }
+
+    public function scopeByYear($query, $year)
+    {
+        return $query->where('year', $year);
+    }
+
+    // Helper methods
+    public function getProductsCount()
+    {
+        return $this->products()->count();
+    }
+
+    public function getActiveProductsCount()
+    {
+        return $this->products()->where('is_active', true)->count();
     }
 }

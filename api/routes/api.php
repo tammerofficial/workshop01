@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\WorkerController;
 use App\Http\Controllers\Api\MaterialController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\WooCommerceProductController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\CategoryController;
@@ -14,6 +16,7 @@ use App\Http\Controllers\Api\ProductionController;
 use App\Http\Controllers\Api\SmartProductionController;
 use App\Http\Controllers\DashboardController;
 use App\Services\WooCommerceService;
+use App\Services\WooCommerceProductService;
 use App\Http\Controllers\Api\WooCommerceController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\PermissionController;
@@ -38,6 +41,17 @@ Route::patch('workers/{worker}/deactivate', [WorkerController::class, 'deactivat
 // Materials Routes
 Route::apiResource('materials', MaterialController::class);
 Route::get('materials/low-stock', [MaterialController::class, 'lowStock']);
+
+// Products Routes
+Route::get('products/materials-for-bom', [ProductController::class, 'getMaterialsForBOM']);
+Route::get('products/{product}/manufacturing-requirements', [ProductController::class, 'getManufacturingRequirements']);
+Route::post('products/{product}/reserve-materials', [ProductController::class, 'reserveMaterials']);
+Route::apiResource('products', ProductController::class);
+
+// WooCommerce Products Sync
+Route::post('products/sync-woocommerce', [WooCommerceProductController::class, 'syncProducts']);
+Route::post('products/test-woocommerce', [WooCommerceProductController::class, 'testConnection']);
+Route::post('products/push-woocommerce', [WooCommerceProductController::class, 'pushProduct']);
 
 // Categories Routes
 Route::apiResource('categories', CategoryController::class);

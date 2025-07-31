@@ -10,6 +10,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
+import Products from './pages/Products';
 import CreateOrder from './pages/CreateOrder';
 import OrderDetails from './pages/OrderDetails';
 import ScheduleFitting from './pages/ScheduleFitting';
@@ -77,6 +78,7 @@ function App() {
                 }>
                   <Route index element={<Dashboard />} />
                   <Route path="orders" element={<Orders />} />
+                  <Route path="products" element={<Products />} />
                   <Route path="orders/create" element={<CreateOrder />} />
                   <Route path="orders/:id" element={<OrderDetails />} />
                   <Route path="orders/:id/schedule-fitting" element={<ScheduleFitting />} />

@@ -1,9 +1,24 @@
+// جلب إحصائيات المبيعات من WooCommerce
+export const getSalesStats = async () => {
+  // WooCommerce Analytics endpoint (requires permissions)
+  // /wp-json/wc-analytics/reports/sales
+  const response = await api.get('https://hudaaljarallah.net/wp-json/wc-analytics/reports/sales');
+  return response.data;
+};
+
+// جلب الطلبات الأخيرة من WooCommerce
+export const getRecentOrders = async (perPage = 5) => {
+  const response = await api.get('/orders', {
+    params: { per_page: perPage, orderby: 'date', order: 'desc' }
+  });
+  return response.data;
+};
 import axios from 'axios';
 
-const BASE_URL = 'https://wordpress-1446204-5489188.cloudwaysapps.com/wp-json/wc/v3';
+const BASE_URL = 'https://hudaaljarallah.net/wp-json/wc/v3';
 const AUTH_PARAMS = {
-  consumer_key: 'ck_f148efa76346d32567e16c4a100f19f0a025bfab',
-  consumer_secret: 'cs_02e1bfa704ed1756f1c4f291d5ac162a89e617f4'
+  consumer_key: 'ck_00514ea74d02b1ae9f5fad49629e8466400d4214',
+  consumer_secret: 'cs_0aafdbe3cb3375d42df7a433ca2830e52f0c27ad'
 };
 
 const api = axios.create({
