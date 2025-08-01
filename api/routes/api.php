@@ -31,6 +31,8 @@ use App\Http\Controllers\Api\Authentication\AuthController;
 use App\Http\Controllers\Api\System\AdvancedFeaturesController;
 use App\Http\Controllers\Api\System\ERPController;
 use App\Http\Controllers\Api\Business\ClientLoyaltyController;
+use App\Http\Controllers\Api\Business\WooCommerceOrderController;
+use App\Http\Controllers\Api\Business\WorkshopOrderController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -421,4 +423,22 @@ Route::prefix('loyalty')->group(function () {
     Route::get('/clients/{client}', [ClientLoyaltyController::class, 'getClientLoyalty']);
     Route::post('/clients/{client}/award-points', [ClientLoyaltyController::class, 'awardPoints']);
     Route::post('/clients/{client}/redeem-points', [ClientLoyaltyController::class, 'redeemPoints']);
+});
+
+// WooCommerce Orders Routes
+Route::prefix('woocommerce-orders')->group(function () {
+    Route::get('/', [WooCommerceOrderController::class, 'index']);
+    Route::get('/{order}', [WooCommerceOrderController::class, 'show']);
+    Route::post('/sync', [WooCommerceOrderController::class, 'syncFromWooCommerce']);
+    Route::post('/{order}/clone-to-workshop', [WooCommerceOrderController::class, 'cloneToWorkshop']);
+    Route::post('/auto-clone-eligible', [WooCommerceOrderController::class, 'autoCloneEligibleOrders']);
+});
+
+// Workshop Orders Routes
+Route::prefix('workshop-orders')->group(function () {
+    Route::get('/', [WorkshopOrderController::class, 'index']);
+    Route::get('/{order}', [WorkshopOrderController::class, 'show']);
+    Route::post('/{order}/accept', [WorkshopOrderController::class, 'accept']);
+    Route::post('/{order}/start-production', [WorkshopOrderController::class, 'startProduction']);
+    Route::patch('/{order}/status', [WorkshopOrderController::class, 'updateStatus']);
 }); 

@@ -54,6 +54,7 @@ import Unauthorized from './pages/auth/Unauthorized';
 
 // ERP pages
 import ERPManagement from './pages/ERPManagement';
+import OrdersNew from './pages/OrdersNew';
 
 function App() {
   return (
@@ -78,6 +79,7 @@ function App() {
                 }>
                   <Route index element={<Dashboard />} />
                   <Route path="orders" element={<Orders />} />
+                  <Route path="orders-management" element={<OrdersNew />} />
                   <Route path="products" element={<Products />} />
                   <Route path="orders/create" element={<CreateOrder />} />
                   <Route path="orders/:id" element={<OrderDetails />} />

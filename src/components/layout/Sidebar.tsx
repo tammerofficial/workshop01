@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { 
   LayoutDashboard, ShoppingBag, Package, Users, Calendar, 
   LineChart, Bell, Settings, Monitor, Workflow, Zap,
-  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2
+  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2, ShoppingCart
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -22,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const workshopItems = [
     { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { path: '/orders', label: 'Orders', icon: <ShoppingBag size={20} />, badge: 5 },
+    { path: '/orders-management', label: 'Orders Management', icon: <ShoppingCart size={20} />, badge: 'NEW' },
     { path: '/products', label: 'Products', icon: <Package size={20} />, badge: 'NEW' },
     { path: '/clients', label: 'Clients', icon: <UserCheck size={20} /> },
     { path: '/inventory', label: 'Inventory', icon: <Package size={20} /> },

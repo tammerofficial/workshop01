@@ -1,4 +1,4 @@
-import api from './laravel';
+import api from './apiClient';
 
 export interface SmartProductionStats {
   [stage: string]: {

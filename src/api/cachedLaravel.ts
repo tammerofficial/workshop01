@@ -320,4 +320,4 @@ export const cacheWarmup = {
 export { cachedApi };
 
 // Re-export original services for backward compatibility
-export * from './laravel';
+export * from './apiClient';

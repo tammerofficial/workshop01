@@ -999,7 +999,7 @@ class BiometricService
         }
 
         try {
-            $response = Http::withToken($this->token)
+            $response = Http::with($this->token)
                 ->put($this->devicesUrl . $deviceId . '/', $deviceData);
             
             if ($response->successful()) {
