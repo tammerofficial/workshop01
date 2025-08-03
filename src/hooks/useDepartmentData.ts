@@ -9,67 +9,37 @@ export const useDepartmentData = () => {
 
   // Filter data based on department
   const getDepartmentData = () => {
-    // In a real application, you would filter by department_id from the backend
-    // For now, we'll simulate department-specific data by filtering existing mock data
-    
-    const departmentFilter = (item: any, index: number) => {
-      // Simulate department filtering logic based on index and department
-      switch (currentDepartment) {
-        case 'wedding':
-          // Wedding department gets items with indices divisible by 3
-          return index % 3 === 0;
-        case 'ready-to-wear':
-          // Ready-to-wear gets items with indices divisible by 3 with remainder 1
-          return index % 3 === 1;
-        case 'custom-made':
-          // Custom-made gets items with indices divisible by 3 with remainder 2
-          return index % 3 === 2;
-        default:
-          return true;
-      }
-    };
+    // No longer need to filter by department, just return all mock data.
+    // In a real application, you might have a default scope or no scope.
+    const departmentFilter = () => true;
 
     // Apply department-specific modifications to data
-    const departmentOrders = mockOrders.filter(departmentFilter).map((order, index) => ({
+    const departmentOrders = mockOrders.filter(departmentFilter).map((order) => ({
       ...order,
       id: `${currentDepartment.toUpperCase()}-${order.id}`,
-      suitType: currentDepartment === 'wedding' ? 'Wedding Dress' :
-                 currentDepartment === 'ready-to-wear' ? 'Ready-to-Wear Dress' :
-                 'Custom-Made Dress',
+      suitType: 'General Product',
       departmentId: currentDepartment
     }));
 
-    const departmentWorkers = mockWorkers.filter(departmentFilter).map((worker, index) => ({
+    const departmentWorkers = mockWorkers.filter(departmentFilter).map((worker) => ({
       ...worker,
       id: `${currentDepartment.toUpperCase()}-${worker.id}`,
-      department: currentDepartment === 'wedding' ? 'Wedding Department' :
-                  currentDepartment === 'ready-to-wear' ? 'Ready-to-Wear Department' :
-                  'Custom-Made Department',
-      role: currentDepartment === 'wedding' ? 'Bridal Specialist' :
-            currentDepartment === 'ready-to-wear' ? 'Fashion Designer' :
-            'Custom Tailor'
+      department: 'General Workshop',
+      role: 'Workshop Staff'
     }));
 
-    const departmentInventory = mockInventoryItems.filter(departmentFilter).map((item, index) => ({
+    const departmentInventory = mockInventoryItems.filter(departmentFilter).map((item) => ({
       ...item,
       id: `${currentDepartment.toUpperCase()}-${item.id}`,
-      name: currentDepartment === 'wedding' ? `Wedding ${item.name}` :
-            currentDepartment === 'ready-to-wear' ? `RTW ${item.name}` :
-            `Custom ${item.name}`,
-      category: currentDepartment === 'wedding' ? 'bridal' :
-               currentDepartment === 'ready-to-wear' ? 'ready-to-wear' :
-               'custom'
+      name: `General ${item.name}`,
+      category: 'general'
     }));
 
-    const departmentNotifications = mockNotifications.filter(departmentFilter).map((notification, index) => ({
+    const departmentNotifications = mockNotifications.filter(departmentFilter).map((notification) => ({
       ...notification,
       id: `${currentDepartment.toUpperCase()}-${notification.id}`,
-      title: `${currentDepartment === 'wedding' ? 'Wedding' : 
-              currentDepartment === 'ready-to-wear' ? 'RTW' : 'Custom'} ${notification.title}`,
-      message: notification.message.replace(/Order/g, 
-        currentDepartment === 'wedding' ? 'Wedding Order' :
-        currentDepartment === 'ready-to-wear' ? 'RTW Order' :
-        'Custom Order')
+      title: `General ${notification.title}`,
+      message: notification.message.replace(/Order/g, 'General Order')
     }));
 
     return {

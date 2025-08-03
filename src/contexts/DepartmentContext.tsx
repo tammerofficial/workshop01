@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
-export type Department = 'wedding' | 'ready-to-wear' | 'custom-made';
+export type Department = 'general';
 
 export interface DepartmentInfo {
   id: Department;
@@ -13,25 +13,11 @@ export interface DepartmentInfo {
 
 export const departments: DepartmentInfo[] = [
   {
-    id: 'wedding',
-    name: 'Wedding Dresses',
-    description: 'Bridal and formal wedding attire',
-    color: 'bg-pink-500',
-    icon: '👰'
-  },
-  {
-    id: 'ready-to-wear',
-    name: 'Ready-to-Wear',
-    description: 'Pre-designed dresses and collections',
-    color: 'bg-purple-500',
-    icon: '👗'
-  },
-  {
-    id: 'custom-made',
-    name: 'Custom-Made',
-    description: 'Bespoke and tailored dresses',
-    color: 'bg-blue-500',
-    icon: '✂️'
+    id: 'general',
+    name: 'General Workshop',
+    description: 'All workshop activities',
+    color: 'bg-gray-500',
+    icon: '🧵'
   }
 ];
 
@@ -49,7 +35,7 @@ interface DepartmentProviderProps {
 }
 
 export const DepartmentProvider: React.FC<DepartmentProviderProps> = ({ children }) => {
-  const [currentDepartment, setCurrentDepartmentState] = useState<Department>('wedding');
+  const [currentDepartment, setCurrentDepartmentState] = useState<Department>('general');
   const [isLoading, setIsLoading] = useState(false);
 
   // Load saved department from localStorage on mount

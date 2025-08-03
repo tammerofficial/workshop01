@@ -42,9 +42,7 @@ const CreateOrder: React.FC = () => {
     clientPhone: '',
     clientEmail: '',
     clientAddress: '',
-    productType: departmentInfo.id === 'wedding' ? 'Wedding Dress' : 
-                 departmentInfo.id === 'ready-to-wear' ? 'Ready-to-Wear Dress' : 
-                 'Custom Dress',
+    productType: 'Standard Garment',
     measurements: {
       chest: '',
       waist: '',
@@ -113,24 +111,11 @@ const CreateOrder: React.FC = () => {
     }
   };
 
-  const productTypes: { [key: string]: { key: string; value: string }[] } = {
-    wedding: [
-      { key: 'createOrder.productTypes.wedding.dress', value: 'Wedding Dress' },
-      { key: 'createOrder.productTypes.wedding.gown', value: 'Bridal Gown' },
-      { key: 'createOrder.productTypes.wedding.evening', value: 'Evening Dress' },
-      { key: 'createOrder.productTypes.wedding.bridesmaid', value: 'Bridesmaid Dress' },
-    ],
-    'ready-to-wear': [
-      { key: 'createOrder.productTypes.ready-to-wear.casual', value: 'Casual Dress' },
-      { key: 'createOrder.productTypes.ready-to-wear.formal', value: 'Formal Dress' },
-      { key: 'createOrder.productTypes.ready-to-wear.cocktail', value: 'Cocktail Dress' },
-      { key: 'createOrder.productTypes.ready-to-wear.business', value: 'Business Dress' },
-    ],
-    'custom-made': [
-      { key: 'createOrder.productTypes.custom-made.custom', value: 'Custom Dress' },
-      { key: 'createOrder.productTypes.custom-made.bespoke', value: 'Bespoke Gown' },
-      { key: 'createOrder.productTypes.custom-made.tailored', value: 'Tailored Outfit' },
-      { key: 'createOrder.productTypes.custom-made.special', value: 'Special Occasion Dress' },
+  const productTypes = {
+    general: [
+      { key: 'createOrder.productTypes.general.garment', value: 'Standard Garment' },
+      { key: 'createOrder.productTypes.general.accessory', value: 'Accessory' },
+      { key: 'createOrder.productTypes.general.alteration', value: 'Alteration' },
     ]
   };
 
