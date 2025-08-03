@@ -67,7 +67,7 @@ class DashboardController extends Controller
             // Performance indicators
             'average_completion_time' => Order::where('status', 'completed')
                 ->whereNotNull('completed_date')
-                ->selectRaw('AVG(DATEDIFF(completed_date, start_date)) as avg_days')
+                ->selectRaw('AVG(julianday(completed_date) - julianday(start_date)) as avg_days')
                 ->value('avg_days') ?? 0,
             'on_time_completion_rate' => $this->calculateOnTimeCompletionRate(),
             

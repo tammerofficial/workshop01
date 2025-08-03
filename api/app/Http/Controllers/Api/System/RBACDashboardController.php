@@ -66,8 +66,8 @@ class RBACDashboardController extends Controller
      */
     protected function getSecurityAlerts(): array
     {
-        $criticalEvents = SecurityEvent::critical()
-            ->uninvestigated()
+        $criticalEvents = SecurityEvent::where('severity', 'critical')
+            ->where('investigated', false)
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
@@ -122,10 +122,10 @@ class RBACDashboardController extends Controller
             ->limit(10)
             ->get();
 
-        $usageByHour = PermissionAuditLog::selectRaw('
-                HOUR(created_at) as hour,
+        $usageByHour = PermissionAuditLog::selectRaw("
+                strftime('%H', created_at) as hour,
                 COUNT(*) as count
-            ')
+            ")
             ->whereDate('created_at', Carbon::today())
             ->groupBy('hour')
             ->pluck('count', 'hour');

@@ -250,9 +250,17 @@ class SecurityEvent extends Model
     public static function detectPatterns()
     {
         return [
-            'repeated_failures' => static::detectRepeatedFailures(),
-            'suspicious_ips' => static::detectSuspiciousIPs(),
-            'unusual_activities' => static::detectUnusualActivities(),
+            'repeated_failures' => static::where('event_type', 'permission_violation')
+                ->where('created_at', '>=', now()->subHours(24))
+                ->count(),
+            'suspicious_ips' => static::select('ip_address')
+                ->where('created_at', '>=', now()->subHours(24))
+                ->groupBy('ip_address')
+                ->havingRaw('COUNT(*) > 5')
+                ->count(),
+            'unusual_activities' => static::where('severity', '>=', 'medium')
+                ->where('created_at', '>=', now()->subHours(24))
+                ->count(),
         ];
     }
 
