@@ -66,14 +66,22 @@ const Permissions: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [rolesData, permissionsData] = await Promise.all([
-        roleService.getAll().then(res => res.data),
-        permissionService.getGrouped().then(res => res.data)
+      const [rolesResponse, permissionsResponse] = await Promise.all([
+        roleService.getAll(),
+        permissionService.getGrouped()
       ]);
-      setRoles(rolesData);
-      setGroupedPermissions(permissionsData);
+      
+      // التأكد من أن البيانات صحيحة قبل استخدامها
+      const rolesData = rolesResponse?.data?.data || rolesResponse?.data || [];
+      const permissionsData = permissionsResponse?.data?.data || permissionsResponse?.data || {};
+      
+      setRoles(Array.isArray(rolesData) ? rolesData : []);
+      setGroupedPermissions(typeof permissionsData === 'object' ? permissionsData : {});
     } catch (error) {
       console.error('Failed to load data:', error);
+      // تعيين قيم افتراضية في حالة الخطأ
+      setRoles([]);
+      setGroupedPermissions({});
     } finally {
       setLoading(false);
     }

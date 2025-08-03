@@ -22,9 +22,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        'role_id',
+        'department',
         'is_active',
         'last_login_at',
+        'last_activity',
+        'email_verified_at',
     ];
 
     /**
@@ -49,6 +52,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
+            'last_activity' => 'datetime',
         ];
     }
 

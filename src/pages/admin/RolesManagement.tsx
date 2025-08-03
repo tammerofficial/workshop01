@@ -77,7 +77,12 @@ const RolesManagement: React.FC = () => {
       ]);
 
       if (rolesResponse.data.success) {
-        setRoles(rolesResponse.data.data);
+        // Ensure permissions is always an array
+        const sanitizedRoles = rolesResponse.data.data.map((role: any) => ({
+          ...role,
+          permissions: Array.isArray(role.permissions) ? role.permissions : []
+        }));
+        setRoles(sanitizedRoles);
       }
 
       if (permissionsResponse.data.success) {
@@ -207,7 +212,7 @@ const RolesManagement: React.FC = () => {
       description: role.description,
       parent_role_id: role.parent_role_id?.toString() || '',
       is_inheritable: role.is_inheritable,
-      permissions: [...role.permissions]
+      permissions: [...(role.permissions || [])]
     });
     setShowEditModal(true);
   };
@@ -216,7 +221,7 @@ const RolesManagement: React.FC = () => {
     setSelectedRole(role);
     setFormData({
       ...formData,
-      permissions: [...role.permissions]
+      permissions: [...(role.permissions || [])]
     });
     setShowPermissionsModal(true);
   };
@@ -332,7 +337,7 @@ const RolesManagement: React.FC = () => {
               </div>
               <div className="flex items-center text-sm text-gray-500">
                 <Lock className="w-4 h-4 mr-1" />
-                {role.permissions.length} صلاحية
+                {role.permissions?.length || 0} صلاحية
               </div>
             </div>
 

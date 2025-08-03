@@ -114,11 +114,18 @@ class UserController extends Controller
             $user->load('role');
 
             // تسجيل النشاط
-            activity()
-                ->performedOn($user)
-                ->causedBy(auth()->user())
-                ->withProperties(['action' => 'user_created'])
-                ->log('تم إنشاء مستخدم جديد: ' . $user->name);
+            try {
+                if (function_exists('activity') && auth()->check()) {
+                    activity()
+                        ->performedOn($user)
+                        ->causedBy(auth()->user())
+                        ->withProperties(['action' => 'user_created'])
+                        ->log('تم إنشاء مستخدم جديد: ' . $user->name);
+                }
+            } catch (\Exception $e) {
+                // تجاهل أخطاء تسجيل النشاط
+                \Log::warning('Failed to log activity: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,
@@ -203,15 +210,22 @@ class UserController extends Controller
             $user->load('role');
 
             // تسجيل النشاط
-            activity()
-                ->performedOn($user)
-                ->causedBy(auth()->user())
-                ->withProperties([
-                    'action' => 'user_updated',
-                    'old_data' => $oldData,
-                    'new_data' => $user->toArray()
-                ])
-                ->log('تم تحديث بيانات المستخدم: ' . $user->name);
+            try {
+                if (function_exists('activity') && auth()->check()) {
+                    activity()
+                        ->performedOn($user)
+                        ->causedBy(auth()->user())
+                        ->withProperties([
+                            'action' => 'user_updated',
+                            'old_data' => $oldData,
+                            'new_data' => $user->toArray()
+                        ])
+                        ->log('تم تحديث بيانات المستخدم: ' . $user->name);
+                }
+            } catch (\Exception $e) {
+                // تجاهل أخطاء تسجيل النشاط
+                \Log::warning('Failed to log activity: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,
