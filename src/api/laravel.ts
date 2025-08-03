@@ -10,6 +10,9 @@ const getApiBaseUrl = () => {
   return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 };
 
+// Export API_BASE_URL for external use
+export const API_BASE_URL = getApiBaseUrl();
+
 // Create axios instance for Laravel API
 // Create axios instance for Laravel API
 const laravelApi = axios.create({
@@ -243,6 +246,55 @@ export const loyaltyService = {
   processOrderPoints: (orderId: number) => laravelApi.post(`/loyalty/orders/${orderId}/process-points`),
   applyOrderDiscount: (orderId: number, data: Record<string, unknown>) => laravelApi.post(`/loyalty/orders/${orderId}/apply-discount`, data),
   processSalePoints: (saleId: number) => laravelApi.post(`/loyalty/sales/${saleId}/process-points`),
+};
+
+// RBAC Dashboard API functions
+export const rbacApi = {
+  // Dashboard Overview
+  getRBACDashboard: () => laravelApi.get('/rbac/dashboard'),
+  getSecurityDetails: () => laravelApi.get('/rbac/security-details'),
+  exportReport: (params?: Record<string, unknown>) => laravelApi.get('/rbac/export-report', { params }),
+  
+  // Role Management
+  getRoleHierarchy: () => laravelApi.get('/rbac/roles/hierarchical'),
+  createRole: (data: Record<string, unknown>) => laravelApi.post('/rbac/roles', data),
+  updateRole: (id: number, data: Record<string, unknown>) => laravelApi.put(`/rbac/roles/${id}`, data),
+  deleteRole: (id: number) => laravelApi.delete(`/rbac/roles/${id}`),
+  
+  // Permission Management
+  getAvailablePermissions: () => laravelApi.get('/rbac/permissions/available'),
+  getGroupedPermissions: () => laravelApi.get('/rbac/permissions/grouped'),
+  
+  // Security Events
+  getSecurityEvents: (params?: Record<string, unknown>) => laravelApi.get('/security/events', { params }),
+  investigateEvent: (eventId: number, notes: string) => laravelApi.post(`/security/events/${eventId}/investigate`, { notes }),
+  resolveEvent: (eventId: number, notes: string) => laravelApi.post(`/security/events/${eventId}/resolve`, { notes }),
+  
+  // Audit Logs
+  getAuditLogs: (params?: Record<string, unknown>) => laravelApi.get('/security/audit-logs', { params }),
+  getActivityLogs: (params?: Record<string, unknown>) => laravelApi.get('/security/activity-logs', { params }),
+  
+  // Real-time Security
+  startMonitoring: (data: Record<string, unknown>) => laravelApi.post('/security/realtime/start-monitoring', data),
+  getLiveUpdates: () => laravelApi.get('/security/realtime/live-updates'),
+  handleAlert: (data: Record<string, unknown>) => laravelApi.post('/security/realtime/handle-alert', data),
+  runAIAnalysis: (data: Record<string, unknown>) => laravelApi.post('/security/realtime/ai-analysis', data),
+  getActiveSessions: () => laravelApi.get('/security/realtime/active-sessions'),
+  
+  // Advanced Analytics
+  getBehaviorPatterns: () => laravelApi.get('/analytics/advanced/behavior-patterns'),
+  getThreatPredictions: () => laravelApi.get('/analytics/advanced/threat-predictions'),
+  getSecurityEffectiveness: () => laravelApi.get('/analytics/advanced/security-effectiveness'),
+  getComplianceMetrics: () => laravelApi.get('/analytics/advanced/compliance-metrics'),
+  getSecurityROI: () => laravelApi.get('/analytics/advanced/security-roi'),
+  getAIPredictions: () => laravelApi.get('/analytics/advanced/ai-predictions'),
+  
+  // Blockchain Audit
+  recordEvent: (data: Record<string, unknown>) => laravelApi.post('/blockchain/record-event', data),
+  verifyIntegrity: (eventId: string) => laravelApi.get(`/blockchain/verify/${eventId}`),
+  getIntegrityReport: (params?: Record<string, unknown>) => laravelApi.get('/blockchain/integrity-report', { params }),
+  searchBlockchain: (data: Record<string, unknown>) => laravelApi.post('/blockchain/search', data),
+  generateCertificate: (data: Record<string, unknown>) => laravelApi.post('/blockchain/generate-certificate', data),
 };
 
 export default laravelApi; 

@@ -16,7 +16,7 @@ import {
   Filter,
   RefreshCw
 } from 'lucide-react';
-import { API_BASE_URL } from '../api/laravel';
+import { API_BASE_URL, rbacApi } from '../api/laravel';
 
 interface OverviewStats {
   total_users: number;
@@ -69,19 +69,8 @@ const RBACDashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setRefreshing(true);
-      const response = await fetch(`${API_BASE_URL}/rbac/dashboard`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('فشل في جلب بيانات لوحة التحكم');
-      }
-
-      const result = await response.json();
-      setDashboardData(result.data);
+      const response = await rbacApi.getRBACDashboard();
+      setDashboardData(response.data.data);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ غير متوقع');
