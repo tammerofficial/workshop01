@@ -45,12 +45,20 @@ chmod -R 755 bootstrap/cache
 # إنشاء رابط symbolic للتخزين
 php artisan storage:link
 
+# اختبار الملفات الجديدة
+echo "🧪 اختبار الملفات..."
+curl -s https://phplaravel-1446204-5746469.cloudwaysapps.com/api/test.php || echo "Test file not accessible"
+curl -s https://phplaravel-1446204-5746469.cloudwaysapps.com/api/health.php || echo "Health file not accessible"
+
 echo "✅ تم تحديث الخادم بنجاح!"
 echo "🌐 الروابط المتاحة:"
-echo "   - Dashboard: https://phplaravel-1446204-5746469.cloudwaysapps.com/api/dashboard/stats"
-echo "   - Users: https://phplaravel-1446204-5746469.cloudwaysapps.com/api/users"
-echo "   - Roles: https://phplaravel-1446204-5746469.cloudwaysapps.com/api/simple-roles"
-echo "   - RBAC Dashboard: https://phplaravel-1446204-5746469.cloudwaysapps.com/api/rbac/dashboard"
+echo "   - Homepage: https://phplaravel-1446204-5746469.cloudwaysapps.com/"
+echo "   - Server Test: https://phplaravel-1446204-5746469.cloudwaysapps.com/api/test.php"
+echo "   - Health Check: https://phplaravel-1446204-5746469.cloudwaysapps.com/api/health.php"
+echo "   - Simple API: https://phplaravel-1446204-5746469.cloudwaysapps.com/api/simple-api.php"
+echo "   - Roles API: https://phplaravel-1446204-5746469.cloudwaysapps.com/api/simple-api.php/roles"
+echo "   - Users API: https://phplaravel-1446204-5746469.cloudwaysapps.com/api/simple-api.php/users"
+echo "   - Dashboard API: https://phplaravel-1446204-5746469.cloudwaysapps.com/api/simple-api.php/dashboard"
 EOF
 
 echo "📝 الأوامر المطلوب تنفيذها على الخادم:"
