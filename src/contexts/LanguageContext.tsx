@@ -130,7 +130,6 @@ const translations = {
     'No skills listed': 'No skills listed',
     'Overview': 'Overview',
     'Tasks': 'Tasks',
-    'Performance': 'Performance',
     'Attendance': 'Attendance',
     'Completed Tasks': 'Completed Tasks',
     'Active Tasks': 'Active Tasks',
@@ -971,13 +970,10 @@ const translations = {
             'common.actual': 'Actual',
         'common.available': 'Available',
         'common.notAvailable': 'Not Available',
-        'common.edit': 'Edit',
         'common.urgent': 'Urgent',
         'common.high': 'High',
         'common.medium': 'Medium',
         'common.low': 'Low',
-        'common.refresh': 'Refresh',
-        'common.loading': 'Loading',
         'common.dueDate': 'Due Date',
         'common.viewDetails': 'View Details',
         'common.showMore': 'Show More',
@@ -987,11 +983,6 @@ const translations = {
         'productionFlow.subtitle': 'Manage production stages for suits and clothing',
         
         // Orders
-        'orders.addNew': 'Add New Order',
-        'orders.searchPlaceholder': 'Search orders and tasks...',
-        'orders.total': 'All Stages',
-        'orders.ordersCount': 'orders',
-        'orders.noItemsInStage': 'No items in this stage',
         'orders.inProgress': 'In Progress',
         'orders.completed': 'Completed',
         
@@ -1000,9 +991,6 @@ const translations = {
         'tasks.tasksCount': 'tasks',
         
         // Production
-        'production.startProduction': 'Start Production',
-        'production.moveToNext': 'Move to Next Stage',
-        'production.dragToMove': 'Drag to move to another stage',
         'production.assignToStage': 'Assign to Stage',
         'production.targetStage': 'Target Stage',
         'workers.assignWorker': 'Assign Worker',
@@ -2162,13 +2150,10 @@ const translations = {
             'common.actual': 'الفعلي',
         'common.available': 'متوفر',
         'common.notAvailable': 'غير متوفر',
-        'common.edit': 'تعديل',
         'common.urgent': 'عاجل',
         'common.high': 'عالي',
         'common.medium': 'متوسط',
         'common.low': 'منخفض',
-        'common.refresh': 'تحديث',
-        'common.loading': 'جاري التحميل',
         'common.dueDate': 'تاريخ الاستحقاق',
         'common.viewDetails': 'عرض التفاصيل',
         'common.showMore': 'عرض المزيد',
@@ -2179,10 +2164,6 @@ const translations = {
         
         // Orders
         'orders.addNew': 'إضافة طلبية جديدة',
-        'orders.searchPlaceholder': 'البحث في الطلبيات والمهام...',
-        'orders.total': 'جميع المراحل',
-        'orders.ordersCount': 'طلبيات',
-        'orders.noItemsInStage': 'لا توجد عناصر في هذه المرحلة',
         'orders.inProgress': 'قيد التنفيذ',
         'orders.completed': 'مكتملة',
         
@@ -2191,9 +2172,6 @@ const translations = {
         'tasks.tasksCount': 'مهام',
         
         // Production
-        'production.startProduction': 'بدء الإنتاج',
-        'production.moveToNext': 'الانتقال للمرحلة التالية',
-        'production.dragToMove': 'اسحب لنقل إلى مرحلة أخرى',
         'production.assignToStage': 'تعيين إلى مرحلة',
         'production.targetStage': 'المرحلة المستهدفة',
         'workers.assignWorker': 'تعيين عامل',
