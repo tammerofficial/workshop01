@@ -115,6 +115,10 @@ export const dashboardService = {
   getStats: () => laravelApi.get('/dashboard/stats'),
   getRecentOrders: () => laravelApi.get('/dashboard/recent-orders'),
   getRecentTasks: () => laravelApi.get('/dashboard/recent-tasks'),
+  getWorkerPerformance: () => laravelApi.get('/dashboard/worker-performance'),
+  getProductionMetrics: () => laravelApi.get('/dashboard/production-metrics'),
+  getInventoryAlerts: () => laravelApi.get('/dashboard/inventory-alerts'),
+  getProductionFlowSummary: () => laravelApi.get('/dashboard/production-flow-summary'),
 };
 
 export const wooCommerceService = {

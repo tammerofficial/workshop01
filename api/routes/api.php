@@ -42,6 +42,10 @@ Route::get('/user', function (Request $request) {
 Route::get('dashboard/stats', [DashboardController::class, 'getStats']);
 Route::get('dashboard/recent-orders', [DashboardController::class, 'getRecentOrders']);
 Route::get('dashboard/recent-tasks', [DashboardController::class, 'getRecentTasks']);
+Route::get('dashboard/worker-performance', [DashboardController::class, 'getWorkerPerformance']);
+Route::get('dashboard/production-metrics', [DashboardController::class, 'getProductionMetrics']);
+Route::get('dashboard/inventory-alerts', [DashboardController::class, 'getInventoryAlerts']);
+Route::get('dashboard/production-flow-summary', [DashboardController::class, 'getProductionFlowSummary']);
 
 // Workers Routes
 Route::apiResource('workers', WorkerController::class);
