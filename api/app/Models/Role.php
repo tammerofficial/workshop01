@@ -61,18 +61,19 @@ class Role extends Model
     }
 
     /**
-     * فحص الصلاحيات مع الوراثة الهرمية
+     * فحص الصلاحيات مع الوراثة الهرمية والشروط المتقدمة
      */
-    public function hasPermission($permission, $resource = null)
+    public function hasPermission($permission, $resource = null, array $context = [])
     {
         // فحص الصلاحيات المباشرة
         if (in_array($permission, $this->permissions ?? [])) {
-            return $this->checkConditions($permission, $resource);
+            $conditionsResult = $this->checkAdvancedConditions($permission, $resource, $context);
+            return $conditionsResult['allowed'];
         }
 
         // فحص الصلاحيات الموروثة من الأدوار الأعلى
         if ($this->is_inheritable && $this->parentRole) {
-            return $this->parentRole->hasPermission($permission, $resource);
+            return $this->parentRole->hasPermission($permission, $resource, $context);
         }
 
         return false;
@@ -125,41 +126,49 @@ class Role extends Model
     }
 
     /**
-     * فحص الشروط الإضافية للصلاحية
+     * فحص الشروط المتقدمة للصلاحية
+     */
+    protected function checkAdvancedConditions($permission, $resource = null, array $context = []): array
+    {
+        // فحص انتهاء صلاحية الدور
+        if ($this->expires_at && Carbon::now()->gt($this->expires_at)) {
+            return [
+                'allowed' => false,
+                'reason' => 'Role has expired'
+            ];
+        }
+
+        // إذا لم تكن هناك شروط محددة، السماح بالوصول
+        if (!$this->conditions || !isset($this->conditions[$permission])) {
+            return ['allowed' => true, 'reason' => 'No conditions to check'];
+        }
+
+        // استخدام خدمة تقييم الشروط المتقدمة
+        $policyService = app(\App\Services\PermissionPolicyService::class);
+        $user = $context['user'] ?? auth()->user();
+        
+        if (!$user) {
+            return [
+                'allowed' => false,
+                'reason' => 'No authenticated user found'
+            ];
+        }
+
+        return $policyService->evaluateConditions(
+            $user,
+            $permission,
+            $resource,
+            $context
+        );
+    }
+
+    /**
+     * فحص الشروط الإضافية للصلاحية (للتوافق مع النماذج السابقة)
      */
     protected function checkConditions($permission, $resource = null): bool
     {
-        if (!$this->conditions || !isset($this->conditions[$permission])) {
-            return true;
-        }
-
-        $conditions = $this->conditions[$permission];
-
-        // فحص شروط القسم
-        if (isset($conditions['department']) && $resource) {
-            if (is_object($resource) && method_exists($resource, 'getDepartment')) {
-                if ($resource->getDepartment() !== $conditions['department']) {
-                    return false;
-                }
-            }
-        }
-
-        // فحص شروط الوقت
-        if (isset($conditions['time_restriction'])) {
-            $currentHour = Carbon::now()->hour;
-            $timeRestriction = $conditions['time_restriction'];
-            
-            if ($currentHour < $timeRestriction['start'] || $currentHour > $timeRestriction['end']) {
-                return false;
-            }
-        }
-
-        // فحص انتهاء صلاحية الدور
-        if ($this->expires_at && Carbon::now()->gt($this->expires_at)) {
-            return false;
-        }
-
-        return true;
+        $result = $this->checkAdvancedConditions($permission, $resource);
+        return $result['allowed'];
     }
 
     /**

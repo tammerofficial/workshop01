@@ -58,6 +58,7 @@ import OrdersNew from './pages/OrdersNew';
 
 // Plugin Management
 import PluginManagement from './pages/PluginManagement';
+import RBACDashboard from './pages/RBACDashboard';
 
 function App() {
   return (
@@ -151,6 +152,13 @@ function App() {
                   <Route path="plugins" element={
                     <ProtectedRoute requiredRoles={['admin']}>
                       <PluginManagement />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* RBAC Dashboard */}
+                  <Route path="rbac-dashboard" element={
+                    <ProtectedRoute requiredRoles={['admin', 'system_administrator']}>
+                      <RBACDashboard />
                     </ProtectedRoute>
                   } />
                 </Route>

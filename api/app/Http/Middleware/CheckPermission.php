@@ -31,7 +31,40 @@ class CheckPermission
         $fullPermission = $this->buildPermissionName($permission, $scope, $user, $resource);
 
         // Check if user has required permission
-        if (!$user->hasPermission($fullPermission, $resource)) {
+        $hasPermission = $user->hasPermission($fullPermission, $resource);
+        
+        // تسجيل محاولة الوصول للصلاحية
+        \App\Models\PermissionAuditLog::logPermissionCheck(
+            $user,
+            $fullPermission,
+            $hasPermission ? 'success' : 'denied',
+            [
+                'resource_type' => $resource ? class_basename($resource) : null,
+                'resource_id' => $resource?->id,
+                'scope' => $scope,
+                'route' => $request->route()?->getName(),
+                'method' => $request->method(),
+                'reason' => $hasPermission ? null : 'Insufficient permissions'
+            ]
+        );
+
+        if (!$hasPermission) {
+            // تسجيل حدث أمني في حالة انتهاك الصلاحيات
+            \App\Models\SecurityEvent::logPermissionViolation(
+                $user,
+                $fullPermission,
+                [
+                    'route' => $request->route()?->getName(),
+                    'method' => $request->method(),
+                    'resource' => $resource ? [
+                        'type' => class_basename($resource),
+                        'id' => $resource->id
+                    ] : null,
+                    'user_role' => $user->role?->name,
+                    'user_department' => $user->getDepartment()
+                ]
+            );
+
             return response()->json([
                 'message' => 'Insufficient permissions',
                 'required_permission' => $fullPermission,

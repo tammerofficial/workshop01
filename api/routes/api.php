@@ -495,3 +495,56 @@ Route::prefix('loyalty-reports')->group(function () {
     Route::get('transactions', [LoyaltyReportsController::class, 'transactionDetailsReport']);
     Route::post('export', [LoyaltyReportsController::class, 'exportReport']);
 });
+
+// RBAC Advanced Management Routes
+Route::prefix('rbac')->middleware(['auth:sanctum', 'permission:roles.manage'])->group(function () {
+    // RBAC Dashboard
+    Route::get('/dashboard', [\App\Http\Controllers\Api\System\RBACDashboardController::class, 'index']);
+    Route::get('/security-details', [\App\Http\Controllers\Api\System\RBACDashboardController::class, 'getSecurityDetails']);
+    Route::get('/export-report', [\App\Http\Controllers\Api\System\RBACDashboardController::class, 'exportReport']);
+    
+    // Enhanced Role Management
+    Route::get('/roles/hierarchical', [EnhancedRoleController::class, 'index']);
+    Route::post('/roles', [EnhancedRoleController::class, 'store']);
+    Route::get('/roles/{role}', [EnhancedRoleController::class, 'show']);
+    Route::put('/roles/{role}', [EnhancedRoleController::class, 'update']);
+    Route::delete('/roles/{role}', [EnhancedRoleController::class, 'destroy']);
+    Route::post('/roles/{role}/permissions', [EnhancedRoleController::class, 'addPermissionWithConditions']);
+    Route::delete('/roles/{role}/permissions', [EnhancedRoleController::class, 'removePermission']);
+    Route::get('/roles/{role}/parentable', [EnhancedRoleController::class, 'getParentableRoles']);
+    
+    // Permission Management
+    Route::get('/permissions/available', [EnhancedRoleController::class, 'getAvailablePermissions']);
+    Route::get('/permissions/grouped', [PermissionController::class, 'getGroupedPermissions']);
+});
+
+// Security & Audit Routes
+Route::prefix('security')->middleware(['auth:sanctum', 'permission:system.logs'])->group(function () {
+    Route::get('/events', function() {
+        return \App\Models\SecurityEvent::with('user')
+            ->orderByDesc('created_at')
+            ->paginate(20);
+    });
+    
+    Route::get('/audit-logs', function() {
+        return \App\Models\PermissionAuditLog::with('user')
+            ->orderByDesc('created_at')
+            ->paginate(50);
+    });
+    
+    Route::get('/activity-logs', function() {
+        return \App\Models\ActivityLog::with(['causer', 'subject'])
+            ->orderByDesc('created_at')
+            ->paginate(50);
+    });
+    
+    Route::post('/events/{event}/investigate', function(\App\Models\SecurityEvent $event) {
+        $event->markAsInvestigated(request('notes'));
+        return response()->json(['success' => true]);
+    });
+    
+    Route::post('/events/{event}/resolve', function(\App\Models\SecurityEvent $event) {
+        $event->resolve(request('notes'));
+        return response()->json(['success' => true]);
+    });
+});

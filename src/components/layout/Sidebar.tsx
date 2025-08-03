@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { 
   LayoutDashboard, ShoppingBag, Package, Users, Calendar, 
   LineChart, Bell, Settings, Monitor, Workflow, Zap,
-  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2, ShoppingCart, Puzzle
+  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2, ShoppingCart, Puzzle, Shield
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -45,6 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const otherItems = [
     { path: '/advanced-features', label: 'Advanced Features', icon: <Zap size={20} />, badge: 'NEW' },
     { path: '/plugins', label: 'Plugin Management', icon: <Puzzle size={20} />, badge: 'NEW' },
+    { path: '/rbac-dashboard', label: 'RBAC Security', icon: <Shield size={20} />, badge: 'SECURE' },
     { path: '/notifications', label: 'Notifications', icon: <Bell size={20} />, badge: 3 },
     { path: '/settings', label: 'Settings', icon: <Settings size={20} /> },
   ];
