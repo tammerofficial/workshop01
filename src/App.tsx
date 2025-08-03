@@ -56,6 +56,9 @@ import Unauthorized from './pages/auth/Unauthorized';
 import ERPManagement from './pages/ERPManagement';
 import OrdersNew from './pages/OrdersNew';
 
+// Plugin Management
+import PluginManagement from './pages/PluginManagement';
+
 function App() {
   return (
     <ThemeProvider>
@@ -141,6 +144,13 @@ function App() {
                   <Route path="erp" element={
                     <ProtectedRoute allowedRoles={['system_super_admin', 'system_admin']}>
                       <ERPManagement />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Plugin Management */}
+                  <Route path="plugins" element={
+                    <ProtectedRoute requiredRoles={['admin']}>
+                      <PluginManagement />
                     </ProtectedRoute>
                   } />
                 </Route>

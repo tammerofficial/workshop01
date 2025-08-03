@@ -30,9 +30,13 @@ use App\Http\Controllers\Api\Core\NotificationController;
 use App\Http\Controllers\Api\Authentication\AuthController;
 use App\Http\Controllers\Api\System\AdvancedFeaturesController;
 use App\Http\Controllers\Api\System\ERPController;
+use App\Http\Controllers\Api\System\PluginController;
 use App\Http\Controllers\Api\Business\ClientLoyaltyController;
 use App\Http\Controllers\Api\Business\WooCommerceOrderController;
 use App\Http\Controllers\Api\Business\WorkshopOrderController;
+use App\Http\Controllers\Api\LoyaltyController;
+use App\Http\Controllers\Api\AppleWalletWorkshopController;
+use App\Http\Controllers\Api\LoyaltyReportsController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -42,10 +46,6 @@ Route::get('/user', function (Request $request) {
 Route::get('dashboard/stats', [DashboardController::class, 'getStats']);
 Route::get('dashboard/recent-orders', [DashboardController::class, 'getRecentOrders']);
 Route::get('dashboard/recent-tasks', [DashboardController::class, 'getRecentTasks']);
-Route::get('dashboard/worker-performance', [DashboardController::class, 'getWorkerPerformance']);
-Route::get('dashboard/production-metrics', [DashboardController::class, 'getProductionMetrics']);
-Route::get('dashboard/inventory-alerts', [DashboardController::class, 'getInventoryAlerts']);
-Route::get('dashboard/production-flow-summary', [DashboardController::class, 'getProductionFlowSummary']);
 
 // Workers Routes
 Route::apiResource('workers', WorkerController::class);
@@ -57,10 +57,10 @@ Route::patch('workers/{worker}/deactivate', [WorkerController::class, 'deactivat
 Route::get('stations', [StationController::class, 'index']);
 Route::get('stations/available', [StationController::class, 'getAvailable']);
 
-
 // Materials Routes
 Route::apiResource('materials', MaterialController::class);
 Route::get('materials/low-stock', [MaterialController::class, 'lowStock']);
+Route::get('materials/stats', [MaterialController::class, 'stats']);
 
 // Products Routes
 Route::get('products/materials-for-bom', [ProductController::class, 'getMaterialsForBOM']);
@@ -105,6 +105,7 @@ Route::apiResource('orders', OrderController::class);
 Route::patch('orders/{order}/assign-worker', [OrderController::class, 'assignWorker']);
 Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus']);
 Route::get('orders/client/{client_id}', [OrderController::class, 'getByClient']);
+Route::get('orders/stats', [OrderController::class, 'stats']);
 
 // Tasks Routes
 Route::apiResource('tasks', TaskController::class);
@@ -119,6 +120,7 @@ Route::get('measurements/client/{clientId}', [MeasurementController::class, 'get
 Route::apiResource('invoices', InvoiceController::class);
 Route::patch('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markAsPaid']);
 Route::patch('invoices/{invoice}/status', [InvoiceController::class, 'updateStatus']);
+Route::get('invoices/stats', [InvoiceController::class, 'stats']);
 
 // Worker Sync Routes
 Route::prefix('worker-sync')->group(function () {
@@ -242,40 +244,6 @@ Route::prefix('woocommerce')->group(function () {
             ]
         ]);
     });
-});
-
-// Dashboard/Analytics Routes
-Route::get('dashboard/stats', function () {
-    return response()->json([
-        'workers_count' => \App\Models\Worker::where('is_active', true)->count(),
-        'orders_count' => \App\Models\Order::count(),
-        'pending_orders' => \App\Models\Order::where('status', 'pending')->count(),
-        'in_progress_orders' => \App\Models\Order::where('status', 'in_progress')->count(),
-        'completed_orders' => \App\Models\Order::where('status', 'completed')->count(),
-        'clients_count' => \App\Models\Client::count(),
-        'materials_count' => \App\Models\Material::where('is_active', true)->count(),
-        'low_stock_materials' => \App\Models\Material::whereColumn('quantity', '<=', 'reorder_level')->count(),
-        'unpaid_invoices' => \App\Models\Invoice::where('status', '!=', 'paid')->count(),
-        'total_revenue' => \App\Models\Invoice::where('status', 'paid')->sum('total_amount'),
-    ]);
-});
-
-Route::get('dashboard/recent-orders', function () {
-    return response()->json(
-        \App\Models\Order::with(['client', 'worker', 'category'])
-            ->latest()
-            ->limit(10)
-            ->get()
-    );
-});
-
-Route::get('dashboard/recent-tasks', function () {
-    return response()->json(
-        \App\Models\Task::with(['order', 'worker'])
-            ->latest()
-            ->limit(10)
-            ->get()
-    );
 });
 
 // WooCommerce Integration Routes
@@ -445,4 +413,85 @@ Route::prefix('workshop-orders')->group(function () {
     Route::post('/{order}/accept', [WorkshopOrderController::class, 'accept']);
     Route::post('/{order}/start-production', [WorkshopOrderController::class, 'startProduction']);
     Route::patch('/{order}/status', [WorkshopOrderController::class, 'updateStatus']);
-}); 
+});
+
+// Plugin Management Routes
+Route::prefix('plugins')->group(function () {
+    Route::get('/', [PluginController::class, 'index']);
+    Route::post('/', [PluginController::class, 'store']);
+    Route::get('/{plugin}', [PluginController::class, 'show']);
+    Route::put('/{plugin}', [PluginController::class, 'update']);
+    Route::delete('/{plugin}', [PluginController::class, 'destroy']);
+    
+    // Plugin lifecycle management
+    Route::post('/{plugin}/install', [PluginController::class, 'install']);
+    Route::post('/{plugin}/activate', [PluginController::class, 'activate']);
+    Route::post('/{plugin}/deactivate', [PluginController::class, 'deactivate']);
+    Route::post('/{plugin}/uninstall', [PluginController::class, 'uninstall']);
+    
+    // Plugin configuration
+    Route::get('/{plugin}/config', [PluginController::class, 'getConfig']);
+    Route::put('/{plugin}/config', [PluginController::class, 'updateConfig']);
+    
+    // Plugin marketplace
+    Route::get('/marketplace/browse', [PluginController::class, 'browseMarketplace']);
+    Route::get('/marketplace/featured', [PluginController::class, 'getFeaturedPlugins']);
+    Route::get('/marketplace/categories', [PluginController::class, 'getCategories']);
+    Route::get('/marketplace/search', [PluginController::class, 'searchMarketplace']);
+});
+
+// Loyalty System Routes
+Route::prefix('loyalty')->group(function () {
+    // العامة - إحصائيات وإعدادات
+    Route::get('statistics', [LoyaltyController::class, 'statistics']);
+    Route::get('config', [LoyaltyController::class, 'config']);
+    
+    // العملاء
+    Route::get('customers', [LoyaltyController::class, 'customers']);
+    Route::get('customers/{customerId}', [LoyaltyController::class, 'customerDetails']);
+    Route::get('customers/{clientId}/summary', [LoyaltyController::class, 'customerSummary']);
+    Route::post('customers/{clientId}/create-account', [LoyaltyController::class, 'createAccount']);
+    
+    // النقاط
+    Route::post('points/add-bonus', [LoyaltyController::class, 'addBonusPoints']);
+    Route::post('points/redeem', [LoyaltyController::class, 'redeemPoints']);
+    Route::post('points/convert', [LoyaltyController::class, 'convertPoints']);
+    Route::post('points/expire', [LoyaltyController::class, 'expirePoints']);
+    Route::post('points/send-expiry-reminders', [LoyaltyController::class, 'sendExpiryReminders']);
+    
+    // الطلبات والمبيعات
+    Route::post('orders/{orderId}/process-points', [LoyaltyController::class, 'processOrderPoints']);
+    Route::post('orders/{orderId}/apply-discount', [LoyaltyController::class, 'applyOrderDiscount']);
+    Route::post('sales/{saleId}/process-points', [LoyaltyController::class, 'processSalePoints']);
+});
+
+// Apple Wallet Integration Routes
+Route::prefix('apple-wallet')->group(function () {
+    // Wallet Pass Management
+    Route::post('customers/{loyaltyCustomerId}/create-pass', [AppleWalletWorkshopController::class, 'createPass']);
+    Route::put('customers/{loyaltyCustomerId}/update-pass', [AppleWalletWorkshopController::class, 'updatePass']);
+    Route::delete('customers/{loyaltyCustomerId}/delete-pass', [AppleWalletWorkshopController::class, 'deletePass']);
+    Route::get('customers/{loyaltyCustomerId}/pass-status', [AppleWalletWorkshopController::class, 'getPassStatus']);
+    Route::post('customers/{loyaltyCustomerId}/toggle-wallet', [AppleWalletWorkshopController::class, 'toggleWalletEnabled']);
+    
+    // Push Notifications
+    Route::post('customers/{loyaltyCustomerId}/push-notification', [AppleWalletWorkshopController::class, 'sendPushNotification']);
+    
+    // Bulk Operations
+    Route::post('create-all-passes', [AppleWalletWorkshopController::class, 'createAllPasses']);
+    Route::post('update-all-passes', [AppleWalletWorkshopController::class, 'updateAllPasses']);
+    
+    // System Integration
+    Route::post('upload-logo', [AppleWalletWorkshopController::class, 'uploadLogo']);
+    Route::post('customers/{loyaltyCustomerId}/sync', [AppleWalletWorkshopController::class, 'syncCustomer']);
+    Route::get('test-connection', [AppleWalletWorkshopController::class, 'testConnection']);
+});
+
+// Loyalty Reports Routes
+Route::prefix('loyalty-reports')->group(function () {
+    Route::get('sales-loyalty', [LoyaltyReportsController::class, 'salesLoyaltyReport']);
+    Route::get('customer-performance', [LoyaltyReportsController::class, 'customerPerformanceReport']);
+    Route::get('roi', [LoyaltyReportsController::class, 'loyaltyROIReport']);
+    Route::get('transactions', [LoyaltyReportsController::class, 'transactionDetailsReport']);
+    Route::post('export', [LoyaltyReportsController::class, 'exportReport']);
+});

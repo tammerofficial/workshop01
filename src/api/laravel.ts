@@ -220,4 +220,29 @@ export const payrollService = {
   delete: (id: number) => laravelApi.delete(`/payroll/${id}`),
 };
 
+// Loyalty Service
+export const loyaltyService = {
+  // Statistics and Configuration
+  getStatistics: () => laravelApi.get('/loyalty/statistics'),
+  getConfig: () => laravelApi.get('/loyalty/config'),
+  
+  // Customers
+  getCustomers: (params?: Record<string, unknown>) => laravelApi.get('/loyalty/customers', { params }),
+  getCustomerDetails: (customerId: number) => laravelApi.get(`/loyalty/customers/${customerId}`),
+  getCustomerSummary: (clientId: number) => laravelApi.get(`/loyalty/customers/${clientId}/summary`),
+  createAccount: (clientId: number, data?: Record<string, unknown>) => laravelApi.post(`/loyalty/customers/${clientId}/create-account`, data || {}),
+  
+  // Points Management
+  addBonusPoints: (data: Record<string, unknown>) => laravelApi.post('/loyalty/points/add-bonus', data),
+  redeemPoints: (data: Record<string, unknown>) => laravelApi.post('/loyalty/points/redeem', data),
+  convertPoints: (data: Record<string, unknown>) => laravelApi.post('/loyalty/points/convert', data),
+  expirePoints: () => laravelApi.post('/loyalty/points/expire'),
+  sendExpiryReminders: (params?: Record<string, unknown>) => laravelApi.post('/loyalty/points/send-expiry-reminders', params || {}),
+  
+  // Orders and Sales Integration
+  processOrderPoints: (orderId: number) => laravelApi.post(`/loyalty/orders/${orderId}/process-points`),
+  applyOrderDiscount: (orderId: number, data: Record<string, unknown>) => laravelApi.post(`/loyalty/orders/${orderId}/apply-discount`, data),
+  processSalePoints: (saleId: number) => laravelApi.post(`/loyalty/sales/${saleId}/process-points`),
+};
+
 export default laravelApi; 

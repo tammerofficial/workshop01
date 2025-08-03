@@ -16,20 +16,28 @@ const Widget = ({ color, icon, title, value, description }) => (
 
 const HomeTVScreen: React.FC = () => {
   const { t } = useLanguage();
-  const [orders, setOrders] = useState([]);
-  const [workers, setWorkers] = useState([]);
-  const [tasks, setTasks] = useState([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [workers, setWorkers] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [ordersRes, workersRes, tasksRes] = await Promise.all([
-        getRecentOrders(10),
-        workerService.getAll(),
-        productService.getAll ? productService.getAll() : Promise.resolve([])
-      ]);
-      setOrders(ordersRes);
-      setWorkers(workersRes.data || workersRes || []);
-      setTasks(tasksRes.data || tasksRes || []);
+      try {
+        const [ordersRes, workersRes, tasksRes] = await Promise.all([
+          getRecentOrders(10),
+          workerService.getAll().catch(() => ({ data: [] })),
+          productService.getAll ? productService.getAll().catch(() => []) : Promise.resolve([])
+        ]);
+        setOrders(ordersRes);
+        setWorkers(workersRes.data || workersRes || []);
+        setTasks(tasksRes.data || tasksRes || []);
+      } catch (error) {
+        console.log('Error fetching data:', error);
+        // Use mock data if API fails
+        setOrders([]);
+        setWorkers([]);
+        setTasks([]);
+      }
     };
     fetchData();
     const interval = setInterval(fetchData, 15000); // auto-refresh every 15s
