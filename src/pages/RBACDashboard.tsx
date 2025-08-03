@@ -17,6 +17,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { API_BASE_URL, rbacApi } from '../api/laravel';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface OverviewStats {
   total_users: number;
@@ -60,6 +61,7 @@ interface DashboardData {
 }
 
 const RBACDashboard: React.FC = () => {
+  const { t } = useLanguage();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -199,7 +201,7 @@ const RBACDashboard: React.FC = () => {
               </button>
               <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center">
                 <Download className="w-4 h-4 mr-2" />
-                تصدير تقرير
+                {t('rbac.exportReport')}
               </button>
             </div>
           </div>
@@ -211,10 +213,10 @@ const RBACDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8 space-x-reverse">
             {[
-              { id: 'overview', label: 'نظرة عامة', icon: BarChart3 },
-              { id: 'security', label: 'الأمان', icon: Shield },
-              { id: 'audit', label: 'المراجعة', icon: Eye },
-              { id: 'reports', label: 'التقارير', icon: Download },
+              { id: 'overview', label: t('rbac.overview'), icon: BarChart3 },
+              { id: 'security', label: t('rbac.security'), icon: Shield },
+              { id: 'audit', label: t('rbac.audit'), icon: Eye },
+              { id: 'reports', label: t('rbac.reports'), icon: Download },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -240,25 +242,25 @@ const RBACDashboard: React.FC = () => {
             {/* Overview Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <StatCard
-                title="إجمالي المستخدمين"
+                title={t('rbac.totalUsers')}
                 value={dashboardData.overview.total_users}
                 icon={<Users className="w-6 h-6 text-blue-600" />}
                 color="blue"
               />
               <StatCard
-                title="المستخدمين النشطين"
+                title={t('rbac.activeUsers')}
                 value={dashboardData.overview.active_users}
                 icon={<Activity className="w-6 h-6 text-green-600" />}
                 color="green"
               />
               <StatCard
-                title="إجمالي الأدوار"
+                title={t('rbac.totalRoles')}
                 value={dashboardData.overview.total_roles}
                 icon={<Shield className="w-6 h-6 text-purple-600" />}
                 color="purple"
               />
               <StatCard
-                title="الصلاحيات المرفوضة اليوم"
+                title={t('rbac.deniedPermissions')}
                 value={dashboardData.overview.failed_permissions_today}
                 icon={<Lock className="w-6 h-6 text-red-600" />}
                 color="red"
@@ -270,7 +272,7 @@ const RBACDashboard: React.FC = () => {
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
-                  التنبيهات الأمنية الحرجة
+                  {t('rbac.criticalAlerts')}
                 </h2>
                 <div className="space-y-3">
                   {dashboardData.security_alerts.critical_events.length > 0 ? (
@@ -279,7 +281,7 @@ const RBACDashboard: React.FC = () => {
                     ))
                   ) : (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <p className="text-green-800 text-center">لا توجد تنبيهات حرجة</p>
+                      <p className="text-green-800 text-center">{t('rbac.noCriticalAlerts')}</p>
                     </div>
                   )}
                 </div>
@@ -289,7 +291,7 @@ const RBACDashboard: React.FC = () => {
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <Users className="w-5 h-5 text-blue-500 mr-2" />
-                  توزيع الأدوار
+                  {t('rbac.roleDistribution')}
                 </h2>
                 <div className="bg-white rounded-lg shadow-md p-6">
                   <div className="space-y-4">
@@ -297,10 +299,10 @@ const RBACDashboard: React.FC = () => {
                       <div key={index} className="flex items-center justify-between">
                         <div>
                           <p className="font-medium text-gray-900">{role.display_name}</p>
-                          <p className="text-sm text-gray-500">المستوى: {role.hierarchy_level}</p>
+                          <p className="text-sm text-gray-500">{t('rbac.level')}: {role.hierarchy_level}</p>
                         </div>
                         <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
-                          {role.users_count} مستخدم
+                          {role.users_count} {t('rbac.user')}
                         </span>
                       </div>
                     ))}

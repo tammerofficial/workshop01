@@ -967,6 +967,54 @@ const translations = {
         'productionFlow.title': 'Production Flow',
         'productionFlow.subtitle': 'Manage production stages for suits and clothing',
         
+        // RBAC Dashboard
+        'rbac.title': 'RBAC Security Dashboard',
+        'rbac.exportReport': 'Export Report',
+        'rbac.overview': 'Overview',
+        'rbac.security': 'Security',
+        'rbac.audit': 'Audit',
+        'rbac.reports': 'Reports',
+        'rbac.totalUsers': 'Total Users',
+        'rbac.activeUsers': 'Active Users',
+        'rbac.totalRoles': 'Total Roles',
+        'rbac.deniedPermissions': 'Denied Permissions Today',
+        'rbac.criticalAlerts': 'Critical Security Alerts',
+        'rbac.noCriticalAlerts': 'No critical alerts',
+        'rbac.roleDistribution': 'Role Distribution',
+        'rbac.level': 'Level',
+        'rbac.users': 'users',
+        'rbac.user': 'user',
+        'rbac.recentActivities': 'Recent Activities',
+        'rbac.noActivities': 'No recent activities',
+        
+        // Admin Panel
+        'admin.myProfile': 'My Profile',
+        'admin.userManagement': 'User Management',
+        'admin.rolesPermissions': 'Roles & Permissions',
+        'admin.securityLogs': 'Security Logs',
+        'admin.systemSettings': 'System Settings',
+        'admin.backupRestore': 'Backup & Restore',
+        'admin.settings': 'Settings',
+        
+        // User Management
+        'users.title': 'User Management',
+        'users.createUser': 'Create User',
+        'users.editUser': 'Edit User',
+        'users.deleteUser': 'Delete User',
+        'users.assignRole': 'Assign Role',
+        'users.changePassword': 'Change Password',
+        'users.activateUser': 'Activate User',
+        'users.deactivateUser': 'Deactivate User',
+        
+        // Roles Management
+        'roles.title': 'Roles Management',
+        'roles.createRole': 'Create Role',
+        'roles.editRole': 'Edit Role',
+        'roles.deleteRole': 'Delete Role',
+        'roles.assignPermissions': 'Assign Permissions',
+        'roles.hierarchy': 'Role Hierarchy',
+        'roles.permissions': 'Permissions',
+        
         // Orders
         'orders.inProgress': 'In Progress',
         'orders.completed': 'Completed',
@@ -2131,6 +2179,54 @@ const translations = {
         // Production Flow
         'productionFlow.title': 'تدفق الإنتاج',
         'productionFlow.subtitle': 'إدارة مراحل إنتاج البدل والملابس',
+        
+        // RBAC Dashboard
+        'rbac.title': 'لوحة الأمان والصلاحيات',
+        'rbac.exportReport': 'تصدير تقرير',
+        'rbac.overview': 'نظرة عامة',
+        'rbac.security': 'الأمان',
+        'rbac.audit': 'المراجعة',
+        'rbac.reports': 'التقارير',
+        'rbac.totalUsers': 'إجمالي المستخدمين',
+        'rbac.activeUsers': 'المستخدمين النشطين',
+        'rbac.totalRoles': 'إجمالي الأدوار',
+        'rbac.deniedPermissions': 'الصلاحيات المرفوضة اليوم',
+        'rbac.criticalAlerts': 'التنبيهات الأمنية الحرجة',
+        'rbac.noCriticalAlerts': 'لا توجد تنبيهات حرجة',
+        'rbac.roleDistribution': 'توزيع الأدوار',
+        'rbac.level': 'المستوى',
+        'rbac.users': 'مستخدم',
+        'rbac.user': 'مستخدم',
+        'rbac.recentActivities': 'الأنشطة الأخيرة',
+        'rbac.noActivities': 'لا توجد أنشطة حديثة',
+        
+        // Admin Panel
+        'admin.myProfile': 'ملفي الشخصي',
+        'admin.userManagement': 'إدارة المستخدمين',
+        'admin.rolesPermissions': 'الأدوار والصلاحيات',
+        'admin.securityLogs': 'سجلات الأمان',
+        'admin.systemSettings': 'إعدادات النظام',
+        'admin.backupRestore': 'النسخ الاحتياطي والاستعادة',
+        'admin.settings': 'الإعدادات',
+        
+        // User Management
+        'users.title': 'إدارة المستخدمين',
+        'users.createUser': 'إنشاء مستخدم',
+        'users.editUser': 'تعديل مستخدم',
+        'users.deleteUser': 'حذف مستخدم',
+        'users.assignRole': 'تعيين دور',
+        'users.changePassword': 'تغيير كلمة المرور',
+        'users.activateUser': 'تفعيل المستخدم',
+        'users.deactivateUser': 'إلغاء تفعيل المستخدم',
+        
+        // Roles Management
+        'roles.title': 'إدارة الأدوار',
+        'roles.createRole': 'إنشاء دور',
+        'roles.editRole': 'تعديل دور',
+        'roles.deleteRole': 'حذف دور',
+        'roles.assignPermissions': 'تعيين صلاحيات',
+        'roles.hierarchy': 'تسلسل الأدوار',
+        'roles.permissions': 'الصلاحيات',
         
         // Orders
         'orders.addNew': 'إضافة طلبية جديدة',
