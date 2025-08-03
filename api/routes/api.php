@@ -548,3 +548,89 @@ Route::prefix('security')->middleware(['auth:sanctum', 'permission:system.logs']
         return response()->json(['success' => true]);
     });
 });
+
+// Real-Time Security Monitoring Routes
+Route::prefix('security/realtime')->middleware(['auth:sanctum', 'permission:system.admin'])->group(function () {
+    Route::post('/start-monitoring', [\App\Http\Controllers\Api\System\RealTimeSecurityController::class, 'startMonitoring']);
+    Route::get('/live-updates', [\App\Http\Controllers\Api\System\RealTimeSecurityController::class, 'getLiveSecurityUpdates']);
+    Route::post('/handle-alert', [\App\Http\Controllers\Api\System\RealTimeSecurityController::class, 'handleSecurityAlert']);
+    Route::post('/ai-analysis', [\App\Http\Controllers\Api\System\RealTimeSecurityController::class, 'runAIAnalysis']);
+    Route::get('/active-sessions', [\App\Http\Controllers\Api\System\RealTimeSecurityController::class, 'monitorActiveSessions']);
+});
+
+// Enterprise SSO Routes
+Route::prefix('sso')->group(function () {
+    Route::post('/login/{provider}', function(string $provider, Request $request) {
+        $ssoService = app(\App\Services\EnterpriseSSOService::class);
+        return $ssoService->processSSOLogin($provider, $request->all());
+    });
+    Route::post('/logout/{provider}', function(string $provider, Request $request) {
+        $ssoService = app(\App\Services\EnterpriseSSOService::class);
+        return $ssoService->processSSOLogout($request->user(), $provider);
+    });
+});
+
+// Mobile Security App Routes
+Route::prefix('mobile/security')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Api\Mobile\SecurityMobileController::class, 'getDashboard']);
+    Route::get('/alerts', [\App\Http\Controllers\Api\Mobile\SecurityMobileController::class, 'getInstantAlerts']);
+    Route::post('/quick-action', [\App\Http\Controllers\Api\Mobile\SecurityMobileController::class, 'takeQuickAction']);
+    Route::post('/emergency-alert', [\App\Http\Controllers\Api\Mobile\SecurityMobileController::class, 'sendEmergencyAlert']);
+    Route::get('/live-activity', [\App\Http\Controllers\Api\Mobile\SecurityMobileController::class, 'getLiveActivity']);
+    Route::post('/analysis', [\App\Http\Controllers\Api\Mobile\SecurityMobileController::class, 'runQuickAnalysis']);
+    Route::put('/notifications', [\App\Http\Controllers\Api\Mobile\SecurityMobileController::class, 'updateNotificationSettings']);
+});
+
+// Blockchain Audit Routes
+Route::prefix('blockchain')->middleware(['auth:sanctum', 'permission:system.admin'])->group(function () {
+    Route::post('/record-event', function(Request $request) {
+        $blockchainService = app(\App\Services\BlockchainAuditService::class);
+        return $blockchainService->recordAuditEvent($request->all());
+    });
+    Route::get('/verify/{eventId}', function(string $eventId) {
+        $blockchainService = app(\App\Services\BlockchainAuditService::class);
+        return $blockchainService->verifyAuditIntegrity($eventId);
+    });
+    Route::get('/integrity-report', function(Request $request) {
+        $blockchainService = app(\App\Services\BlockchainAuditService::class);
+        $start = \Carbon\Carbon::parse($request->get('start', now()->subMonth()));
+        $end = \Carbon\Carbon::parse($request->get('end', now()));
+        return $blockchainService->generateIntegrityReport($start, $end);
+    });
+    Route::post('/search', function(Request $request) {
+        $blockchainService = app(\App\Services\BlockchainAuditService::class);
+        return $blockchainService->searchBlockchainAudit($request->all());
+    });
+    Route::post('/generate-certificate', function(Request $request) {
+        $blockchainService = app(\App\Services\BlockchainAuditService::class);
+        return $blockchainService->generateDigitalCertificate($request->all());
+    });
+});
+
+// Advanced Analytics Routes
+Route::prefix('analytics/advanced')->middleware(['auth:sanctum', 'permission:analytics.view'])->group(function () {
+    Route::get('/behavior-patterns', function() {
+        $analyticsService = app(\App\Services\AdvancedAnalyticsService::class);
+        return $analyticsService->analyzeBehaviorPatterns();
+    });
+    Route::get('/threat-predictions', function() {
+        $analyticsService = app(\App\Services\AdvancedAnalyticsService::class);
+        return $analyticsService->predictSecurityThreats();
+    });
+    Route::get('/security-effectiveness', function() {
+        $analyticsService = app(\App\Services\AdvancedAnalyticsService::class);
+        return $analyticsService->analyzeSecurityEffectiveness();
+    });
+    Route::get('/compliance-metrics', function() {
+        $analyticsService = app(\App\Services\AdvancedAnalyticsService::class);
+        return $analyticsService->analyzeComplianceMetrics();
+    });
+    Route::get('/security-roi', function() {
+        $analyticsService = app(\App\Services\AdvancedAnalyticsService::class);
+        return $analyticsService->calculateSecurityROI();
+    });
+    Route::get('/ai-predictions', function() {
+        $analyticsService = app(\App\Services\AdvancedAnalyticsService::class);
+        return $analyticsService->generateAIPredictions();
+    });
+});
