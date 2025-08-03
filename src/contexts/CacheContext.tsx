@@ -73,7 +73,7 @@ export function CacheProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Generic cache functions
-  const getCachedData = useCallback(<T>(key: string): T | null => {
+  const getCachedData = useCallback(<T,>(key: string): T | null => {
     const data = apiCache.get<T>(key);
     if (data !== null) {
       trackCacheHit();
