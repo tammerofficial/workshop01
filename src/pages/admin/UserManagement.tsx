@@ -16,7 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { rbacApi } from '../../api/laravel';
+import { rbacApi, userApi } from '../../api/laravel';
 
 interface User {
   id: number;
@@ -73,11 +73,20 @@ const UserManagement: React.FC = () => {
     try {
       setLoading(true);
       const [usersResponse, rolesResponse] = await Promise.all([
-        fetch('/api/users'),
+        userApi.getUsers({ search: searchTerm, role: selectedRole }),
         rbacApi.getRoleHierarchy()
       ]);
 
-      // Mock data for users since API might not exist yet
+      if (usersResponse.data.success) {
+        setUsers(usersResponse.data.data.data || []);
+      }
+      
+      if (rolesResponse.data) {
+        setRoles(rolesResponse.data);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+      // Fall back to mock data if API fails
       const mockUsers: User[] = [
         {
           id: 1,
@@ -93,31 +102,9 @@ const UserManagement: React.FC = () => {
           last_activity: new Date().toISOString(),
           created_at: new Date().toISOString(),
           department: 'IT'
-        },
-        {
-          id: 2,
-          name: 'فاطمة علي',
-          email: 'manager@workshop.com',
-          role: {
-            id: 2,
-            name: 'production_manager',
-            display_name: 'مدير الإنتاج',
-            hierarchy_level: 3
-          },
-          is_active: true,
-          last_activity: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          department: 'Production'
         }
       ];
-
       setUsers(mockUsers);
-      
-      if (rolesResponse.data) {
-        setRoles(rolesResponse.data);
-      }
-    } catch (error) {
-      console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
@@ -125,24 +112,12 @@ const UserManagement: React.FC = () => {
 
   const handleCreateUser = async () => {
     try {
-      // Here you would call the API to create user
-      console.log('Creating user:', formData);
-      
-      // Mock creation
-      const newUser: User = {
-        id: users.length + 1,
-        name: formData.name,
-        email: formData.email,
-        role: roles.find(r => r.id === parseInt(formData.role_id))!,
-        is_active: formData.is_active,
-        last_activity: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        department: formData.department
-      };
-
-      setUsers([...users, newUser]);
-      setShowCreateModal(false);
-      resetForm();
+      const response = await userApi.createUser(formData);
+      if (response.data.success) {
+        await loadData(); // Reload data
+        setShowCreateModal(false);
+        resetForm();
+      }
     } catch (error) {
       console.error('Error creating user:', error);
     }
@@ -150,29 +125,15 @@ const UserManagement: React.FC = () => {
 
   const handleUpdateUser = async () => {
     try {
-      // Here you would call the API to update user
-      console.log('Updating user:', selectedUser?.id, formData);
-      
-      // Mock update
       if (selectedUser) {
-        const updatedUsers = users.map(user => 
-          user.id === selectedUser.id 
-            ? { 
-                ...user, 
-                name: formData.name,
-                email: formData.email,
-                role: roles.find(r => r.id === parseInt(formData.role_id)) || user.role,
-                is_active: formData.is_active,
-                department: formData.department
-              }
-            : user
-        );
-        setUsers(updatedUsers);
+        const response = await userApi.updateUser(selectedUser.id, formData);
+        if (response.data.success) {
+          await loadData(); // Reload data
+          setShowEditModal(false);
+          setSelectedUser(null);
+          resetForm();
+        }
       }
-      
-      setShowEditModal(false);
-      setSelectedUser(null);
-      resetForm();
     } catch (error) {
       console.error('Error updating user:', error);
     }
@@ -181,13 +142,11 @@ const UserManagement: React.FC = () => {
   const handleDeleteUser = async () => {
     try {
       if (selectedUser) {
-        // Here you would call the API to delete user
-        console.log('Deleting user:', selectedUser.id);
-        
-        // Mock deletion
-        setUsers(users.filter(user => user.id !== selectedUser.id));
+        const response = await userApi.deleteUser(selectedUser.id);
+        if (response.data.success) {
+          await loadData(); // Reload data
+        }
       }
-      
       setShowDeleteConfirm(false);
       setSelectedUser(null);
     } catch (error) {
@@ -197,13 +156,10 @@ const UserManagement: React.FC = () => {
 
   const toggleUserStatus = async (userId: number) => {
     try {
-      // Here you would call the API to toggle user status
-      const updatedUsers = users.map(user => 
-        user.id === userId 
-          ? { ...user, is_active: !user.is_active }
-          : user
-      );
-      setUsers(updatedUsers);
+      const response = await userApi.toggleUserStatus(userId);
+      if (response.data.success) {
+        await loadData(); // Reload data
+      }
     } catch (error) {
       console.error('Error toggling user status:', error);
     }

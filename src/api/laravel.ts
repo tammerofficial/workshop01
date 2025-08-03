@@ -249,6 +249,24 @@ export const loyaltyService = {
 };
 
 // RBAC Dashboard API functions
+// User Management API
+export const userApi = {
+  // User CRUD
+  getUsers: (params?: Record<string, unknown>) => laravelApi.get('/users', { params }),
+  createUser: (data: Record<string, unknown>) => laravelApi.post('/users', data),
+  getUser: (id: number) => laravelApi.get(`/users/${id}`),
+  updateUser: (id: number, data: Record<string, unknown>) => laravelApi.put(`/users/${id}`, data),
+  deleteUser: (id: number) => laravelApi.delete(`/users/${id}`),
+  
+  // User Actions
+  toggleUserStatus: (id: number) => laravelApi.patch(`/users/${id}/toggle-status`),
+  assignRole: (id: number, roleId: number) => laravelApi.patch(`/users/${id}/assign-role`, { role_id: roleId }),
+  
+  // User Analytics
+  getUserStatistics: () => laravelApi.get('/users/statistics'),
+  exportUsers: (format = 'csv') => laravelApi.get('/users/export', { params: { format } }),
+};
+
 export const rbacApi = {
   // Dashboard Overview
   getRBACDashboard: () => laravelApi.get('/rbac/dashboard'),

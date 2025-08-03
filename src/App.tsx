@@ -42,6 +42,8 @@ import ProductionTracking from './pages/ProductionTracking';
 // Admin pages
 import Profile from './pages/admin/Profile';
 import UserManagement from './pages/admin/UserManagement';
+import RolesManagement from './pages/admin/RolesManagement';
+import AdminSettings from './pages/admin/AdminSettings';
 import Permissions from './pages/admin/Permissions';
 import SecurityLogs from './pages/admin/SecurityLogs';
 import SystemSettings from './pages/admin/SystemSettings';
@@ -105,7 +107,7 @@ function App() {
                   <Route path="analytics" element={<Analytics />} />
                   <Route path="advanced-features" element={<AdvancedFeatures />} />
                   <Route path="notifications" element={<Notifications />} />
-                  <Route path="settings" element={<Settings />} />
+                  <Route path="settings" element={<AdminSettings />} />
                   <Route path="invoices" element={<Invoices />} />
                   <Route path="invoices/create" element={<CreateInvoice />} />
                   <Route path="sales" element={<Sales />} />
@@ -118,6 +120,11 @@ function App() {
                   <Route path="admin/users" element={
                     <ProtectedRoute requiredRoles={['admin']}>
                       <UserManagement />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="admin/roles" element={
+                    <ProtectedRoute requiredRoles={['admin']}>
+                      <RolesManagement />
                     </ProtectedRoute>
                   } />
                   <Route path="admin/permissions" element={

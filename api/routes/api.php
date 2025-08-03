@@ -496,6 +496,19 @@ Route::prefix('loyalty-reports')->group(function () {
     Route::post('export', [LoyaltyReportsController::class, 'exportReport']);
 });
 
+// User Management Routes
+Route::prefix('users')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\UserController::class, 'index']);
+    Route::post('/', [\App\Http\Controllers\Api\UserController::class, 'store']);
+    Route::get('/statistics', [\App\Http\Controllers\Api\UserController::class, 'statistics']);
+    Route::get('/export', [\App\Http\Controllers\Api\UserController::class, 'export']);
+    Route::get('/{user}', [\App\Http\Controllers\Api\UserController::class, 'show']);
+    Route::put('/{user}', [\App\Http\Controllers\Api\UserController::class, 'update']);
+    Route::delete('/{user}', [\App\Http\Controllers\Api\UserController::class, 'destroy']);
+    Route::patch('/{user}/toggle-status', [\App\Http\Controllers\Api\UserController::class, 'toggleStatus']);
+    Route::patch('/{user}/assign-role', [\App\Http\Controllers\Api\UserController::class, 'assignRole']);
+});
+
 // RBAC Advanced Management Routes
 Route::prefix('rbac')->group(function () {
     // RBAC Dashboard (temporary without auth for testing)
