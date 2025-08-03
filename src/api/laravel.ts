@@ -267,6 +267,24 @@ export const userApi = {
   exportUsers: (format = 'csv') => laravelApi.get('/users/export', { params: { format } }),
 };
 
+// Role Management API
+export const roleApi = {
+  // Role CRUD
+  getRoles: (params?: Record<string, unknown>) => laravelApi.get('/simple-roles', { params }),
+  createRole: (data: Record<string, unknown>) => laravelApi.post('/simple-roles', data),
+  getRole: (id: number) => laravelApi.get(`/simple-roles/${id}`),
+  updateRole: (id: number, data: Record<string, unknown>) => laravelApi.put(`/simple-roles/${id}`, data),
+  deleteRole: (id: number) => laravelApi.delete(`/simple-roles/${id}`),
+  
+  // Role Actions
+  updateRolePermissions: (id: number, permissions: string[]) => laravelApi.patch(`/simple-roles/${id}/permissions`, { permissions }),
+  getParentableRoles: (id: number) => laravelApi.get(`/simple-roles/${id}/parentable-roles`),
+  
+  // Role Analytics
+  getRoleStatistics: () => laravelApi.get('/simple-roles/statistics'),
+  getAvailablePermissions: () => laravelApi.get('/simple-roles/available-permissions'),
+};
+
 export const rbacApi = {
   // Dashboard Overview
   getRBACDashboard: () => laravelApi.get('/rbac/dashboard'),

@@ -509,6 +509,19 @@ Route::prefix('users')->group(function () {
     Route::patch('/{user}/assign-role', [\App\Http\Controllers\Api\UserController::class, 'assignRole']);
 });
 
+// Simple Role Management Routes (Non-conflicting)
+Route::prefix('simple-roles')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\RoleController::class, 'index']);
+    Route::post('/', [\App\Http\Controllers\Api\RoleController::class, 'store']);
+    Route::get('/statistics', [\App\Http\Controllers\Api\RoleController::class, 'statistics']);
+    Route::get('/available-permissions', [\App\Http\Controllers\Api\RoleController::class, 'getAvailablePermissions']);
+    Route::get('/{role}', [\App\Http\Controllers\Api\RoleController::class, 'show']);
+    Route::put('/{role}', [\App\Http\Controllers\Api\RoleController::class, 'update']);
+    Route::delete('/{role}', [\App\Http\Controllers\Api\RoleController::class, 'destroy']);
+    Route::patch('/{role}/permissions', [\App\Http\Controllers\Api\RoleController::class, 'updatePermissions']);
+    Route::get('/{role}/parentable-roles', [\App\Http\Controllers\Api\RoleController::class, 'getParentableRoles']);
+});
+
 // RBAC Advanced Management Routes
 Route::prefix('rbac')->group(function () {
     // RBAC Dashboard (temporary without auth for testing)
@@ -516,19 +529,20 @@ Route::prefix('rbac')->group(function () {
     Route::get('/security-details', [\App\Http\Controllers\Api\System\RBACDashboardController::class, 'getSecurityDetails']);
     Route::get('/export-report', [\App\Http\Controllers\Api\System\RBACDashboardController::class, 'exportReport']);
     
-    // Enhanced Role Management
-    Route::get('/roles/hierarchical', [EnhancedRoleController::class, 'index']);
-    Route::post('/roles', [EnhancedRoleController::class, 'store']);
-    Route::get('/roles/{role}', [EnhancedRoleController::class, 'show']);
-    Route::put('/roles/{role}', [EnhancedRoleController::class, 'update']);
-    Route::delete('/roles/{role}', [EnhancedRoleController::class, 'destroy']);
-    Route::post('/roles/{role}/permissions', [EnhancedRoleController::class, 'addPermissionWithConditions']);
-    Route::delete('/roles/{role}/permissions', [EnhancedRoleController::class, 'removePermission']);
-    Route::get('/roles/{role}/parentable', [EnhancedRoleController::class, 'getParentableRoles']);
+    // Permission Management  
+    Route::get('/permissions/grouped', [\App\Http\Controllers\Api\Authentication\PermissionController::class, 'getGroupedPermissions']);
     
-    // Permission Management
-    Route::get('/permissions/available', [EnhancedRoleController::class, 'getAvailablePermissions']);
-    Route::get('/permissions/grouped', [PermissionController::class, 'getGroupedPermissions']);
+    // Enhanced Role Management
+    Route::get('/roles/hierarchical', [\App\Http\Controllers\Api\Authentication\EnhancedRoleController::class, 'index']);
+    Route::post('/roles', [\App\Http\Controllers\Api\Authentication\EnhancedRoleController::class, 'store']);
+    Route::get('/roles/{role}', [\App\Http\Controllers\Api\Authentication\EnhancedRoleController::class, 'show']);
+    Route::put('/roles/{role}', [\App\Http\Controllers\Api\Authentication\EnhancedRoleController::class, 'update']);
+    Route::delete('/roles/{role}', [\App\Http\Controllers\Api\Authentication\EnhancedRoleController::class, 'destroy']);
+    Route::post('/roles/{role}/permissions', [\App\Http\Controllers\Api\Authentication\EnhancedRoleController::class, 'addPermissionWithConditions']);
+    Route::delete('/roles/{role}/permissions', [\App\Http\Controllers\Api\Authentication\EnhancedRoleController::class, 'removePermission']);
+    Route::get('/roles/{role}/parentable', [\App\Http\Controllers\Api\Authentication\EnhancedRoleController::class, 'getParentableRoles']);
+    
+    Route::get('/permissions/available', [\App\Http\Controllers\Api\Authentication\EnhancedRoleController::class, 'getAvailablePermissions']);
 });
 
 // Security & Audit Routes

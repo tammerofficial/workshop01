@@ -16,7 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { rbacApi, userApi } from '../../api/laravel';
+import { rbacApi, userApi, roleApi } from '../../api/laravel';
 
 interface User {
   id: number;
@@ -74,15 +74,15 @@ const UserManagement: React.FC = () => {
       setLoading(true);
       const [usersResponse, rolesResponse] = await Promise.all([
         userApi.getUsers({ search: searchTerm, role: selectedRole }),
-        rbacApi.getRoleHierarchy()
+        roleApi.getRoles()
       ]);
 
       if (usersResponse.data.success) {
         setUsers(usersResponse.data.data.data || []);
       }
       
-      if (rolesResponse.data) {
-        setRoles(rolesResponse.data);
+      if (rolesResponse.data.success) {
+        setRoles(rolesResponse.data.data || []);
       }
     } catch (error) {
       console.error('Error loading data:', error);

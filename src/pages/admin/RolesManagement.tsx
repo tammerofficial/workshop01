@@ -16,7 +16,7 @@ import {
   Unlock
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { rbacApi } from '../../api/laravel';
+import { rbacApi, roleApi } from '../../api/laravel';
 
 interface Permission {
   name: string;
@@ -72,20 +72,20 @@ const RolesManagement: React.FC = () => {
     try {
       setLoading(true);
       const [rolesResponse, permissionsResponse] = await Promise.all([
-        rbacApi.getRoleHierarchy(),
-        rbacApi.getGroupedPermissions()
+        roleApi.getRoles(),
+        roleApi.getAvailablePermissions()
       ]);
 
-      if (rolesResponse.data) {
-        setRoles(rolesResponse.data);
+      if (rolesResponse.data.success) {
+        setRoles(rolesResponse.data.data);
       }
 
-      if (permissionsResponse.data) {
-        setPermissions(permissionsResponse.data);
+      if (permissionsResponse.data.success) {
+        setPermissions(permissionsResponse.data.data);
       }
     } catch (error) {
       console.error('Error loading data:', error);
-      // Use mock data
+      // Use mock data as fallback
       const mockRoles: Role[] = [
         {
           id: 1,
@@ -134,35 +134,6 @@ const RolesManagement: React.FC = () => {
           { name: 'users.edit', display_name: 'تعديل المستخدمين', description: 'تعديل بيانات المستخدمين', module: 'users', action: 'edit' },
           { name: 'users.delete', display_name: 'حذف المستخدمين', description: 'حذف المستخدمين', module: 'users', action: 'delete' },
           { name: 'users.manage', display_name: 'إدارة المستخدمين', description: 'إدارة كاملة للمستخدمين', module: 'users', action: 'manage' },
-        ],
-        'roles': [
-          { name: 'roles.view', display_name: 'عرض الأدوار', description: 'عرض الأدوار والصلاحيات', module: 'roles', action: 'view' },
-          { name: 'roles.create', display_name: 'إنشاء أدوار', description: 'إنشاء أدوار جديدة', module: 'roles', action: 'create' },
-          { name: 'roles.edit', display_name: 'تعديل الأدوار', description: 'تعديل الأدوار الموجودة', module: 'roles', action: 'edit' },
-          { name: 'roles.delete', display_name: 'حذف الأدوار', description: 'حذف الأدوار', module: 'roles', action: 'delete' },
-          { name: 'roles.manage', display_name: 'إدارة الأدوار', description: 'إدارة كاملة للأدوار', module: 'roles', action: 'manage' },
-        ],
-        'orders': [
-          { name: 'orders.view', display_name: 'عرض الطلبات', description: 'عرض الطلبات', module: 'orders', action: 'view' },
-          { name: 'orders.create', display_name: 'إنشاء طلبات', description: 'إنشاء طلبات جديدة', module: 'orders', action: 'create' },
-          { name: 'orders.edit', display_name: 'تعديل الطلبات', description: 'تعديل الطلبات', module: 'orders', action: 'edit' },
-          { name: 'orders.delete', display_name: 'حذف الطلبات', description: 'حذف الطلبات', module: 'orders', action: 'delete' },
-          { name: 'orders.manage', display_name: 'إدارة الطلبات', description: 'إدارة كاملة للطلبات', module: 'orders', action: 'manage' },
-        ],
-        'products': [
-          { name: 'products.view', display_name: 'عرض المنتجات', description: 'عرض المنتجات', module: 'products', action: 'view' },
-          { name: 'products.create', display_name: 'إنشاء منتجات', description: 'إضافة منتجات جديدة', module: 'products', action: 'create' },
-          { name: 'products.edit', display_name: 'تعديل المنتجات', description: 'تعديل المنتجات', module: 'products', action: 'edit' },
-          { name: 'products.delete', display_name: 'حذف المنتجات', description: 'حذف المنتجات', module: 'products', action: 'delete' },
-          { name: 'products.manage', display_name: 'إدارة المنتجات', description: 'إدارة كاملة للمنتجات', module: 'products', action: 'manage' },
-        ],
-        'production': [
-          { name: 'production.view', display_name: 'عرض الإنتاج', description: 'عرض عمليات الإنتاج', module: 'production', action: 'view' },
-          { name: 'production.manage', display_name: 'إدارة الإنتاج', description: 'إدارة عمليات الإنتاج', module: 'production', action: 'manage' },
-        ],
-        'workers': [
-          { name: 'workers.view', display_name: 'عرض العمال', description: 'عرض قائمة العمال', module: 'workers', action: 'view' },
-          { name: 'workers.manage', display_name: 'إدارة العمال', description: 'إدارة العمال', module: 'workers', action: 'manage' },
         ]
       };
 
@@ -175,25 +146,12 @@ const RolesManagement: React.FC = () => {
 
   const handleCreateRole = async () => {
     try {
-      console.log('Creating role:', formData);
-      
-      const newRole: Role = {
-        id: roles.length + 1,
-        name: formData.name,
-        display_name: formData.display_name,
-        description: formData.description,
-        hierarchy_level: formData.parent_role_id ? 
-          (roles.find(r => r.id === parseInt(formData.parent_role_id))?.hierarchy_level || 0) + 1 : 0,
-        parent_role_id: formData.parent_role_id ? parseInt(formData.parent_role_id) : undefined,
-        permissions: formData.permissions,
-        users_count: 0,
-        is_system_role: false,
-        is_inheritable: formData.is_inheritable
-      };
-
-      setRoles([...roles, newRole]);
-      setShowCreateModal(false);
-      resetForm();
+      const response = await roleApi.createRole(formData);
+      if (response.data.success) {
+        await loadData(); // Reload data
+        setShowCreateModal(false);
+        resetForm();
+      }
     } catch (error) {
       console.error('Error creating role:', error);
     }
@@ -202,27 +160,14 @@ const RolesManagement: React.FC = () => {
   const handleUpdateRole = async () => {
     try {
       if (selectedRole) {
-        console.log('Updating role:', selectedRole.id, formData);
-        
-        const updatedRoles = roles.map(role => 
-          role.id === selectedRole.id 
-            ? { 
-                ...role, 
-                name: formData.name,
-                display_name: formData.display_name,
-                description: formData.description,
-                parent_role_id: formData.parent_role_id ? parseInt(formData.parent_role_id) : undefined,
-                permissions: formData.permissions,
-                is_inheritable: formData.is_inheritable
-              }
-            : role
-        );
-        setRoles(updatedRoles);
+        const response = await roleApi.updateRole(selectedRole.id, formData);
+        if (response.data.success) {
+          await loadData(); // Reload data
+          setShowEditModal(false);
+          setSelectedRole(null);
+          resetForm();
+        }
       }
-      
-      setShowEditModal(false);
-      setSelectedRole(null);
-      resetForm();
     } catch (error) {
       console.error('Error updating role:', error);
     }
@@ -231,10 +176,11 @@ const RolesManagement: React.FC = () => {
   const handleDeleteRole = async () => {
     try {
       if (selectedRole) {
-        console.log('Deleting role:', selectedRole.id);
-        setRoles(roles.filter(role => role.id !== selectedRole.id));
+        const response = await roleApi.deleteRole(selectedRole.id);
+        if (response.data.success) {
+          await loadData(); // Reload data
+        }
       }
-      
       setShowDeleteConfirm(false);
       setSelectedRole(null);
     } catch (error) {
@@ -586,14 +532,16 @@ const RolesManagement: React.FC = () => {
                   إلغاء
                 </button>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (selectedRole) {
-                      const updatedRoles = roles.map(role =>
-                        role.id === selectedRole.id
-                          ? { ...role, permissions: formData.permissions }
-                          : role
-                      );
-                      setRoles(updatedRoles);
+                      try {
+                        const response = await roleApi.updateRolePermissions(selectedRole.id, formData.permissions);
+                        if (response.data.success) {
+                          await loadData(); // Reload data
+                        }
+                      } catch (error) {
+                        console.error('Error updating permissions:', error);
+                      }
                     }
                     setShowPermissionsModal(false);
                     setSelectedRole(null);
