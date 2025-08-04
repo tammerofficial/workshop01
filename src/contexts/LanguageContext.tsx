@@ -45,7 +45,18 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   const t = (key: string, options?: { [key: string]: string | number }): string => {
     const langTranslations = translations[language];
-    const translation = (langTranslations as any)[key] || key;
+    
+    // Support nested keys like "sidebar.dashboard"
+    const keys = key.split('.');
+    let translation: any = langTranslations;
+    
+    for (const k of keys) {
+      translation = translation?.[k];
+      if (translation === undefined) {
+        return key; // Return original key if translation not found
+      }
+    }
+    
     if (!options) return translation;
 
     return translation.replace(/{{(\w+)}}/g, (_: string, k: string) => String(options![k]));

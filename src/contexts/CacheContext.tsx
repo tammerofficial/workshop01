@@ -83,7 +83,7 @@ export function CacheProvider({ children }: { children: React.ReactNode }): JSX.
     return data;
   }, [trackCacheHit, trackCacheMiss]);
 
-  const setCachedData = useCallback(<T>(key: string, data: T, ttl?: number) => {
+  const setCachedData = useCallback(<T,>(key: string, data: T, ttl?: number) => {
     apiCache.set(key, data, ttl);
   }, []);
 
@@ -96,7 +96,7 @@ export function CacheProvider({ children }: { children: React.ReactNode }): JSX.
   }, []);
 
   // Cached fetch wrapper with loading state
-  const fetchWithCache = useCallback(async <T>(
+  const fetchWithCache = useCallback(async <T,>(
     key: string,
     fetchFn: () => Promise<T>,
     ttl?: number

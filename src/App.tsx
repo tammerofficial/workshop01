@@ -51,6 +51,10 @@ import POSSystem from './pages/boutique/POSSystem';
 // E-commerce pages
 import HomePage from './pages/ecommerce/HomePage';
 import ProductCatalog from './pages/ecommerce/ProductCatalog';
+import ProductDetail from './pages/ecommerce/ProductDetail';
+import CustomerAuth from './pages/ecommerce/CustomerAuth';
+import CustomerDashboard from './pages/ecommerce/CustomerDashboard';
+import Checkout from './pages/ecommerce/Checkout';
 
 // Admin pages
 import Profile from './pages/admin/Profile';
@@ -88,6 +92,7 @@ function App() {
               <Routes>
                 {/* Auth Routes */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/customer/auth" element={<CustomerAuth />} />
                 <Route path="/logout" element={<Logout />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 
@@ -204,6 +209,9 @@ function App() {
         {/* E-commerce Routes */}
         <Route path="ecommerce" element={<HomePage />} />
         <Route path="ecommerce/catalog" element={<ProductCatalog />} />
+        <Route path="ecommerce/product/:id" element={<ProductDetail />} />
+        <Route path="ecommerce/checkout" element={<Checkout />} />
+        <Route path="ecommerce/dashboard" element={<CustomerDashboard />} />
                   <Route path="manager-dashboard" element={<ManagerDashboard />} />
                   
                   {/* Admin Routes - with role-based protection */}

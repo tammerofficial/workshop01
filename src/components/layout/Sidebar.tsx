@@ -62,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     // 5. نظام نقاط البيع (صلاحية تشغيل البوتيك)
     { 
       path: '/pos-system', 
-      label: t('pos.title'), 
+      label: t('sidebar.pos'), 
       icon: <CreditCard size={20} />, 
       badge: t('common.new'),
       requiredPermissions: ['pos.operate'],
@@ -71,13 +71,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     // 6. المتجر الإلكتروني (صلاحية إدارة المتجر)
     { 
       path: '/ecommerce', 
-      label: t('ecommerce.homepage.title'), 
+      label: t('sidebar.ecommerce'), 
       icon: <ShoppingBag size={20} />, 
       badge: t('common.new'),
       requiredPermissions: ['ecommerce.manage'],
       show: hasPermission('ecommerce.manage') || hasAnyRole(['super_admin', 'boutique_manager', 'ecommerce_manager'])
     },
-    // 6. لوحة إدارية شاملة (صلاحية إدارة عليا)
+    // 7. لوحة إدارية شاملة (صلاحية إدارة عليا)
     { 
       path: '/manager-dashboard', 
       label: t('sidebar.managerDashboard'), 
@@ -339,7 +339,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       color: 'var(--secondary-color)'
                     }}
                   >
-                    {t('sidebar.production', 'عمليات الإنتاج')}
+                    {t('sidebar.production')}
                   </h3>
                   <span className="ml-2 text-lg">⚡</span>
                 </div>
@@ -449,7 +449,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       color: 'var(--secondary-color)'
                     }}
                   >
-                    {t('sidebar.workshop', 'إدارة الورشة')}
+                    {t('sidebar.workshop')}
                   </h3>
                   <span className="ml-2 text-lg">🏭</span>
                 </div>
@@ -559,7 +559,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       color: 'var(--secondary-color)'
                     }}
                   >
-                    {t('sidebar.erpSystem', 'نظام تخطيط الموارد')}
+                    {t('sidebar.erpSystem')}
                   </h3>
                   <span className="ml-2 text-lg">💼</span>
                 </div>
@@ -669,7 +669,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       color: 'var(--secondary-color)'
                     }}
                   >
-                    {t('sidebar.systemManagement', 'إدارة النظام')}
+                    {t('sidebar.systemManagement')}
                   </h3>
                   <span className="ml-2 text-lg">🔧</span>
               </div>
@@ -779,7 +779,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       color: 'var(--secondary-color)'
                     }}
                   >
-                    {t('sidebar.userSettings', 'الإعدادات الشخصية')}
+                    {t('sidebar.userSettings')}
                   </h3>
                   <span className="ml-2 text-lg">👤</span>
                 </div>

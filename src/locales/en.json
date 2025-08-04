@@ -25,6 +25,7 @@
     "ok": "OK",
     "new": "NEW",
     "hot": "HOT",
+    "secure": "SECURE",
     "urgent": "Urgent",
     "high": "High",
     "medium": "Medium",
@@ -36,6 +37,7 @@
   "sidebar": {
     "dashboard": "Dashboard",
     "orders": "Orders Management",
+    "ordersManagement": "Orders Management",
     "clients": "Clients",
     "products": "Products",
     "inventory": "Inventory",
@@ -55,10 +57,24 @@
     "managerDashboard": "Manager Dashboard",
     "productionTracking": "Production Tracking",
     "barcodeQR": "Barcode & QR",
+    "ecommerce": "E-Commerce Store",
     "production": "Production Operations",
     "workshop": "Workshop Management",
     "systemManagement": "ERP System",
-    "userSettings": "User Settings"
+    "userSettings": "User Settings",
+    "pos": "POS System",
+    "invoices": "Invoices",
+    "sales": "Sales",
+    "analytics": "Analytics",
+    "calendar": "Calendar",
+    "productionFlow": "Production Flow",
+    "stations": "Stations",
+    "erpSystem": "ERP System",
+    "erpManagement": "ERP Management",
+    "advancedFeatures": "Advanced Features",
+    "pluginManagement": "Plugin Management",
+    "rbacSecurity": "RBAC Security",
+    "notifications": "Notifications"
   },
   "page": {
     "dashboard": {
