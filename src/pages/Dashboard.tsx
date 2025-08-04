@@ -69,33 +69,33 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, change, 
   );
 };
 
-const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
+const WorkshopDashboard: React.FC<{ stats: any; t: any }> = ({ stats, t }) => {
   return (
     <div className="space-y-6">
       {/* إحصائيات التصنيع والإنتاج */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Active Orders"
+          title={t('dashboard.activeOrders')}
           value={stats.in_progress_orders || 0}
           icon={<Workflow className="h-6 w-6 text-white" />}
           color="bg-gradient-to-r from-blue-500 to-blue-600"
           change={{ value: 15, positive: true }}
         />
         <StatCard
-          title="Completed Today"
+          title={t('dashboard.completedToday')}
           value={stats.completed_this_month || 0}
           icon={<CheckCircle className="h-6 w-6 text-white" />}
           color="bg-gradient-to-r from-green-500 to-green-600"
           change={{ value: 8, positive: true }}
         />
         <StatCard
-          title="Production Stages"
+          title={t('dashboard.productionStages')}
           value={stats.active_stations || 0}
           icon={<Factory className="h-6 w-6 text-white" />}
           color="bg-gradient-to-r from-purple-500 to-purple-600"
         />
         <StatCard
-          title="Quality Rate"
+          title={t('dashboard.qualityRate')}
           value="96%"
           icon={<Award className="h-6 w-6 text-white" />}
           color="bg-gradient-to-r from-yellow-500 to-yellow-600"
@@ -108,7 +108,7 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center">
             <Workflow className="mr-2 text-blue-600" size={24} />
-            Production Flow
+            {t('dashboard.productionFlow')}
           </h3>
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -116,7 +116,7 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
             onClick={() => window.location.href = '/suit-production'}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
           >
-            View Details
+            {t('common.viewDetails')}
           </motion.button>
         </div>
 
@@ -125,8 +125,8 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
           {[
             { 
               id: 'pending', 
-              name: 'Pending Orders', 
-              nameAr: 'الطلبات المعلقة',
+              name: t('dashboard.stages.pending'), 
+              nameAr: t('dashboard.stages.pending'),
               count: stats.pending_orders || 8, 
               icon: <Clock className="h-5 w-5" />, 
               color: 'bg-gray-500',
@@ -135,8 +135,8 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
             },
             { 
               id: 'design', 
-              name: 'Design', 
-              nameAr: 'التصميم',
+              name: t('dashboard.stages.design'), 
+              nameAr: t('dashboard.stages.design'),
               count: 12, 
               icon: <Package className="h-5 w-5" />, 
               color: 'bg-blue-500',
@@ -145,8 +145,8 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
             },
             { 
               id: 'cutting', 
-              name: 'Cutting', 
-              nameAr: 'القص',
+              name: t('dashboard.stages.cutting'), 
+              nameAr: t('dashboard.stages.cutting'),
               count: 6, 
               icon: <Activity className="h-5 w-5" />, 
               color: 'bg-yellow-500',
@@ -155,8 +155,8 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
             },
             { 
               id: 'sewing', 
-              name: 'Sewing', 
-              nameAr: 'الخياطة',
+              name: t('dashboard.stages.sewing'), 
+              nameAr: t('dashboard.stages.sewing'),
               count: 9, 
               icon: <Target className="h-5 w-5" />, 
               color: 'bg-green-500',
@@ -165,8 +165,8 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
             },
             { 
               id: 'fitting', 
-              name: 'Fitting', 
-              nameAr: 'التفصيل',
+              name: t('dashboard.stages.fitting'), 
+              nameAr: t('dashboard.stages.fitting'),
               count: 7, 
               icon: <Users className="h-5 w-5" />, 
               color: 'bg-purple-500',
@@ -175,8 +175,8 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
             },
             { 
               id: 'finishing', 
-              name: 'Finishing', 
-              nameAr: 'اللمسة الأخيرة',
+              name: t('dashboard.stages.finishing'), 
+              nameAr: t('dashboard.stages.finishing'),
               count: 4, 
               icon: <Award className="h-5 w-5" />, 
               color: 'bg-orange-500',
@@ -185,8 +185,8 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
             },
             { 
               id: 'completed', 
-              name: 'Completed', 
-              nameAr: 'مكتمل',
+              name: t('dashboard.stages.completed'), 
+              nameAr: t('dashboard.stages.completed'),
               count: stats.completed_orders || 25, 
               icon: <CheckCircle className="h-5 w-5" />, 
               color: 'bg-emerald-500',
@@ -221,7 +221,7 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
                   <div className={`text-2xl font-bold ${stage.textColor}`}>
                     {stage.count}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Orders</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.orders')}</div>
                 </div>
                 
                 {/* Progress Bar */}
@@ -250,21 +250,21 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
             <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
               {((stats.completed_orders || 25) / ((stats.orders_count || 64)) * 100).toFixed(1)}%
             </div>
-            <div className="text-xs text-gray-600 dark:text-gray-400">Completion Rate</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">{t('dashboard.completionRate')}</div>
           </div>
           <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
             <div className="text-lg font-bold text-green-600 dark:text-green-400">2.5d</div>
-            <div className="text-xs text-gray-600 dark:text-gray-400">Avg. Stage Time</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">{t('dashboard.avgStageTime')}</div>
           </div>
           <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
             <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">96%</div>
-            <div className="text-xs text-gray-600 dark:text-gray-400">Quality Rate</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">{t('dashboard.qualityRate')}</div>
           </div>
           <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
             <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
               {stats.active_stations || 8}
             </div>
-            <div className="text-xs text-gray-600 dark:text-gray-400">Active Stations</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">{t('dashboard.activeStations')}</div>
           </div>
         </div>
 
@@ -272,7 +272,7 @@ const WorkshopDashboard: React.FC<{ stats: any }> = ({ stats }) => {
         <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-800 rounded-lg max-w-full">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Overall Production Progress
+              {t('dashboard.overallProgress')}
             </span>
             <span className="text-sm font-bold text-gray-800 dark:text-white">
               {((stats.completed_orders || 25) / (stats.orders_count || 64) * 100).toFixed(1)}%
@@ -557,35 +557,35 @@ const Dashboard = () => {
   const tabs: TabData[] = [
     {
       id: 'workshop',
-      name: 'Workshop',
+      name: t('dashboard.tabs.workshop'),
       nameAr: 'الورشة',
       icon: <Factory size={20} />,
       color: 'bg-blue-500',
-      description: 'Production & Manufacturing'
+      description: t('dashboard.tabs.workshopDesc')
     },
     {
       id: 'attendance',
-      name: 'HR & Attendance',
+      name: t('dashboard.tabs.hr'),
       nameAr: 'الموارد البشرية',
       icon: <Users size={20} />,
       color: 'bg-green-500',
-      description: 'Workers & Payroll'
+      description: t('dashboard.tabs.hrDesc')
     },
     {
       id: 'sales',
-      name: 'Sales & Finance',
+      name: t('dashboard.tabs.sales'),
       nameAr: 'المبيعات والمالية',
       icon: <DollarSign size={20} />,
       color: 'bg-purple-500',
-      description: 'Revenue & Clients'
+      description: t('dashboard.tabs.salesDesc')
     },
     {
       id: 'inventory',
-      name: 'Inventory',
+      name: t('dashboard.tabs.inventory'),
       nameAr: 'المخزون',
       icon: <Package size={20} />,
       color: 'bg-orange-500',
-      description: 'Stock & Materials'
+      description: t('dashboard.tabs.inventoryDesc')
     }
   ];
 
@@ -636,7 +636,7 @@ const Dashboard = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'workshop':
-        return <WorkshopDashboard stats={stats} />;
+        return <WorkshopDashboard stats={stats} t={t} />;
       case 'attendance':
         return <AttendanceDashboard stats={stats} />;
       case 'sales':
@@ -644,7 +644,7 @@ const Dashboard = () => {
       case 'inventory':
         return <InventoryDashboard stats={stats} />;
       default:
-        return <WorkshopDashboard stats={stats} />;
+        return <WorkshopDashboard stats={stats} t={t} />;
     }
   };
 
@@ -657,10 +657,10 @@ const Dashboard = () => {
       >
         <div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Smart Dashboard
+            {t('dashboard.title')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
-            Intelligent workshop management system
+            {t('dashboard.subtitle')}
           </p>
         </div>
         <button
@@ -668,7 +668,7 @@ const Dashboard = () => {
           className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors flex items-center space-x-2"
         >
           <Activity size={20} />
-          <span>Refresh</span>
+          <span>{t('common.refresh')}</span>
         </button>
       </motion.div>
 

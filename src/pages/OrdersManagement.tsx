@@ -6,7 +6,6 @@ import {
   Eye,
   Edit,
   Trash2,
-  User,
   Package,
   Clock,
   CheckCircle,
@@ -15,13 +14,6 @@ import {
   TrendingUp,
   Download,
   RefreshCw,
-  Filter,
-  Calendar,
-  Phone,
-  Mail,
-  Car,
-  Tool,
-  Star,
   MoreVertical,
   Wrench,
   FileText,
@@ -135,7 +127,7 @@ const statusIcons = {
 };
 
 const OrdersManagement: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -228,7 +220,7 @@ const OrdersManagement: React.FC = () => {
         setOrders(orders.filter(order => order.id !== orderId));
         toast.success(t('orders.deleteSuccess'));
       } catch (error) {
-        toast.error('فشل في حذف الطلب');
+        toast.error(t('orders.deleteError'));
       }
     }
   };
@@ -245,8 +237,8 @@ const OrdersManagement: React.FC = () => {
       const headers = [
         t('orders.table.orderNumber'),
         t('orders.table.customer'),
-        'الهاتف',
-        'الوصف',
+        t('orders.table.phone'),
+        t('orders.table.description'),
         t('orders.table.status'),
         t('orders.table.priority'),
         t('orders.table.progress'),
@@ -264,8 +256,8 @@ const OrdersManagement: React.FC = () => {
           getStatusText(order.status),
           getPriorityText(order.priority),
           `${order.progress}%`,
-          `${order.total_cost} ر.س`,
-          new Date(order.due_date).toLocaleDateString('ar-SA')
+          `${order.total_cost} د.ك`,
+          new Date(order.due_date).toLocaleDateString('ar', { calendar: 'gregory' })
         ].join(','))
       ].join('\n');
 
@@ -306,7 +298,7 @@ const OrdersManagement: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6" dir="rtl">
+    <div className="p-6 space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -412,7 +404,7 @@ const OrdersManagement: React.FC = () => {
             <div>
               <p className="text-gray-600 dark:text-gray-400 text-sm">{t('orders.stats.totalRevenue')}</p>
               <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {stats.totalRevenue.toLocaleString('ar-SA')} ر.س
+                {stats.totalRevenue.toLocaleString('ar')} د.ك
               </p>
             </div>
             <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
@@ -477,35 +469,35 @@ const OrdersManagement: React.FC = () => {
         transition={{ duration: 0.5, delay: 0.3 }}
         className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
       >
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" dir="ltr">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {t('orders.table.orderNumber')}
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {t('orders.table.customer')}
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  الوصف
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  {t('orders.table.description')}
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {t('orders.table.status')}
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {t('orders.table.priority')}
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {t('orders.table.progress')}
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {t('orders.table.amount')}
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {t('orders.table.dueDate')}
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {t('orders.table.actions')}
                 </th>
               </tr>
@@ -523,14 +515,14 @@ const OrdersManagement: React.FC = () => {
                       transition={{ duration: 0.3, delay: index * 0.05 }}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
                         <div className="flex items-center">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             ORD-{order.id}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
                         <div>
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {order.client.name}
@@ -540,23 +532,23 @@ const OrdersManagement: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
                         <div className="text-sm text-gray-900 dark:text-white">
                           {order.description}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status as keyof typeof statusColors]}`}>
                           <StatusIcon className="w-3 h-3 ml-1" />
                           {getStatusText(order.status)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityColors[order.priority as keyof typeof priorityColors]}`}>
                           {getPriorityText(order.priority)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
                         <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                           <div
                             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
@@ -567,17 +559,17 @@ const OrdersManagement: React.FC = () => {
                           {order.progress}%
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {order.total_cost.toLocaleString('ar-SA')} ر.س
+                          {order.total_cost.toLocaleString('ar')} د.ك
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-left">
                         <div className="text-sm text-gray-900 dark:text-white">
-                          {new Date(order.due_date).toLocaleDateString('ar-SA')}
+                          {new Date(order.due_date).toLocaleDateString('ar', { calendar: 'gregory' })}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-left">
                         <div className="flex items-center space-x-2 space-x-reverse">
                           <motion.button
                             whileHover={{ scale: 1.1 }}

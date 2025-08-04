@@ -300,7 +300,7 @@ const WooCommerceOrdersTab: React.FC<WooCommerceOrdersTabProps> = ({ onOrderClon
                   </td>
                   
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(order.order_date).toLocaleDateString('ar-SA')}
+                    {new Date(order.order_date).toLocaleDateString('ar', { calendar: 'gregory' })}
                   </td>
                   
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -453,7 +453,7 @@ const WooCommerceOrdersTab: React.FC<WooCommerceOrdersTabProps> = ({ onOrderClon
                         </div>
                         <div>
                           <span className="text-sm font-medium text-gray-500">تاريخ الطلب:</span>
-                          <p className="text-sm text-gray-900">{new Date(selectedOrder.order_date).toLocaleDateString('ar-SA')}</p>
+                          <p className="text-sm text-gray-900">{new Date(selectedOrder.order_date).toLocaleDateString('ar', { calendar: 'gregory' })}</p>
                         </div>
                       </div>
                     </div>

@@ -226,10 +226,10 @@ const BarcodeQRManagement: React.FC = () => {
   };
 
   const tabs = [
-    { id: 'generate', label: 'توليد الأكواد', icon: QrCode },
-    { id: 'scan', label: 'مسح الأكواد', icon: Scan },
-    { id: 'history', label: 'السجل', icon: FileText },
-    { id: 'analytics', label: 'الإحصائيات', icon: BarChart3 }
+    { id: 'generate', label: t('barcodeQR.generateCodes'), icon: QrCode },
+    { id: 'scan', label: t('barcodeQR.scanCodes'), icon: Scan },
+    { id: 'history', label: t('barcodeQR.history'), icon: FileText },
+    { id: 'analytics', label: t('barcodeQR.statistics'), icon: BarChart3 }
   ];
 
   return (
@@ -253,7 +253,7 @@ const BarcodeQRManagement: React.FC = () => {
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            تحديث
+            {t('barcodeQR.update')}
           </button>
         </div>
       </div>
@@ -266,7 +266,7 @@ const BarcodeQRManagement: React.FC = () => {
               <QrCode className="h-6 w-6 text-blue-600" />
             </div>
             <div className="mr-4">
-              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>الأكواد المولدة</p>
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{t('barcodeQR.generatedCodes')}</p>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {statistics.total_generated}
               </p>
@@ -280,7 +280,7 @@ const BarcodeQRManagement: React.FC = () => {
               <Scan className="h-6 w-6 text-green-600" />
             </div>
             <div className="mr-4">
-              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>إجمالي المسح</p>
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{t('barcodeQR.totalScans')}</p>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {statistics.total_scans}
               </p>
@@ -294,7 +294,7 @@ const BarcodeQRManagement: React.FC = () => {
               <CheckCircle className="h-6 w-6 text-purple-600" />
             </div>
             <div className="mr-4">
-              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>معدل النجاح</p>
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{t('barcodeQR.successRate')}</p>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {statistics.success_rate}%
               </p>
@@ -308,7 +308,7 @@ const BarcodeQRManagement: React.FC = () => {
               <Eye className="h-6 w-6 text-yellow-600" />
             </div>
             <div className="mr-4">
-              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>الأكثر مسحاً</p>
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{t('barcodeQR.mostScanned')}</p>
               <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {statistics.most_scanned?.length || 0}
               </p>
@@ -345,9 +345,9 @@ const BarcodeQRManagement: React.FC = () => {
           {/* Generate Tab */}
           {activeTab === 'generate' && (
             <div className="space-y-6">
-              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                توليد الأكواد
-              </h3>
+                              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {t('barcodeQR.generateCodes')}
+                </h3>
 
               {/* Quick Generation */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -356,7 +356,7 @@ const BarcodeQRManagement: React.FC = () => {
                   className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-center"
                 >
                   <Package className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm font-medium">باركود منتج</p>
+                  <p className="text-sm font-medium">{t('barcodeQR.productBarcode')}</p>
                 </button>
 
                 <button
@@ -364,7 +364,7 @@ const BarcodeQRManagement: React.FC = () => {
                   className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-center"
                 >
                   <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm font-medium">QR طلبية</p>
+                  <p className="text-sm font-medium">{t('barcodeQR.orderQR')}</p>
                 </button>
 
                 <button
@@ -372,7 +372,7 @@ const BarcodeQRManagement: React.FC = () => {
                   className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-center"
                 >
                   <Boxes className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm font-medium">QR مادة</p>
+                  <p className="text-sm font-medium">{t('barcodeQR.materialQR')}</p>
                 </button>
 
                 <button
@@ -380,7 +380,7 @@ const BarcodeQRManagement: React.FC = () => {
                   className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-center"
                 >
                   <Settings className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm font-medium">توليد مجمع</p>
+                  <p className="text-sm font-medium">{t('barcodeQR.batchGenerate')}</p>
                 </button>
               </div>
 
@@ -388,7 +388,7 @@ const BarcodeQRManagement: React.FC = () => {
               {generatedCodes.length > 0 && (
                 <div>
                   <h4 className={`text-md font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    الأكواد المولدة ({generatedCodes.length})
+                    {t('barcodeQR.generatedCodes')} ({generatedCodes.length})
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {generatedCodes.map((code) => (
@@ -441,7 +441,7 @@ const BarcodeQRManagement: React.FC = () => {
             <div className="space-y-6">
               <div className="text-center">
                 <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  مسح الأكواد
+                  {t('barcodeQR.scanCodes')}
                 </h3>
                 <button
                   onClick={() => setShowScanner(true)}

@@ -309,7 +309,7 @@ const POSSystem: React.FC = () => {
           {selectedCustomer && selectedCustomer.available_points > 0 && (
             <div className="mt-4 p-3 bg-blue-50 rounded-lg">
               <label className="block text-sm font-medium text-blue-900 mb-2">
-                {t('loyalty.usePoints')} (متاح: {selectedCustomer.available_points})
+                {t('loyalty.usePoints')} ({t('loyalty.available')}: {selectedCustomer.available_points})
               </label>
               <input
                 type="number"

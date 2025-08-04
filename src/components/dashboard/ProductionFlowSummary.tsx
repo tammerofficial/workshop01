@@ -141,7 +141,7 @@ const ProductionFlowSummary: React.FC<ProductionFlowSummaryProps> = ({ className
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{stats.totalOrders}</div>
-          <div className="text-xs text-gray-600 dark:text-gray-400">Total Orders</div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">{t('productionTracking.totalOrders')}</div>
         </div>
         <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div className="text-xl font-bold text-green-600 dark:text-green-400">{stats.activeStages}</div>

@@ -47,12 +47,12 @@ const WorkflowDashboard: React.FC = () => {
         const apiData = response.data.data;
         const mockData: WorkflowStats = {
           stages: [ // This part is still mock, we will replace it later
-            { stage_name: 'القص', pending_tasks: 5, in_progress_tasks: 3, completed_today: 12, workers_assigned: 4 },
-            { stage_name: 'الخياطة', pending_tasks: 8, in_progress_tasks: 6, completed_today: 15, workers_assigned: 8 },
-            { stage_name: 'التطريز', pending_tasks: 3, in_progress_tasks: 2, completed_today: 8, workers_assigned: 5 },
-            { stage_name: 'مراقبة الجودة', pending_tasks: 2, in_progress_tasks: 1, completed_today: 10, workers_assigned: 3 },
-            { stage_name: 'التعبئة', pending_tasks: 1, in_progress_tasks: 2, completed_today: 18, workers_assigned: 4 },
-            { stage_name: 'التسليم', pending_tasks: 0, in_progress_tasks: 1, completed_today: 20, workers_assigned: 2 }
+            { stage_name: 'cutting', pending_tasks: 5, in_progress_tasks: 3, completed_today: 12, workers_assigned: 4 },
+            { stage_name: 'sewing', pending_tasks: 8, in_progress_tasks: 6, completed_today: 15, workers_assigned: 8 },
+            { stage_name: 'embroidery', pending_tasks: 3, in_progress_tasks: 2, completed_today: 8, workers_assigned: 5 },
+            { stage_name: 'qualityControl', pending_tasks: 2, in_progress_tasks: 1, completed_today: 10, workers_assigned: 3 },
+            { stage_name: 'packaging', pending_tasks: 1, in_progress_tasks: 2, completed_today: 18, workers_assigned: 4 },
+            { stage_name: 'delivery', pending_tasks: 0, in_progress_tasks: 1, completed_today: 20, workers_assigned: 2 }
           ],
           workers: {
             total_active: apiData.total_active,
@@ -66,15 +66,15 @@ const WorkflowDashboard: React.FC = () => {
             completion_rate: 94.2
           },
           alerts: [ // Mock alerts
-            { type: 'warning', message: 'الخياطة بها 8 مهام معلقة', severity: 'medium' },
-            { type: 'info', message: 'تم إكمال 83 مهمة اليوم', severity: 'low' }
+            { type: 'warning', message: 'sewing_pending_8', severity: 'medium' },
+            { type: 'info', message: 'completed_83', severity: 'low' }
           ]
         };
         setStats(mockData);
       }
       setLastUpdate(new Date());
     } catch (error) {
-      console.error('خطأ في تحميل إحصائيات التدفق:', error);
+      console.error('Error loading workflow stats:', error);
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ const WorkflowDashboard: React.FC = () => {
 
   useEffect(() => {
     loadWorkflowStats();
-    // تحديث كل دقيقة
+    // Update every minute
     const interval = setInterval(loadWorkflowStats, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -108,7 +108,7 @@ const WorkflowDashboard: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-xl text-gray-600">جاري تحميل نظام التدفق...</p>
+          <p className="text-xl text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -117,7 +117,7 @@ const WorkflowDashboard: React.FC = () => {
   if (!stats) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-xl text-gray-600">فشل في تحميل البيانات</p>
+        <p className="text-xl text-gray-600">{t('common.loadingError')}</p>
       </div>
     );
   }
@@ -136,14 +136,14 @@ const WorkflowDashboard: React.FC = () => {
           </div>
           <div className="flex items-center space-x-4 space-x-reverse">
             <div className="text-sm text-gray-500">
-              آخر تحديث: {lastUpdate.toLocaleTimeString('ar-SA')}
+              {t('dashboard.stats.lastUpdated')}: {lastUpdate.toLocaleTimeString(t('common.locale'))}
             </div>
             <button
               onClick={loadWorkflowStats}
               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <RefreshCw className="w-4 h-4 ml-2" />
-              تحديث
+              {t('common.refresh')}
             </button>
           </div>
         </div>
@@ -154,7 +154,7 @@ const WorkflowDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">متوسط الكفاءة</p>
+                              <p className="text-sm text-gray-600">{t('dashboard.stats.averageEfficiency')}</p>
               <p className="text-3xl font-bold text-blue-600">{stats.performance.avg_efficiency}%</p>
             </div>
             <TrendingUp className="w-12 h-12 text-blue-500" />
@@ -164,7 +164,7 @@ const WorkflowDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">متوسط الجودة</p>
+                              <p className="text-sm text-gray-600">{t('dashboard.stats.averageQuality')}</p>
               <p className="text-3xl font-bold text-green-600">{stats.performance.avg_quality}/10</p>
             </div>
             <CheckCircle className="w-12 h-12 text-green-500" />
@@ -174,7 +174,7 @@ const WorkflowDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">معدل الإكمال</p>
+                              <p className="text-sm text-gray-600">{t('workflow.completionRate')}</p>
               <p className="text-3xl font-bold text-purple-600">{stats.performance.completion_rate}%</p>
             </div>
             <Activity className="w-12 h-12 text-purple-500" />
@@ -185,30 +185,30 @@ const WorkflowDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Production Stages */}
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">مراحل الإنتاج</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('dashboard.productionStages')}</h3>
           <div className="space-y-4">
             {stats.stages.map((stage, index) => (
               <div key={stage.stage_name} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center">
                     <div className={`w-4 h-4 rounded-full ${getStageColor(stage.pending_tasks, stage.in_progress_tasks)} ml-3`}></div>
-                    <span className="font-medium text-gray-800">{stage.stage_name}</span>
+                    <span className="font-medium text-gray-800">{t(`dashboard.stages.${stage.stage_name}`)}</span>
                   </div>
-                  <span className="text-sm text-gray-600">{stage.workers_assigned} عامل</span>
+                  <span className="text-sm text-gray-600">{stage.workers_assigned} {t('workflow.workers')}</span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div className="text-center p-2 bg-red-50 rounded">
                     <div className="font-bold text-red-600">{stage.pending_tasks}</div>
-                    <div className="text-red-600">معلقة</div>
+                    <div className="text-red-600">{t('status.pending')}</div>
                   </div>
                   <div className="text-center p-2 bg-yellow-50 rounded">
                     <div className="font-bold text-yellow-600">{stage.in_progress_tasks}</div>
-                    <div className="text-yellow-600">قيد التنفيذ</div>
+                    <div className="text-yellow-600">{t('status.inProgress')}</div>
                   </div>
                   <div className="text-center p-2 bg-green-50 rounded">
                     <div className="font-bold text-green-600">{stage.completed_today}</div>
-                    <div className="text-green-600">مكتملة اليوم</div>
+                    <div className="text-green-600">{t('workflow.completedToday')}</div>
                   </div>
                 </div>
               </div>
@@ -218,11 +218,11 @@ const WorkflowDashboard: React.FC = () => {
 
         {/* Workers Status */}
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">حالة العمال</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('workflow.workersStatus')}</h3>
           
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-600">إجمالي العمال النشطين</span>
+              <span className="text-gray-600">{t('dashboard.stats.activeWorkers')}</span>
               <span className="text-2xl font-bold text-gray-800">{stats.workers.total_active}</span>
             </div>
           </div>
@@ -231,7 +231,7 @@ const WorkflowDashboard: React.FC = () => {
             <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
               <div className="flex items-center">
                 <div className="w-4 h-4 bg-green-500 rounded-full ml-3"></div>
-                <span className="text-green-700">متاحين</span>
+                <span className="text-green-700">{t('status.available')}</span>
               </div>
               <span className="font-bold text-green-700">{stats.workers.available}</span>
             </div>
@@ -239,7 +239,7 @@ const WorkflowDashboard: React.FC = () => {
             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
               <div className="flex items-center">
                 <div className="w-4 h-4 bg-blue-500 rounded-full ml-3"></div>
-                <span className="text-blue-700">مشغولين</span>
+                <span className="text-blue-700">{t('status.busy')}</span>
               </div>
               <span className="font-bold text-blue-700">{stats.workers.busy}</span>
             </div>
@@ -247,7 +247,7 @@ const WorkflowDashboard: React.FC = () => {
             <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
               <div className="flex items-center">
                 <div className="w-4 h-4 bg-yellow-500 rounded-full ml-3"></div>
-                <span className="text-yellow-700">في استراحة</span>
+                <span className="text-yellow-700">{t('status.onBreak')}</span>
               </div>
               <span className="font-bold text-yellow-700">{stats.workers.on_break}</span>
             </div>
@@ -263,7 +263,7 @@ const WorkflowDashboard: React.FC = () => {
             </div>
             <div className="flex justify-between text-xs text-gray-600 mt-1">
               <span>0</span>
-              <span>{stats.workers.total_active} عامل</span>
+              <span>{stats.workers.total_active} {t('workflow.workers')}</span>
             </div>
           </div>
         </div>
@@ -272,13 +272,20 @@ const WorkflowDashboard: React.FC = () => {
       {/* Alerts */}
       {stats.alerts.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">التنبيهات والإشعارات</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('workflow.alerts')}</h3>
           <div className="space-y-3">
             {stats.alerts.map((alert, index) => (
               <div key={index} className="flex items-start p-3 border-r-4 border-yellow-500 bg-yellow-50 rounded-lg">
                 <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 ml-3" />
                 <div>
-                  <p className="text-yellow-800">{alert.message}</p>
+                  <p className="text-yellow-800">
+                    {alert.message === 'sewing_pending_8' ? 
+                      t('workflow.pendingTasksAlert', { stage: t('dashboard.stages.sewing'), count: 8 }) :
+                      alert.message === 'completed_83' ?
+                      t('workflow.completedTasksToday', { count: 83 }) :
+                      alert.message
+                    }
+                  </p>
                   <span className="text-xs text-yellow-600 capitalize">{alert.severity}</span>
                 </div>
               </div>
@@ -292,14 +299,14 @@ const WorkflowDashboard: React.FC = () => {
         <div className="flex flex-col space-y-3">
           <button
             className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-colors"
-            title="إعدادات النظام"
+            title={t('workflow.systemSettings')}
           >
             <Settings className="w-6 h-6" />
           </button>
           
           <button
             className="bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition-colors"
-            title="بدء العمليات"
+            title={t('workflow.startOperations')}
           >
             <Play className="w-6 h-6" />
           </button>

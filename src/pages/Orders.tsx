@@ -330,10 +330,11 @@ const Orders = () => {
   });
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
+    return new Date(dateString).toLocaleDateString(isRTL ? 'ar' : 'en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      calendar: 'gregory'
     });
   };
 

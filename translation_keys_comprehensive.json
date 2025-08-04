@@ -1,0 +1,398 @@
+{
+  "orders": {
+    "title": "Orders Management",
+    "subtitle": "Manage and track all workshop orders and services",
+    "refresh": "Refresh",
+    "export": "Export",
+    "newOrder": "New Order",
+    "searchPlaceholder": "Search orders...",
+    "stats": {
+      "total": "Total Orders",
+      "totalRevenue": "Total Revenue"
+    },
+    "status": {
+      "pending": "Pending",
+      "inProgress": "In Progress", 
+      "completed": "Completed"
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "filters": {
+      "allStatuses": "All Statuses",
+      "allPriorities": "All Priorities"
+    },
+    "table": {
+      "orderNumber": "Order Number",
+      "customer": "Customer",
+      "description": "Description",
+      "status": "Status",
+      "priority": "Priority", 
+      "progress": "Progress",
+      "amount": "Amount",
+      "dueDate": "Due Date",
+      "actions": "Actions"
+    },
+    "ordersCount": "orders",
+    "noItemsInStage": "No items in this stage"
+  },
+  "clients": {
+    "title": "Clients Management",
+    "subtitle": "Manage customer information and profiles",
+    "syncFromWooCommerce": "Sync from WooCommerce",
+    "addNew": "Add New",
+    "total": "Total Clients",
+    "woocommerce": "WooCommerce",
+    "local": "Local",
+    "searchPlaceholder": "Search clients...",
+    "source": {
+      "all": "All Sources",
+      "local": "Local",
+      "woocommerce": "WooCommerce"
+    },
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "source": "Source", 
+      "orders": "Orders",
+      "actions": "Actions"
+    },
+    "viewProfile": "View Profile",
+    "editClient": "Edit Client"
+  },
+  "inventory": {
+    "title": "Inventory Management",
+    "subtitle": "Track materials and supplies",
+    "addItem": "Add Item",
+    "totalItems": "Total Items",
+    "lowStock": "Low Stock",
+    "outOfStock": "Out of Stock",
+    "stockValue": "Stock Value",
+    "searchPlaceholder": "Search inventory...",
+    "allCategories": "All Categories",
+    "allStatuses": "All Statuses",
+    "lowStockStatus": "Low Stock",
+    "table": {
+      "image": "Image",
+      "name": "Name",
+      "sku": "SKU",
+      "category": "Category",
+      "quantity": "Quantity",
+      "status": "Status",
+      "actions": "Actions"
+    }
+  },
+  "workers": {
+    "title": "Workers Management", 
+    "subtitle": "Manage workers and their information",
+    "refresh": "Refresh",
+    "addWorker": "Add Worker",
+    "total": "Total Workers",
+    "active": "Active",
+    "inactive": "Inactive",
+    "department": "Department",
+    "searchPlaceholder": "Search workers...",
+    "allDepartments": "All Departments",
+    "activeStatus": "Active",
+    "biometric": "Biometric",
+    "employeeCode": "Employee Code"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "subtitle": "Schedule appointments and manage events",
+    "view": {
+      "month": "Month",
+      "week": "Week", 
+      "day": "Day"
+    },
+    "filter": {
+      "all": "All",
+      "tasks": "Tasks",
+      "orders": "Orders"
+    },
+    "refresh": "Refresh",
+    "stats": {
+      "title": "Statistics",
+      "pendingTasks": "Pending Tasks",
+      "completedTasks": "Completed Tasks",
+      "pendingOrders": "Pending Orders",
+      "completedOrders": "Completed Orders"
+    },
+    "dayNames": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue", 
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
+    "legend": {
+      "title": "Legend",
+      "tasks": "Tasks",
+      "orders": "Orders",
+      "completed": "Completed",
+      "pending": "Pending"
+    }
+  },
+  "productionFlow": {
+    "title": "Production Flow",
+    "subtitle": "Monitor production progress and workflow"
+  },
+  "stationDisplay": {
+    "title": "Station Display"
+  },
+  "productionTracking": {
+    "title": "Production Tracking",
+    "subtitle": "Track production progress and performance",
+    "alerts": "Alerts",
+    "workerAnalysis": "Worker Analysis",
+    "reports": "Reports",
+    "refreshData": "Refresh Data",
+    "searchPlaceholder": "Search tracking...",
+    "allStatuses": "All Statuses",
+    "totalOrders": "Total Orders",
+    "inProgressOrders": "In Progress Orders",
+    "completedOrders": "Completed Orders",
+    "averageEfficiency": "Average Efficiency",
+    "lowStockMaterials": "Low Stock Materials"
+  },
+  "stations": {
+    "title": "Production Stations",
+    "subtitle": "Monitor and manage production stations",
+    "viewProduction": "View Production",
+    "viewTracking": "View Tracking",
+    "refresh": "Refresh",
+    "integration": "Integration",
+    "flowConnection": "Flow Connection",
+    "trackingConnection": "Tracking Connection", 
+    "realTimeUpdates": "Real-time Updates",
+    "totalWorkers": "Total Workers",
+    "availableWorkers": "Available Workers",
+    "activeTasks": "Active Tasks",
+    "pendingOrders": "Pending Orders",
+    "allDepartments": "All Departments",
+    "gridView": "Grid View",
+    "listView": "List View",
+    "available": "Available",
+    "efficiency": "Efficiency",
+    "completedTasks": "Completed Tasks",
+    "currentTask": "Current Task",
+    "noCurrentTask": "No current task",
+    "startTask": "Start Task"
+  },
+  "sales": {
+    "title": "Sales Management",
+    "subtitle": "Track all sales and revenue",
+    "newSale": "New Sale",
+    "totalSales": "Total Sales",
+    "todaysSales": "Today's Sales",
+    "averageSale": "Average Sale",
+    "totalOrders": "Total Orders",
+    "recentSales": "Recent Sales"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "subtitle": "Manage billing and payments",
+    "new": "New Invoice",
+    "total": "Total Invoices",
+    "paid": "Paid",
+    "pending": "Pending",
+    "overdue": "Overdue",
+    "searchPlaceholder": "Search invoices...",
+    "allStatuses": "All Statuses", 
+    "noInvoices": "No invoices found",
+    "createFirst": "Create your first invoice"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "Business insights and performance metrics",
+    "controls": {
+      "week": "Week",
+      "month": "Month",
+      "quarter": "Quarter",
+      "year": "Year",
+      "orders": "Orders",
+      "revenue": "Revenue",
+      "workers": "Workers",
+      "tasks": "Tasks",
+      "export": "Export"
+    },
+    "metrics": {
+      "totalOrders": "Total Orders",
+      "totalRevenue": "Total Revenue",
+      "activeWorkers": "Active Workers",
+      "completedTasks": "Completed Tasks",
+      "fromLastMonth": "from last month"
+    },
+    "charts": {
+      "monthlyOrders": "Monthly Orders",
+      "departmentPerformance": "Department Performance",
+      "orderStatus": "Order Status",
+      "taskStatus": "Task Status",
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "pending": "Pending",
+      "overdue": "Overdue"
+    }
+  },
+  "attendance": {
+    "title": "Attendance Management",
+    "subtitle": "Track worker attendance and time",
+    "syncBiometric": "Sync with Biometric",
+    "totalHours": "Total Hours",
+    "attendanceRecords": "Attendance Records",
+    "noRecordsFound": "No records found",
+    "adjustFilters": "Adjust your filters",
+    "syncNow": "Sync Now"
+  },
+  "payroll": {
+    "title": "Payroll Management",
+    "description": "Manage employee salaries and payments",
+    "createPayroll": "Create Payroll",
+    "createAllPayrolls": "Create All Payrolls",
+    "totalPayroll": "Total Payroll",
+    "averageSalary": "Average Salary",
+    "totalWorkers": "Total Workers",
+    "totalHours": "Total Hours",
+    "records": "Payroll Records",
+    "payrollNumber": "Payroll Number",
+    "worker": "Worker",
+    "hours": "Hours",
+    "baseSalary": "Base Salary",
+    "overtime": "Overtime",
+    "bonus": "Bonus",
+    "netSalary": "Net Salary"
+  },
+  "erp": {
+    "title": "ERP Management",
+    "subtitle": "Manage departments and positions for the organization",
+    "departments": "Departments",
+    "positions": "Positions",
+    "resignations": "Resignations",
+    "devices": "Devices"
+  },
+  "advanced": {
+    "title": "Advanced Features",
+    "subtitle": "AI, IoT integration, and smart automation tools",
+    "tabs": {
+      "ai": "AI Features",
+      "iot": "IoT Integration",
+      "system": "System",
+      "automation": "Automation"
+    },
+    "features": {
+      "ai": {
+        "title": "AI-Powered Features",
+        "description": "Intelligent automation and machine learning capabilities",
+        "autoAssignment": "Auto Task Assignment",
+        "autoAssignment.description": "Automatically assign tasks based on worker skills and availability",
+        "predictiveAnalytics": "Predictive Analytics",
+        "predictiveAnalytics.description": "Forecast demand and optimize resource allocation",
+        "qualityControl": "AI Quality Control",
+        "qualityControl.description": "Automated quality inspection using computer vision",
+        "demandForecasting": "Demand Forecasting",
+        "demandForecasting.description": "Predict future demand patterns using historical data"
+      }
+    }
+  },
+  "rbac": {
+    "title": "RBAC Security Dashboard",
+    "subtitle": "Monitor and manage system security in real-time",
+    "exportReport": "Export Report",
+    "overview": "Overview",
+    "security": "Security",
+    "audit": "Audit",
+    "reports": "Reports"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Manage notifications and alerts",
+    "markAllAsRead": "Mark All as Read",
+    "viewDetails": "View Details"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Configure your application settings",
+    "appearance": {
+      "title": "Appearance",
+      "description": "Customize the look and feel of your application",
+      "theme": {
+        "light": "Light",
+        "lightDesc": "Clean and bright interface",
+        "dark": "Dark", 
+        "darkDesc": "Easy on the eyes in low light",
+        "auto": "Auto",
+        "autoDesc": "Adapts to your system preference"
+      },
+      "primaryColor": {
+        "title": "Primary Color"
+      },
+      "colors": {
+        "custom": "Custom Color"
+      },
+      "preview": {
+        "title": "Preview",
+        "description": "See how your changes will look",
+        "cardTitle": "Sample Card",
+        "cardDescription": "This is a preview of how your interface will look with the selected settings",
+        "successButton": "Primary Button",
+        "secondaryButton": "Secondary Button"
+      }
+    },
+    "advancedAppearance": {
+      "title": "Advanced Appearance",
+      "description": "Advanced visual customization options"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Manage notification preferences"
+    },
+    "general": {
+      "title": "General Settings",
+      "description": "Basic application configuration",
+      "language": {
+        "title": "Language",
+        "ltr": "Left to Right",
+        "rtl": "Right to Left"
+      }
+    },
+    "security": {
+      "title": "Security",
+      "description": "Security and privacy settings"
+    },
+    "woocommerce": {
+      "title": "WooCommerce Integration", 
+      "description": "Connect with WooCommerce store"
+    },
+    "actions": {
+      "save": "Save Changes",
+      "reset": "Reset to Default"
+    }
+  },
+  "language": {
+    "english": "English",
+    "arabic": "Arabic"
+  },
+  "tasks": {
+    "total": "Total Tasks",
+    "tasksCount": "tasks"
+  },
+  "production": {
+    "dragToMove": "Drag to move between stages",
+    "stages": {
+      "design": "Design",
+      "cutting": "Cutting",
+      "sewing": "Sewing",
+      "fitting": "Fitting",
+      "completed": "Completed"
+    }
+  },
+  "barcodeQR": {
+    "title": "Barcode & QR Management",
+    "subtitle": "Generate and manage barcodes and QR codes"
+  }
+}

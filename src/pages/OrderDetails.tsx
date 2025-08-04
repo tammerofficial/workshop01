@@ -21,7 +21,8 @@ const OrderDetails: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
+    return new Date(dateString).toLocaleDateString(isRTL ? 'ar' : 'en-US', {
+      calendar: 'gregory',
       year: 'numeric',
       month: 'long',
       day: 'numeric',

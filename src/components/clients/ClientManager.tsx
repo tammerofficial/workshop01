@@ -313,7 +313,7 @@ const ClientManager: React.FC = () => {
               <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
                 <ShoppingBag size={24} className="mx-auto text-secondary mb-2" />
                 <div className="text-2xl font-bold text-gray-900">{selectedClient.totalOrders}</div>
-                <div className="text-sm text-gray-500">Total Orders</div>
+                <div className="text-sm text-gray-500">{t('productionTracking.totalOrders')}</div>
               </div>
               <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
                 <DollarSign size={24} className="mx-auto text-success mb-2" />

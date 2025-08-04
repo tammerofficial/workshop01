@@ -299,7 +299,7 @@ const WorkshopOrdersTab: React.FC<WorkshopOrdersTabProps> = ({ onOrderUpdated })
                       {order.order_number}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {new Date(order.created_at).toLocaleDateString('ar-SA')}
+                      {new Date(order.created_at).toLocaleDateString('ar', { calendar: 'gregory' })}
                     </div>
                   </td>
                   
@@ -559,7 +559,7 @@ const WorkshopOrdersTab: React.FC<WorkshopOrdersTabProps> = ({ onOrderUpdated })
                           <span className="text-sm font-medium text-gray-500">تاريخ التسليم المقدر:</span>
                           <p className="text-sm text-gray-900">
                             {selectedOrder.estimated_delivery_date 
-                              ? new Date(selectedOrder.estimated_delivery_date).toLocaleDateString('ar-SA')
+                              ? new Date(selectedOrder.estimated_delivery_date).toLocaleDateString('ar', { calendar: 'gregory' })
                               : 'غير محدد'
                             }
                           </p>

@@ -134,14 +134,14 @@ const ManagerDashboard: React.FC = () => {
           </div>
           <div className="flex items-center space-x-4 space-x-reverse">
             <div className="text-sm text-gray-500">
-              آخر تحديث: {lastUpdate.toLocaleTimeString('ar-SA')}
+              {t('page.managerDashboard.lastUpdate')}: {lastUpdate.toLocaleTimeString('ar')}
             </div>
             <button
               onClick={loadDashboard}
               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <RefreshCw className="w-4 h-4 ml-2" />
-              تحديث
+              {t('page.managerDashboard.update')}
             </button>
           </div>
         </div>
@@ -152,7 +152,7 @@ const ManagerDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">الطلبيات المكتملة اليوم</p>
+              <p className="text-sm text-gray-600">{t('page.managerDashboard.completedOrdersToday')}</p>
               <p className="text-3xl font-bold text-green-600">{dashboardData.overview.orders_completed}</p>
             </div>
             <CheckCircle className="w-12 h-12 text-green-500" />
@@ -162,7 +162,7 @@ const ManagerDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">العمال النشطين</p>
+              <p className="text-sm text-gray-600">{t('page.managerDashboard.activeWorkers')}</p>
               <p className="text-3xl font-bold text-blue-600">{dashboardData.overview.active_workers}</p>
             </div>
             <Users className="w-12 h-12 text-blue-500" />
@@ -172,7 +172,7 @@ const ManagerDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">متوسط الكفاءة</p>
+              <p className="text-sm text-gray-600">{t('page.managerDashboard.averageEfficiency')}</p>
               <p className="text-3xl font-bold text-purple-600">
                 {Math.round(dashboardData.overview.avg_efficiency)}%
               </p>
@@ -184,7 +184,7 @@ const ManagerDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">متوسط الجودة</p>
+              <p className="text-sm text-gray-600">{t('page.managerDashboard.averageQuality')}</p>
               <p className="text-3xl font-bold text-orange-600">
                 {Math.round(dashboardData.overview.avg_quality * 10) / 10}/10
               </p>
@@ -197,7 +197,7 @@ const ManagerDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Production Flow */}
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">تدفق الإنتاج</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('page.managerDashboard.productionFlow')}</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={dashboardData.production_flow.stages}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -213,7 +213,7 @@ const ManagerDashboard: React.FC = () => {
 
         {/* Top Performers */}
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">أفضل العمال اليوم</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('page.managerDashboard.topWorkersToday')}</h3>
           <div className="space-y-3">
             {dashboardData.worker_performance.top_performers.slice(0, 5).map((worker, index) => (
               <div key={worker.worker_name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -227,7 +227,7 @@ const ManagerDashboard: React.FC = () => {
                   </div>
                   <div className="mr-3">
                     <p className="font-medium text-gray-800">{worker.worker_name}</p>
-                    <p className="text-sm text-gray-600">كفاءة: {worker.efficiency}%</p>
+                    <p className="text-sm text-gray-600">{t('page.managerDashboard.averageEfficiency')}: {worker.efficiency}%</p>
                   </div>
                 </div>
                 <div className="text-lg font-bold text-blue-600">
@@ -241,31 +241,31 @@ const ManagerDashboard: React.FC = () => {
 
       {/* Real-time Metrics */}
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">المقاييس الفورية</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('page.managerDashboard.realTimeMetrics')}</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-4 bg-blue-50 rounded-lg">
             <div className="text-2xl font-bold text-blue-600">
               {dashboardData.real_time_metrics.current_active_tasks}
             </div>
-            <div className="text-sm text-gray-600">مهام نشطة</div>
+            <div className="text-sm text-gray-600">{t('page.managerDashboard.activeTasks')}</div>
           </div>
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <div className="text-2xl font-bold text-green-600">
               {dashboardData.real_time_metrics.workers_online}
             </div>
-            <div className="text-sm text-gray-600">عمال متصلين</div>
+            <div className="text-sm text-gray-600">{t('page.managerDashboard.connectedWorkers')}</div>
           </div>
           <div className="text-center p-4 bg-yellow-50 rounded-lg">
             <div className="text-2xl font-bold text-yellow-600">
               {dashboardData.real_time_metrics.orders_in_queue}
             </div>
-            <div className="text-sm text-gray-600">طلبيات في الانتظار</div>
+            <div className="text-sm text-gray-600">{t('page.managerDashboard.pendingOrders')}</div>
           </div>
           <div className="text-center p-4 bg-red-50 rounded-lg">
             <div className="text-2xl font-bold text-red-600">
               {dashboardData.real_time_metrics.urgent_orders}
             </div>
-            <div className="text-sm text-gray-600">طلبيات عاجلة</div>
+            <div className="text-sm text-gray-600">{t('page.managerDashboard.urgentOrders')}</div>
           </div>
         </div>
       </div>

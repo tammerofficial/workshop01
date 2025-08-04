@@ -164,10 +164,10 @@ export default function Clients() {
       setEditingClient(null);
       
       // Show success message
-      alert('Client updated successfully!');
+      alert(t('clients.updateSuccess'));
     } catch (error) {
       console.error('Error updating client:', error);
-      alert('Failed to update client. Please try again.');
+      alert(t('clients.updateError'));
     }
   };
 
@@ -191,10 +191,10 @@ export default function Clients() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'completed': return 'مكتمل';
-      case 'in_progress': return 'قيد التنفيذ';
-      case 'pending': return 'قيد الانتظار';
-      case 'cancelled': return 'ملغي';
+      case 'completed': return t('status.completed');
+      case 'in_progress': return t('status.inProgress');
+      case 'pending': return t('status.pending');
+      case 'cancelled': return t('status.cancelled');
       default: return status;
     }
   };
@@ -497,29 +497,29 @@ export default function Clients() {
                     <h3 className="text-lg font-semibold mb-3">معلومات الطلب الأساسية</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-500">عنوان الطلب</label>
+                        <label className="text-sm font-medium text-gray-500">{t('orders.table.description')}</label>
                         <p className="font-semibold">{getOrderDisplayTitle(selectedOrder)}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">الحالة</label>
+                        <label className="text-sm font-medium text-gray-500">{t('orders.table.status')}</label>
                         <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedOrder.status)}`}>
                           {getStatusText(selectedOrder.status)}
                         </span>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">التكلفة الإجمالية</label>
+                        <label className="text-sm font-medium text-gray-500">{t('orders.table.amount')}</label>
                         <p className="text-xl font-bold text-green-600">{formatCurrency(selectedOrder.total_cost)}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">تاريخ الإنشاء</label>
+                        <label className="text-sm font-medium text-gray-500">{t('common.createdAt')}</label>
                         <p>{formatDate(selectedOrder.created_at)}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">تاريخ التسليم</label>
+                        <label className="text-sm font-medium text-gray-500">{t('orders.table.dueDate')}</label>
                         <p>{formatDate(selectedOrder.due_date)}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">المصدر</label>
+                        <label className="text-sm font-medium text-gray-500">{t('clients.table.source')}</label>
                         <div className="flex items-center space-x-2">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             selectedOrder.woocommerce_id 
@@ -539,14 +539,14 @@ export default function Clients() {
                                   {/* Order Details */}
                 {selectedOrder.woocommerce_id && (
                   <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-blue-800">تفاصيل الطلب</h3>
+                    <h3 className="text-lg font-semibold mb-3 text-blue-800">{t('orders.orderDetails')}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                                                  <label className="text-sm font-medium text-gray-500">رقم الطلب</label>
+                                                  <label className="text-sm font-medium text-gray-500">{t('orders.table.orderNumber')}</label>
                         <p className="font-semibold">#{selectedOrder.woocommerce_id}</p>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-500">مستورد من</label>
+                          <label className="text-sm font-medium text-gray-500">{t('orders.importedFrom')}</label>
                           <p className="text-blue-600">WooCommerce</p>
                         </div>
                       </div>
@@ -555,22 +555,22 @@ export default function Clients() {
 
                   {/* Client Info */}
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-green-800">معلومات العميل</h3>
+                    <h3 className="text-lg font-semibold mb-3 text-green-800">{t('clients.customerInfo')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-500">اسم العميل</label>
+                        <label className="text-sm font-medium text-gray-500">{t('clients.table.name')}</label>
                         <p className="font-semibold">{selectedClient?.name}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">البريد الإلكتروني</label>
+                        <label className="text-sm font-medium text-gray-500">{t('clients.table.email')}</label>
                         <p>{selectedClient?.email}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">رقم الهاتف</label>
+                        <label className="text-sm font-medium text-gray-500">{t('clients.table.phone')}</label>
                         <p>{selectedClient?.phone}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">العنوان</label>
+                        <label className="text-sm font-medium text-gray-500">{t('clients.table.address')}</label>
                         <p>{selectedClient?.address}</p>
                       </div>
                     </div>
@@ -582,7 +582,7 @@ export default function Clients() {
                     onClick={() => setShowOrderDetails(false)}
                     className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors"
                   >
-                    إغلاق
+                    {t('common.close')}
                   </button>
                   
                   {/* Production Tracking Button - Show only for in-progress orders */}
@@ -608,7 +608,7 @@ export default function Clients() {
                     }}
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    تعديل الطلب
+                    {t('orders.editOrder')}
                   </button>
                 </div>
               </div>
@@ -634,7 +634,7 @@ export default function Clients() {
               color: 'var(--text-color)'
             }}
           >
-            Clients
+            {t('clients.title')}
           </h1>
           <p 
             className="text-gray-600 mt-2"
@@ -646,7 +646,7 @@ export default function Clients() {
               color: 'var(--secondary-color)'
             }}
           >
-            Manage customer information and profiles
+            {t('clients.subtitle')}
           </p>
         </div>
         <div className="flex space-x-4">
@@ -837,7 +837,7 @@ export default function Clients() {
                             }}
                             className="text-blue-600 hover:text-blue-800 text-xs underline"
                           >
-                            Load
+                            {t('common.load')}
                           </button>
                         )}
                       </div>

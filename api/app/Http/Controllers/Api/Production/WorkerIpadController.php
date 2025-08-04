@@ -70,8 +70,8 @@ class WorkerIpadController extends Controller
                 'worker' => [
                     'id' => $worker->id,
                     'name' => $worker->name,
-                    'emp_code' => $worker->emp_code,
-                    'avatar' => $worker->avatar ?? '/assets/default-avatar.png',
+                    'emp_code' => $worker->employee_code,
+                    'avatar' => '/assets/default-avatar.png',
                     'department' => $worker->department,
                     'shift' => $this->getCurrentShift()
                 ],

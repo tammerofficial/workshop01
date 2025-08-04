@@ -217,7 +217,7 @@ const Calendar: React.FC = () => {
         <div key={i} className="flex-1 min-h-[400px] border-r border-gray-200 dark:border-gray-700 last:border-r-0">
           <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
             <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              {date.toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'short' })}
+              {date.toLocaleDateString(language === 'ar' ? 'ar' : 'en-US', { weekday: 'short', calendar: 'gregory' })}
             </div>
             <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
               {date.getDate()}
@@ -388,7 +388,8 @@ const Calendar: React.FC = () => {
               </button>
               
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {selectedDate.toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { 
+                {selectedDate.toLocaleDateString(language === 'ar' ? 'ar' : 'en-US', {
+      calendar: 'gregory', 
                   year: 'numeric', 
                   month: 'long' 
                 })}

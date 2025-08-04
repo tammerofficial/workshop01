@@ -312,14 +312,14 @@ const Invoices = () => {
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-gray-400" />
                 <span className="text-sm text-gray-600 dark:text-gray-300">
-                  {t('invoices.issued', { date: new Date(invoice.issue_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US') })}
+                  {t('invoices.issued', { date: new Date(invoice.issue_date).toLocaleDateString(isRTL ? 'ar' : 'en-US', { calendar: 'gregory' }) })}
                 </span>
               </div>
 
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-gray-400" />
                 <span className="text-sm text-gray-600 dark:text-gray-300">
-                  {t('invoices.due', { date: new Date(invoice.due_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US') })}
+                  {t('invoices.due', { date: new Date(invoice.due_date).toLocaleDateString(isRTL ? 'ar' : 'en-US', { calendar: 'gregory' }) })}
                 </span>
               </div>
 

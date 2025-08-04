@@ -133,14 +133,14 @@ const WorkerIpadDashboard: React.FC<WorkerIpadDashboardProps> = ({ workerId }) =
             />
             <div>
               <h1 className="text-2xl font-bold text-gray-800">{worker?.name}</h1>
-              <p className="text-gray-600">كود الموظف: {worker?.emp_code}</p>
+              <p className="text-gray-600">{t('workers.ipad.employeeCode')} {worker?.emp_code}</p>
               <p className="text-sm text-indigo-600">{worker?.shift}</p>
             </div>
           </div>
           <div className="text-left">
-            <div className="text-sm text-gray-500">التاريخ</div>
-            <div className="text-lg font-semibold">{new Date().toLocaleDateString('ar-SA')}</div>
-            <div className="text-sm text-gray-500">{new Date().toLocaleTimeString('ar-SA', { hour12: false })}</div>
+            <div className="text-sm text-gray-500">{t('workers.ipad.date')}</div>
+            <div className="text-lg font-semibold">{new Date().toLocaleDateString('ar', { calendar: 'gregory' })}</div>
+<div className="text-sm text-gray-500">{new Date().toLocaleTimeString('ar', { hour12: false })}</div>
           </div>
         </div>
       </div>
@@ -151,22 +151,22 @@ const WorkerIpadDashboard: React.FC<WorkerIpadDashboardProps> = ({ workerId }) =
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-white rounded-xl shadow-lg p-4 text-center">
               <div className="text-3xl font-bold text-green-600">{performance?.efficiency || 0}%</div>
-              <div className="text-sm text-gray-600">كفاءة الأداء</div>
+              <div className="text-sm text-gray-600">{t('workers.ipad.performanceEfficiency')}</div>
               <Target className="w-6 h-6 text-green-500 mx-auto mt-2" />
             </div>
             <div className="bg-white rounded-xl shadow-lg p-4 text-center">
               <div className="text-3xl font-bold text-blue-600">{performance?.quality || 0}</div>
-              <div className="text-sm text-gray-600">درجة الجودة</div>
+              <div className="text-sm text-gray-600">{t('workers.ipad.qualityScore')}</div>
               <Star className="w-6 h-6 text-blue-500 mx-auto mt-2" />
             </div>
             <div className="bg-white rounded-xl shadow-lg p-4 text-center">
               <div className="text-3xl font-bold text-purple-600">{completedToday}</div>
-              <div className="text-sm text-gray-600">مهام اليوم</div>
+              <div className="text-sm text-gray-600">{t('workers.ipad.todayTasks')}</div>
               <Clock className="w-6 h-6 text-purple-500 mx-auto mt-2" />
             </div>
             <div className="bg-white rounded-xl shadow-lg p-4 text-center">
               <div className="text-3xl font-bold text-orange-600">#{performance?.rank_today || 0}</div>
-              <div className="text-sm text-gray-600">الترتيب اليومي</div>
+              <div className="text-sm text-gray-600">{t('workers.ipad.dailyRank')}</div>
               <Award className="w-6 h-6 text-orange-500 mx-auto mt-2" />
             </div>
           </div>
@@ -188,13 +188,13 @@ const WorkerIpadDashboard: React.FC<WorkerIpadDashboardProps> = ({ workerId }) =
         {/* Current Tasks */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-2xl shadow-xl p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">المهام الحالية</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">{t('workers.ipad.currentTasks')}</h2>
             
             {currentTasks.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-6xl mb-4">📋</div>
-                <p className="text-gray-600 text-lg">لا توجد مهام حالية</p>
-                <p className="text-gray-500">سيتم تخصيص مهام جديدة قريباً</p>
+                <p className="text-gray-600 text-lg">{t('workers.ipad.noCurrentTasks')}</p>
+                <p className="text-gray-500">{t('workers.ipad.newTasksSoon')}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -270,7 +270,7 @@ const WorkerIpadDashboard: React.FC<WorkerIpadDashboardProps> = ({ workerId }) =
 
                     {/* Due Date */}
                     <div className="mt-2 text-xs text-gray-500">
-                      موعد الإنجاز المتوقع: {new Date(task.due_date).toLocaleString('ar-SA')}
+                      موعد الإنجاز المتوقع: {new Date(task.due_date).toLocaleString('ar', { calendar: 'gregory' })}
                     </div>
                   </div>
                 ))}

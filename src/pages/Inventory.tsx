@@ -144,7 +144,7 @@ const Inventory = () => {
   const getStockStatus = (material: Material) => {
     if (material.quantity === 0) return { status: 'out', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200', text: t('inventory.outOfStockStatus') };
     if (material.quantity <= material.reorder_level) return { status: 'low', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200', text: t('inventory.lowStockStatus') };
-    return { status: 'good', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', text: t('common.available') };
+    return { status: 'good', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', text: t('inventory.available') };
   };
 
   if (loading) {
@@ -173,7 +173,7 @@ const Inventory = () => {
               color: 'var(--text-color)'
             }}
           >
-            Inventory
+            {t('inventory.title')}
           </h1>
           <p 
             className="text-gray-600 dark:text-gray-400 mt-2"
@@ -185,7 +185,7 @@ const Inventory = () => {
               color: 'var(--secondary-color)'
             }}
           >
-            Track materials and supplies
+            {t('inventory.subtitle')}
           </p>
         </div>
                 <button 
@@ -234,7 +234,7 @@ const Inventory = () => {
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('inventory.stockValue')}</p>
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                ${materials.reduce((acc, m) => acc + m.quantity * m.cost_per_unit, 0).toLocaleString()}
+                {materials.reduce((acc, m) => acc + m.quantity * m.cost_per_unit, 0).toFixed(3)} {t('common.currency')}
               </p>
             </div>
             <TrendingUp className="h-8 w-8 text-green-600 dark:text-green-400" />

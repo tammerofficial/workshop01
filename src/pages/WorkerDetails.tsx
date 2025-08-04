@@ -905,7 +905,7 @@ const WorkerDetails: React.FC = () => {
                                 const isCheckIn = (record.punch_state_display as string)?.toLowerCase().includes('in') || 
                                                   (record.punch_state_display as string)?.toLowerCase().includes('دخول');
                                 const date = new Date(record.date as string);
-                                const formattedDate = date.toLocaleDateString(isRTL ? 'ar-SA' : 'en-US');
+                                const formattedDate = date.toLocaleDateString(isRTL ? 'ar' : 'en-US', { calendar: 'gregory' });
                                 const time = record.time as string;
                                 const action = record.punch_state_display as string || (isCheckIn ? t('Check In') : t('Check Out'));
                                 const device = record.device_name as string || t('Unknown Device');
@@ -919,7 +919,7 @@ const WorkerDetails: React.FC = () => {
                                           {formattedDate}
                                         </p>
                                         <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                          {date.toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', { weekday: 'short' })}
+                                          {date.toLocaleDateString(isRTL ? 'ar' : 'en-US', { weekday: 'short', calendar: 'gregory' })}
                                         </p>
                                       </div>
                                     </div>

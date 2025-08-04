@@ -168,7 +168,7 @@ const Sales: React.FC = () => {
         <div className={`p-6 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Orders</p>
+              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('productionTracking.totalOrders')}</p>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.totalOrders}</p>
             </div>
             <div className="p-3 bg-orange-100 rounded-lg">
