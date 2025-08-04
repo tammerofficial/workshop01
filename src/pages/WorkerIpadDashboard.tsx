@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Play, Square, Pause, RotateCcw, Star, Clock, Target, Award } from 'lucide-react';
-import { laravel } from '../api/laravel';
+import { useLanguage } from '../contexts/LanguageContext';
+import laravel from '../api/laravel';
 
 interface WorkerTask {
   id: number;
@@ -37,6 +38,7 @@ interface WorkerIpadDashboardProps {
 }
 
 const WorkerIpadDashboard: React.FC<WorkerIpadDashboardProps> = ({ workerId }) => {
+  const { t } = useLanguage();
   const [worker, setWorker] = useState<WorkerData | null>(null);
   const [currentTasks, setCurrentTasks] = useState<WorkerTask[]>([]);
   const [performance, setPerformance] = useState<PerformanceData | null>(null);

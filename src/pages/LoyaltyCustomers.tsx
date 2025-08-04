@@ -15,7 +15,7 @@ import {
   Coins,
   Plus
 } from 'lucide-react';
-import { laravel } from '../api/laravel';
+import laravel from '../api/laravel';
 
 interface LoyaltyCustomer {
   id: number;

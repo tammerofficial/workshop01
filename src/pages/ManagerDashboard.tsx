@@ -7,7 +7,8 @@ import {
   TrendingUp, TrendingDown, Users, Clock, AlertTriangle, 
   CheckCircle, Activity, Settings, RefreshCw
 } from 'lucide-react';
-import { laravel } from '../api/laravel';
+import { useLanguage } from '../contexts/LanguageContext';
+import laravel from '../api/laravel';
 
 interface DashboardStats {
   overview: {
@@ -50,6 +51,7 @@ interface DashboardStats {
 }
 
 const ManagerDashboard: React.FC = () => {
+  const { t } = useLanguage();
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -127,8 +129,8 @@ const ManagerDashboard: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">لوحة مراقبة المدير</h1>
-            <p className="text-gray-600 mt-1">نظرة شاملة على الإنتاج والأداء</p>
+            <h1 className="text-2xl font-bold text-gray-800">{t('page.managerDashboard.title')}</h1>
+            <p className="text-gray-600 mt-1">{t('page.managerDashboard.subtitle')}</p>
           </div>
           <div className="flex items-center space-x-4 space-x-reverse">
             <div className="text-sm text-gray-500">

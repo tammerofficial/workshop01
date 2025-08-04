@@ -19,7 +19,7 @@ import {
   Download,
   Smartphone
 } from 'lucide-react';
-import { laravel } from '../api/laravel';
+import laravel from '../api/laravel';
 
 interface CustomerInfo {
   membership_number: string;

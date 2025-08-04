@@ -277,10 +277,7 @@ class Worker extends Model
         'audit_trail' => 'array',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+
 
     public function tasks()
     {
@@ -393,5 +390,29 @@ class Worker extends Model
         return $query->where('is_active', true)
                     ->where('payroll_status', 'active')
                     ->whereNotNull('hourly_rate');
+    }
+
+    // العلاقة مع المستخدم المرتبط (في نظام RBAC)
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    // العلاقة مع تقدم الطلبيات
+    public function orderProgress(): HasMany
+    {
+        return $this->hasMany(OrderWorkflowProgress::class, 'assigned_worker_id');
+    }
+
+    // العلاقة مع تخصيصات المراحل
+    public function stageAssignments(): HasMany
+    {
+        return $this->hasMany(WorkerStageAssignment::class, 'worker_id');
+    }
+
+    // العلاقة مع مقاييس الأداء
+    public function performanceMetrics(): HasMany
+    {
+        return $this->hasMany(WorkerPerformanceMetric::class, 'worker_id');
     }
 }

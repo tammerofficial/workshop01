@@ -90,8 +90,22 @@ const translations = {
     'Calculated from: Monthly Salary ÷ Monthly Working Hours': 'Calculated from: Monthly Salary ÷ Monthly Working Hours',
     'Calculated as: Hourly Rate × 1.5': 'Calculated as: Hourly Rate × 1.5',
 
+    'sidebar.workflow': 'Workflow Automation',
+    'sidebar.workerIpad': 'Worker iPad Interface',
+    'sidebar.managerDashboard': 'Manager Dashboard',
+
+    'page.workflow.title': 'Workflow Automation System',
+    'page.workflow.subtitle': 'Design, monitor, and manage automated production flows',
+    'page.workerIpad.title': 'Worker Task Interface',
+    'page.workerIpad.subtitle': 'Real-time task management for workshop staff',
+    'page.managerDashboard.title': 'Manager Monitoring Dashboard',
+    'page.managerDashboard.subtitle': 'Comprehensive overview of production and performance',
+    
     // Sidebar Navigation
-    'sidebar.workshop': 'Workshop',
+    'sidebar.production': 'Production Operations',
+    'sidebar.workshop': 'Workshop Management',
+    'sidebar.systemManagement': 'System Management',
+    'sidebar.userSettings': 'User Settings',
     'sidebar.dashboard': 'Dashboard',
     'sidebar.orders': 'Orders',
     'sidebar.ordersManagement': 'Orders Management',
@@ -100,8 +114,13 @@ const translations = {
     'sidebar.inventory': 'Inventory',
     'sidebar.workers': 'Workers',
     'sidebar.productionFlow': 'Production Flow',
-    'sidebar.stations': 'Stations',
+    'sidebar.stations': 'Station Display',
     'sidebar.productionTracking': 'Production Tracking',
+    'sidebar.barcodeQR': 'Barcode & QR',
+    
+    // Barcode & QR Management
+    'barcodeQR.title': 'Barcode & QR Code Management',
+    'barcodeQR.subtitle': 'Generate and scan codes for products, orders and materials',
     'sidebar.calendar': 'Calendar',
     'sidebar.erpSystem': 'ERP System',
     'sidebar.invoices': 'Invoices',
@@ -1542,8 +1561,22 @@ const translations = {
     'nav.notifications': 'الإشعارات',
     'nav.settings': 'الإعدادات',
     
+    'sidebar.workflow': 'نظام التدفق الآلي',
+    'sidebar.workerIpad': 'واجهة العمال - iPad',
+    'sidebar.managerDashboard': 'لوحة مراقبة المدير',
+    
+    'page.workflow.title': 'نظام تدفق العمل الآلي',
+    'page.workflow.subtitle': 'تصميم ومراقبة وإدارة تدفقات الإنتاج الآلية',
+    'page.workerIpad.title': 'واجهة مهام العامل',
+    'page.workerIpad.subtitle': 'إدارة المهام في الوقت الفعلي لموظفي الورشة',
+    'page.managerDashboard.title': 'لوحة مراقبة المدير',
+    'page.managerDashboard.subtitle': 'نظرة شاملة على الإنتاج والأداء',
+
     // Sidebar Navigation
-    'sidebar.workshop': 'ورشة العمل',
+    'sidebar.production': 'عمليات الإنتاج',
+    'sidebar.workshop': 'إدارة الورشة',
+    'sidebar.systemManagement': 'إدارة النظام',
+    'sidebar.userSettings': 'الإعدادات الشخصية',
     'sidebar.dashboard': 'لوحة التحكم',
     'sidebar.orders': 'الطلبات',
     'sidebar.ordersManagement': 'إدارة الطلبات',
@@ -1552,8 +1585,13 @@ const translations = {
     'sidebar.inventory': 'المخزون',
     'sidebar.workers': 'العمال',
     'sidebar.productionFlow': 'سير الإنتاج',
-    'sidebar.stations': 'المحطات',
+    'sidebar.stations': 'عرض المحطات',
     'sidebar.productionTracking': 'تتبع الإنتاج',
+    'sidebar.barcodeQR': 'الباركود و QR',
+    
+    // Barcode & QR Management
+    'barcodeQR.title': 'إدارة الباركود و QR Code',
+    'barcodeQR.subtitle': 'توليد ومسح الأكواد للمنتجات والطلبات والمواد',
     'sidebar.calendar': 'التقويم',
     'sidebar.erpSystem': 'نظام تخطيط الموارد',
     'sidebar.invoices': 'الفواتير',
@@ -2810,9 +2848,7 @@ const translations = {
     'woocommerce.lastSync': 'آخر مزامنة',
     'woocommerce.never': 'لم يتم',
 
-    // WooCommerce Settings
-    'settings.woocommerce.title': 'تكامل WooCommerce',
-    'settings.woocommerce.description': 'ربط ومزامنة متجر WooCommerce الخاص بك',
+
 
     // Advanced Features
     'advanced.title': 'الميزات المتقدمة',
@@ -2890,12 +2926,7 @@ const translations = {
     'common.enabled': 'مفعل',
     'common.disabled': 'معطل',
 
-    // Language Settings
-    'settings.general.language.ltr': 'من اليسار إلى اليمين',
-    'settings.general.language.rtl': 'من اليمين إلى اليسار',
-    'settings.appearance.theme.lightDesc': 'مشرق ونظيف',
-    'settings.appearance.theme.darkDesc': 'مريح للعيون',
-    'settings.appearance.theme.autoDesc': 'يتبع تفضيل النظام',
+
   }
 };
 

@@ -241,10 +241,10 @@ const BarcodeQRManagement: React.FC = () => {
             <QrCode className="h-8 w-8 text-blue-600" />
             <div>
               <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                إدارة الباركود و QR Code
+                {t('barcodeQR.title')}
               </h1>
               <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                توليد ومسح الأكواد للمنتجات والطلبات والمواد
+                {t('barcodeQR.subtitle')}
               </p>
             </div>
           </div>

@@ -41,6 +41,9 @@ import Payroll from './pages/Payroll';
 import Attendance from './pages/Attendance';
 import ProductionTracking from './pages/ProductionTracking';
 import BarcodeQRManagement from './pages/BarcodeQRManagement';
+import WorkerIpadDashboard from './pages/WorkerIpadDashboard';
+import ManagerDashboard from './pages/ManagerDashboard';
+import WorkflowDashboard from './pages/WorkflowDashboard';
 
 // Admin pages
 import Profile from './pages/admin/Profile';
@@ -185,8 +188,11 @@ function App() {
                   <Route path="sales" element={<Sales />} />
                   <Route path="payroll" element={<Payroll />} />
                   <Route path="attendance" element={<Attendance />} />
-                  <Route path="production-tracking" element={<ProductionTracking />} />
-                <Route path="barcode-qr" element={<BarcodeQRManagement />} />
+                                    <Route path="production-tracking" element={<ProductionTracking />} />
+                  <Route path="barcode-qr" element={<BarcodeQRManagement />} />
+                  <Route path="worker-ipad" element={<WorkerIpadDashboard workerId={1} />} />
+                  <Route path="workflow-dashboard" element={<WorkflowDashboard />} />
+                  <Route path="manager-dashboard" element={<ManagerDashboard />} />
                   
                   {/* Admin Routes - with role-based protection */}
                   <Route path="admin/profile" element={<Profile />} />

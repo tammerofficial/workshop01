@@ -13,7 +13,7 @@ import {
   Activity,
   Target
 } from 'lucide-react';
-import { laravel } from '../api/laravel';
+import laravel from '../api/laravel';
 
 interface ReportData {
   period: {

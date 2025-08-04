@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\Business\WooCommerceOrderController;
 use App\Http\Controllers\Api\Business\WorkshopOrderController;
 use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\AppleWalletWorkshopController;
+use App\Http\Controllers\Api\Production\WorkflowController;
 use App\Http\Controllers\Api\LoyaltyReportsController;
 
 Route::get('/user', function (Request $request) {
@@ -725,6 +726,11 @@ Route::group(['prefix' => 'system-settings'], function () {
     Route::get('/theme', [\App\Http\Controllers\Api\SystemSettingsController::class, 'getThemeSettings']);
     Route::post('/theme', [\App\Http\Controllers\Api\SystemSettingsController::class, 'updateThemeSettings'])->middleware('auth:sanctum');
     Route::post('/theme/reset', [\App\Http\Controllers\Api\SystemSettingsController::class, 'resetThemeSettings'])->middleware('auth:sanctum');
+});
+
+// Workflow & Worker Status Routes
+Route::prefix('workflow')->group(function () {
+    Route::get('/worker-status-summary', [WorkflowController::class, 'getWorkerStatusSummary']);
 });
 
 // API Dashboard Routes (JSON endpoints)

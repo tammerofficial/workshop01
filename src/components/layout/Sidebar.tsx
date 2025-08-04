@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { 
   LayoutDashboard, ShoppingBag, Package, Users, Calendar, 
   LineChart, Bell, Settings, Monitor, Workflow, Zap,
-  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2, ShoppingCart, Puzzle, Shield, QrCode
+  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2, ShoppingCart, Puzzle, Shield, QrCode, Boxes
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -21,184 +21,230 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const { isDark } = useTheme();
   const { hasPermission, hasAnyRole, canAccessAdmin } = usePermissions();
   
+  // قسم عمليات الإنتاج - تدفق منطقي مع صلاحيات محددة ومتدرجة
+  const productionItems = [
+    // 1. تخطيط وإدارة سير العمل (صلاحية إدارة متقدمة)
+    { 
+      path: '/workflow-dashboard', 
+      label: t('sidebar.workflow'), 
+      icon: <Workflow size={20} />, 
+      badge: t('common.new'),
+      requiredPermissions: ['production.manage'],
+      show: hasPermission('production.manage') || hasAnyRole(['super_admin', 'production_manager'])
+    },
+    // 2. تنفيذ العمل (واجهة العمال - صلاحية تنفيذ)
+    { 
+      path: '/worker-ipad', 
+      label: t('sidebar.workerIpad'), 
+      icon: <Users size={20} />, 
+      badge: t('common.new'),
+      requiredPermissions: ['production.execute'],
+      show: hasPermission('production.execute') || hasAnyRole(['super_admin', 'production_worker', 'production_manager'])
+    },
+    // 3. تتبع ومراقبة الإنتاج (صلاحية مراقبة)
+    { 
+      path: '/production-tracking', 
+      label: t('sidebar.productionTracking'), 
+      icon: <Factory size={20} />, 
+      badge: t('common.new'),
+      requiredPermissions: ['production.track'],
+      show: hasPermission('production.track') || hasAnyRole(['super_admin', 'production_manager', 'production_supervisor'])
+    },
+    // 4. أدوات مساعدة (الباركود - صلاحية أدوات)
+    { 
+      path: '/barcode-qr', 
+      label: t('sidebar.barcodeQR'), 
+      icon: <QrCode size={20} />, 
+      badge: t('common.new'),
+      requiredPermissions: ['production.tools'],
+      show: hasPermission('production.tools') || hasAnyRole(['super_admin', 'production_manager', 'inventory_manager'])
+    },
+    // 5. لوحة إدارية شاملة (صلاحية إدارة عليا)
+    { 
+      path: '/manager-dashboard', 
+      label: t('sidebar.managerDashboard'), 
+      icon: <Monitor size={20} />, 
+      badge: t('common.new'),
+      requiredPermissions: ['production.admin'],
+      show: hasPermission('production.admin') || hasAnyRole(['super_admin', 'production_manager', 'general_manager'])
+    },
+  ].filter(item => item.show);
+
+  // قسم إدارة الورشة - منظم حسب تدفق العمل اليومي
   const workshopItems = [
+    // 1. نقطة البداية
     { 
       path: '/', 
-      label: t('sidebar.dashboard', 'لوحة التحكم'), 
+      label: t('sidebar.dashboard'), 
       icon: <LayoutDashboard size={20} />, 
       requiredPermissions: ['dashboard.view'],
       show: hasPermission('dashboard.view') || hasAnyRole(['super_admin'])
     },
-    { 
-      path: '/orders', 
-      label: t('sidebar.orders', 'الطلبات'), 
-      icon: <ShoppingBag size={20} />, 
-      badge: 5,
-      requiredPermissions: ['orders.view'],
-      show: hasPermission('orders.view') || hasAnyRole(['super_admin'])
-    },
+    // 2. إدارة الطلبات (دمج العنصرين المكررين)
     { 
       path: '/orders-management', 
-      label: t('sidebar.ordersManagement', 'إدارة الطلبات'), 
+      label: t('sidebar.ordersManagement'), 
       icon: <ShoppingCart size={20} />, 
-      badge: t('common.new', 'جديد'),
+      badge: 5, // عدد الطلبات المعلقة
       requiredPermissions: ['orders.view'],
       show: hasPermission('orders.view') || hasAnyRole(['super_admin'])
     },
+    // 3. المنتجات والكتالوج
     { 
       path: '/products', 
-      label: t('sidebar.products', 'المنتجات'), 
+      label: t('sidebar.products'), 
       icon: <Package size={20} />, 
-      badge: t('common.new', 'جديد'),
+      badge: t('common.new'),
       requiredPermissions: ['products.view'],
       show: hasPermission('products.view') || hasAnyRole(['super_admin'])
     },
+    // 4. إدارة العملاء
     { 
       path: '/clients', 
-      label: t('sidebar.clients', 'العملاء'), 
+      label: t('sidebar.clients'), 
       icon: <UserCheck size={20} />,
       requiredPermissions: ['clients.view'],
       show: hasPermission('clients.view') || hasAnyRole(['super_admin'])
     },
+    // 5. إدارة المخزون
     { 
       path: '/inventory', 
-      label: t('sidebar.inventory', 'المخزون'), 
-      icon: <Package size={20} />,
+      label: t('sidebar.inventory'), 
+      icon: <Boxes size={20} />, // أيقونة مختلفة عن Products
       requiredPermissions: ['inventory.view'],
       show: hasPermission('inventory.view') || hasAnyRole(['super_admin'])
     },
+    // 6. إدارة الموارد البشرية
     { 
       path: '/workers', 
-      label: t('sidebar.workers', 'العمال'), 
+      label: t('sidebar.workers'), 
       icon: <Users size={20} />,
       requiredPermissions: ['workers.view'],
       show: hasPermission('workers.view') || hasAnyRole(['super_admin'])
     },
+    // 7. التخطيط والجدولة
+    { 
+      path: '/calendar', 
+      label: t('sidebar.calendar'), 
+      icon: <Calendar size={20} />,
+      requiredPermissions: ['calendar.view'],
+      show: hasPermission('calendar.view') || hasAnyRole(['super_admin'])
+    },
+    // 8. مراقبة الإنتاج التقليدي
     { 
       path: '/suit-production', 
-      label: t('sidebar.productionFlow', 'سير الإنتاج'), 
-      icon: <Workflow size={20} />,
+      label: t('sidebar.productionFlow'), 
+      icon: <Factory size={20} />,
       requiredPermissions: ['production.view'],
       show: hasPermission('production.view') || hasAnyRole(['super_admin'])
     },
     { 
       path: '/station-display', 
-      label: t('sidebar.stations', 'المحطات'), 
+      label: t('sidebar.stations'), 
       icon: <Monitor size={20} />,
       requiredPermissions: ['production.view'],
       show: hasPermission('production.view') || hasAnyRole(['super_admin'])
     },
-    { 
-      path: '/production-tracking', 
-      label: t('sidebar.productionTracking', 'تتبع الإنتاج'), 
-      icon: <Factory size={20} />, 
-      badge: t('common.new', 'جديد'),
-      requiredPermissions: ['production.view'],
-      show: hasPermission('production.view') || hasAnyRole(['super_admin'])
-    },
-    { 
-      path: '/barcode-qr', 
-      label: 'الباركود و QR', 
-      icon: <QrCode size={20} />, 
-      badge: t('common.new', 'جديد'),
-      requiredPermissions: ['production.view'],
-      show: hasPermission('production.view') || hasAnyRole(['super_admin'])
-    },
-    { 
-      path: '/calendar', 
-      label: t('sidebar.calendar', 'التقويم'), 
-      icon: <Calendar size={20} />,
-      requiredPermissions: ['calendar.view'],
-      show: hasPermission('calendar.view') || hasAnyRole(['super_admin'])
-    },
   ].filter(item => item.show);
 
+  // قسم نظام تخطيط الموارد - منظم حسب دورة العمل المالي والإداري
   const erpItems = [
+    // 1. المبيعات (نقطة البداية في الدورة المالية)
+    { 
+      path: '/sales', 
+      label: t('sidebar.sales'), 
+      icon: <DollarSign size={20} />, 
+      badge: t('common.hot'),
+      requiredPermissions: ['reports.view'],
+      show: hasPermission('reports.view') || hasAnyRole(['super_admin'])
+    },
+    // 2. الفواتير (تابع للمبيعات)
     { 
       path: '/invoices', 
-      label: t('sidebar.invoices', 'الفواتير'), 
+      label: t('sidebar.invoices'), 
       icon: <FileText size={20} />,
       requiredPermissions: ['invoices.view'],
       show: hasPermission('invoices.view') || hasAnyRole(['super_admin'])
     },
-    { 
-      path: '/sales', 
-      label: t('sidebar.sales', 'المبيعات'), 
-      icon: <DollarSign size={20} />, 
-      badge: t('common.hot', 'ساخن'),
-      requiredPermissions: ['reports.view'],
-      show: hasPermission('reports.view') || hasAnyRole(['super_admin'])
-    },
-    { 
-      path: '/payroll', 
-      label: t('sidebar.payroll', 'كشوف المرتبات'), 
-      icon: <TrendingUp size={20} />,
-      requiredPermissions: ['payroll.view'],
-      show: hasPermission('payroll.view') || hasAnyRole(['super_admin'])
-    },
-    { 
-      path: '/attendance', 
-      label: t('sidebar.attendance', 'الحضور'), 
-      icon: <Clock size={20} />,
-      requiredPermissions: ['attendance.modify'],
-      show: hasPermission('attendance.modify') || hasAnyRole(['super_admin'])
-    },
+    // 3. التحليلات المالية والتقارير
     { 
       path: '/analytics', 
-      label: t('sidebar.analytics', 'التحليلات'), 
+      label: t('sidebar.analytics'), 
       icon: <LineChart size={20} />,
       requiredPermissions: ['analytics.view'],
       show: hasPermission('analytics.view') || hasAnyRole(['super_admin'])
     },
+    // 4. إدارة الموارد البشرية - الحضور
+    { 
+      path: '/attendance', 
+      label: t('sidebar.attendance'), 
+      icon: <Clock size={20} />,
+      requiredPermissions: ['attendance.modify'],
+      show: hasPermission('attendance.modify') || hasAnyRole(['super_admin'])
+    },
+    // 5. إدارة الموارد البشرية - المرتبات
+    { 
+      path: '/payroll', 
+      label: t('sidebar.payroll'), 
+      icon: <TrendingUp size={20} />,
+      requiredPermissions: ['payroll.view'],
+      show: hasPermission('payroll.view') || hasAnyRole(['super_admin'])
+    },
+    // 6. النظام الشامل للـ ERP
     { 
       path: '/erp', 
-      label: t('sidebar.erpManagement', 'إدارة تخطيط الموارد'), 
+      label: t('sidebar.erpManagement'), 
       icon: <Building2 size={20} />, 
-      badge: t('common.new', 'جديد'),
+      badge: t('common.new'),
       requiredPermissions: ['system.admin'],
       show: hasPermission('system.admin') || hasAnyRole(['super_admin'])
     },
   ].filter(item => item.show);
 
-  const otherItems = [
+  // قسم إدارة النظام - صلاحيات محددة حسب مستوى الأمان
+  const systemItems = [
     { 
       path: '/advanced-features', 
-      label: t('sidebar.advancedFeatures', 'الميزات المتقدمة'), 
+      label: t('sidebar.advancedFeatures'), 
       icon: <Zap size={20} />, 
-      badge: t('common.new', 'جديد'),
-      requiredPermissions: ['system.admin'],
-      show: hasPermission('system.admin') || hasAnyRole(['super_admin'])
+      badge: t('common.new'),
+      requiredPermissions: ['system.features'],
+      show: hasPermission('system.features') || hasAnyRole(['super_admin', 'system_admin'])
     },
     { 
       path: '/plugins', 
-      label: t('sidebar.pluginManagement', 'إدارة الإضافات'), 
+      label: t('sidebar.pluginManagement'), 
       icon: <Puzzle size={20} />, 
-      badge: t('common.new', 'جديد'),
-      requiredPermissions: ['system.admin'],
-      show: hasPermission('system.admin') || hasAnyRole(['super_admin'])
+      badge: t('common.new'),
+      requiredPermissions: ['system.plugins'],
+      show: hasPermission('system.plugins') || hasAnyRole(['super_admin', 'system_admin'])
     },
     { 
       path: '/rbac-dashboard', 
-      label: t('sidebar.rbacSecurity', 'أمان التحكم بالأدوار'), 
+      label: t('sidebar.rbacSecurity'), 
       icon: <Shield size={20} />, 
-      badge: t('common.secure', 'آمن'),
-      requiredPermissions: ['system.logs'],
-      show: hasPermission('system.logs') || hasAnyRole(['super_admin'])
+      badge: t('common.secure'),
+      requiredPermissions: ['system.security'],
+      show: hasPermission('system.security') || hasAnyRole(['super_admin', 'security_admin'])
     },
+  ].filter(item => item.show);
+
+  // قسم الإعدادات الشخصية - مرن لجميع المستخدمين
+  const userItems = [
     { 
       path: '/notifications', 
-      label: t('sidebar.notifications', 'الإشعارات'), 
+      label: t('sidebar.notifications'), 
       icon: <Bell size={20} />, 
       badge: 3,
-      requiredPermissions: [],
+      requiredPermissions: [], // متاح للجميع
       show: true // Always show notifications
     },
     { 
       path: '/settings', 
-      label: t('sidebar.settings', 'الإعدادات'), 
+      label: t('sidebar.settings'), 
       icon: <Settings size={20} />,
-      requiredPermissions: ['settings.view'],
-      show: hasPermission('settings.view') || hasAnyRole(['super_admin'])
+      requiredPermissions: ['user.settings'], // صلاحية أكثر تحديداً
+      show: hasPermission('user.settings') || hasAnyRole(['super_admin']) || true // متاح للجميع أساساً
     },
   ].filter(item => item.show);
 
@@ -250,7 +296,117 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
 
       {/* Navigation */}
       <nav className="flex-1 mt-6 px-3 pb-6 space-y-8 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
-        {/* Workshop Section */}
+        {/* Production Operations Section */}
+        {productionItems.length > 0 && (
+          <div>
+            {isOpen && (
+              <div className="mb-6">
+                <div 
+                  className="flex items-center px-3 mb-3 py-2 rounded-lg bg-theme-sidebar"
+                  style={{ 
+                    color: 'var(--secondary-color)',
+                    backgroundColor: 'var(--sidebar-bg)'
+                  }}
+                >
+                  <div 
+                    className="w-1 h-4 rounded-full mr-3"
+                    style={{ backgroundColor: '#f59e0b' }}
+                  ></div>
+                  <h3 
+                    className="text-sm font-bold uppercase tracking-wider"
+                    style={{
+                      fontFamily: 'var(--font-family)',
+                      fontSize: 'calc(var(--font-size) * 0.75)',
+                      fontWeight: 'var(--font-weight)',
+                      color: 'var(--secondary-color)'
+                    }}
+                  >
+                    {t('sidebar.production', 'عمليات الإنتاج')}
+                  </h3>
+                  <span className="ml-2 text-lg">⚡</span>
+                </div>
+                <div 
+                  className="h-px mx-3 mb-4"
+                  style={{ backgroundColor: 'var(--border-color)' }}
+                ></div>
+              </div>
+            )}
+          <ul className="space-y-1">
+            {productionItems.map((item) => (
+              <li key={item.path}>
+                <NavLink
+                  to={item.path}
+                  className={({ isActive }) =>
+                    classNames(
+                      "sidebar-item nav-item flex items-center px-3 py-3 rounded-xl transition-all duration-200 group relative",
+                      {
+                        "active": isActive,
+                        
+                        "justify-center": !isOpen,
+                        "justify-between": isOpen && item.badge,
+                      }
+                    )
+                  }
+                >
+                  <div className={classNames("flex items-center", { "justify-center": !isOpen })}>
+                    <span className={classNames(
+                      "transition-transform duration-200 group-hover:scale-110",
+                      !isOpen ? "text-center" : isRTL ? "ml-3" : "mr-3"
+                    )}>
+                      {item.icon}
+                    </span>
+                    {isOpen && (
+                      <span 
+                        className="font-medium text-sm"
+                        style={{
+                          fontFamily: 'var(--font-family)',
+                          fontSize: 'var(--font-size)',
+                          fontWeight: 'var(--font-weight)',
+                          lineHeight: 'var(--line-height)'
+                        }}
+                      >
+                        {item.label}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Badge */}
+                  {isOpen && item.badge && (
+                    <span className={`inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white rounded-full ${
+                      item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
+                  
+                  {/* Tooltip for collapsed state */}
+                  {!isOpen && (
+                    <div 
+                      className={`absolute ${isRTL ? 'right-full mr-2' : 'left-full ml-2'} px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50`}
+                      style={{
+                        fontFamily: 'var(--font-family)',
+                        fontSize: 'calc(var(--font-size) * 0.75)',
+                        fontWeight: 'var(--font-weight)'
+                      }}
+                    >
+                      {item.label}
+                      {item.badge && (
+                        <span className={`ml-1 inline-flex items-center justify-center px-1 py-0.5 text-xs font-bold leading-none text-white rounded-full ${
+                          item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                        }`}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+          </div>
+        )}
+
+        {/* Workshop Management Section */}
         {workshopItems.length > 0 && (
           <div>
             {isOpen && (
@@ -275,7 +431,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       color: 'var(--secondary-color)'
                     }}
                   >
-                    {t('sidebar.workshop', 'ورشة العمل')}
+                    {t('sidebar.workshop', 'إدارة الورشة')}
                   </h3>
                   <span className="ml-2 text-lg">🏭</span>
                 </div>
@@ -470,8 +626,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           </div>
         )}
 
-        {/* Other Section */}
-        {otherItems.length > 0 && (
+        {/* System Management Section */}
+        {systemItems.length > 0 && (
           <div>
             {isOpen && (
               <div className="mb-6">
@@ -484,7 +640,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                 >
                   <div 
                     className="w-1 h-4 rounded-full mr-3"
-                    style={{ backgroundColor: '#a855f7' }}
+                    style={{ backgroundColor: '#dc2626' }}
                   ></div>
                   <h3 
                     className="text-sm font-bold uppercase tracking-wider"
@@ -495,18 +651,128 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       color: 'var(--secondary-color)'
                     }}
                   >
-                    {t('sidebar.other', 'أخرى')}
+                    {t('sidebar.systemManagement', 'إدارة النظام')}
                   </h3>
-                  <span className="ml-2 text-lg">⚙️</span>
+                  <span className="ml-2 text-lg">🔧</span>
+                </div>
+                <div 
+                  className="h-px mx-3 mb-4"
+                  style={{ backgroundColor: 'var(--border-color)' }}
+                ></div>
               </div>
-              <div 
-                className="h-px mx-3 mb-4"
-                style={{ backgroundColor: 'var(--border-color)' }}
-              ></div>
-            </div>
-          )}
+            )}
           <ul className="space-y-1">
-            {otherItems.map((item) => (
+            {systemItems.map((item) => (
+              <li key={item.path}>
+                <NavLink
+                  to={item.path}
+                  className={({ isActive }) =>
+                    classNames(
+                      "sidebar-item nav-item flex items-center px-3 py-3 rounded-xl transition-all duration-200 group relative",
+                      {
+                        "active": isActive,
+                        
+                        "justify-center": !isOpen,
+                        "justify-between": isOpen && item.badge,
+                      }
+                    )
+                  }
+                >
+                  <div className={classNames("flex items-center", { "justify-center": !isOpen })}>
+                    <span className={classNames(
+                      "transition-transform duration-200 group-hover:scale-110",
+                      !isOpen ? "text-center" : isRTL ? "ml-3" : "mr-3"
+                    )}>
+                      {item.icon}
+                    </span>
+                    {isOpen && (
+                      <span 
+                        className="font-medium text-sm"
+                        style={{
+                          fontFamily: 'var(--font-family)',
+                          fontSize: 'var(--font-size)',
+                          fontWeight: 'var(--font-weight)',
+                          lineHeight: 'var(--line-height)'
+                        }}
+                      >
+                        {item.label}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Badge */}
+                  {isOpen && item.badge && (
+                    <span className={`inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white rounded-full ${
+                      item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
+                  
+                  {/* Tooltip for collapsed state */}
+                  {!isOpen && (
+                    <div 
+                      className={`absolute ${isRTL ? 'right-full mr-2' : 'left-full ml-2'} px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50`}
+                      style={{
+                        fontFamily: 'var(--font-family)',
+                        fontSize: 'calc(var(--font-size) * 0.75)',
+                        fontWeight: 'var(--font-weight)'
+                      }}
+                    >
+                      {item.label}
+                      {item.badge && (
+                        <span className={`ml-1 inline-flex items-center justify-center px-1 py-0.5 text-xs font-bold leading-none text-white rounded-full ${
+                          item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                        }`}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+          </div>
+        )}
+
+        {/* User Settings Section */}
+        {userItems.length > 0 && (
+          <div>
+            {isOpen && (
+              <div className="mb-6">
+                <div 
+                  className="flex items-center px-3 mb-3 py-2 rounded-lg bg-theme-sidebar"
+                  style={{ 
+                    color: 'var(--secondary-color)',
+                    backgroundColor: 'var(--sidebar-bg)'
+                  }}
+                >
+                  <div 
+                    className="w-1 h-4 rounded-full mr-3"
+                    style={{ backgroundColor: '#6b7280' }}
+                  ></div>
+                  <h3 
+                    className="text-sm font-bold uppercase tracking-wider"
+                    style={{
+                      fontFamily: 'var(--font-family)',
+                      fontSize: 'calc(var(--font-size) * 0.75)',
+                      fontWeight: 'var(--font-weight)',
+                      color: 'var(--secondary-color)'
+                    }}
+                  >
+                    {t('sidebar.userSettings', 'الإعدادات الشخصية')}
+                  </h3>
+                  <span className="ml-2 text-lg">👤</span>
+                </div>
+                <div 
+                  className="h-px mx-3 mb-4"
+                  style={{ backgroundColor: 'var(--border-color)' }}
+                ></div>
+              </div>
+            )}
+          <ul className="space-y-1">
+            {userItems.map((item) => (
               <li key={item.path}>
                 <NavLink
                   to={item.path}

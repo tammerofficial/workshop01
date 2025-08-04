@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
-import { laravel } from '../api/laravel';
+import laravel from '../api/laravel';
 
 // Types
 interface Order {
