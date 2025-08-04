@@ -45,6 +45,13 @@ import WorkerIpadDashboard from './pages/WorkerIpadDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
 import WorkflowDashboard from './pages/WorkflowDashboard';
 
+// Boutique pages
+import POSSystem from './pages/boutique/POSSystem';
+
+// E-commerce pages
+import HomePage from './pages/ecommerce/HomePage';
+import ProductCatalog from './pages/ecommerce/ProductCatalog';
+
 // Admin pages
 import Profile from './pages/admin/Profile';
 import UserManagement from './pages/admin/UserManagement';
@@ -191,7 +198,12 @@ function App() {
                                     <Route path="production-tracking" element={<ProductionTracking />} />
                   <Route path="barcode-qr" element={<BarcodeQRManagement />} />
                   <Route path="worker-ipad" element={<WorkerIpadDashboard workerId={1} />} />
-                  <Route path="workflow-dashboard" element={<WorkflowDashboard />} />
+                                      <Route path="workflow-dashboard" element={<WorkflowDashboard />} />
+                    <Route path="pos-system" element={<POSSystem />} />
+        
+        {/* E-commerce Routes */}
+        <Route path="ecommerce" element={<HomePage />} />
+        <Route path="ecommerce/catalog" element={<ProductCatalog />} />
                   <Route path="manager-dashboard" element={<ManagerDashboard />} />
                   
                   {/* Admin Routes - with role-based protection */}

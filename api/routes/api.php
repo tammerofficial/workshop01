@@ -42,6 +42,9 @@ use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\AppleWalletWorkshopController;
 use App\Http\Controllers\Api\Production\WorkflowController;
 use App\Http\Controllers\Api\LoyaltyReportsController;
+use App\Http\Controllers\Api\Boutique\BoutiqueController;
+use App\Http\Controllers\Api\Boutique\PosController;
+use App\Http\Controllers\Api\Boutique\LoyaltyIntegrationController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -731,6 +734,26 @@ Route::group(['prefix' => 'system-settings'], function () {
 // Workflow & Worker Status Routes
 Route::prefix('workflow')->group(function () {
     Route::get('/worker-status-summary', [WorkflowController::class, 'getWorkerStatusSummary']);
+});
+
+// Boutique System Routes 🏪
+Route::prefix('boutique')->middleware('auth:sanctum')->group(function () {
+    // إدارة البوتيكات
+    Route::apiResource('manage', BoutiqueController::class);
+    
+    // نقاط البيع (POS)
+    Route::prefix('pos')->group(function () {
+        Route::post('/search-products', [PosController::class, 'searchProducts']);
+        Route::post('/create-sale', [PosController::class, 'createSale']);
+        Route::get('/sales', [PosController::class, 'getSales']);
+    });
+    
+    // تكامل نظام الولاء
+    Route::prefix('loyalty')->group(function () {
+        Route::post('/search-customer', [LoyaltyIntegrationController::class, 'searchCustomer']);
+        Route::post('/calculate-points', [LoyaltyIntegrationController::class, 'calculatePoints']);
+        Route::get('/customer/{id}', [LoyaltyIntegrationController::class, 'getCustomerDetails']);
+    });
 });
 
 // API Dashboard Routes (JSON endpoints)

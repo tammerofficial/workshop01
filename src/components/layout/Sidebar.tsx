@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { 
   LayoutDashboard, ShoppingBag, Package, Users, Calendar, 
   LineChart, Bell, Settings, Monitor, Workflow, Zap,
-  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2, ShoppingCart, Puzzle, Shield, QrCode, Boxes
+  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2, ShoppingCart, Puzzle, Shield, QrCode, Boxes, CreditCard
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -59,7 +59,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       requiredPermissions: ['production.tools'],
       show: hasPermission('production.tools') || hasAnyRole(['super_admin', 'production_manager', 'inventory_manager'])
     },
-    // 5. لوحة إدارية شاملة (صلاحية إدارة عليا)
+    // 5. نظام نقاط البيع (صلاحية تشغيل البوتيك)
+    { 
+      path: '/pos-system', 
+      label: t('pos.title'), 
+      icon: <CreditCard size={20} />, 
+      badge: t('common.new'),
+      requiredPermissions: ['pos.operate'],
+      show: hasPermission('pos.operate') || hasAnyRole(['super_admin', 'boutique_cashier', 'boutique_sales_agent', 'boutique_supervisor', 'boutique_manager'])
+    },
+    // 6. المتجر الإلكتروني (صلاحية إدارة المتجر)
+    { 
+      path: '/ecommerce', 
+      label: t('ecommerce.homepage.title'), 
+      icon: <ShoppingBag size={20} />, 
+      badge: t('common.new'),
+      requiredPermissions: ['ecommerce.manage'],
+      show: hasPermission('ecommerce.manage') || hasAnyRole(['super_admin', 'boutique_manager', 'ecommerce_manager'])
+    },
+    // 6. لوحة إدارية شاملة (صلاحية إدارة عليا)
     { 
       path: '/manager-dashboard', 
       label: t('sidebar.managerDashboard'), 
@@ -654,13 +672,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                     {t('sidebar.systemManagement', 'إدارة النظام')}
                   </h3>
                   <span className="ml-2 text-lg">🔧</span>
-                </div>
-                <div 
-                  className="h-px mx-3 mb-4"
-                  style={{ backgroundColor: 'var(--border-color)' }}
-                ></div>
               </div>
-            )}
+              <div 
+                className="h-px mx-3 mb-4"
+                style={{ backgroundColor: 'var(--border-color)' }}
+              ></div>
+            </div>
+          )}
           <ul className="space-y-1">
             {systemItems.map((item) => (
               <li key={item.path}>

@@ -1,0 +1,310 @@
+{
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجح",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "search": "بحث",
+    "filter": "تصفية",
+    "refresh": "تحديث",
+    "export": "تصدير",
+    "import": "استيراد",
+    "close": "إغلاق",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "submit": "إرسال",
+    "reset": "إعادة تعيين",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "ok": "موافق",
+    "new": "جديد",
+    "hot": "مطلوب",
+    "urgent": "عاجل",
+    "high": "عالي",
+    "medium": "متوسط",
+    "low": "منخفض",
+    "available": "متاح",
+    "notAvailable": "غير متاح",
+    "actual": "فعلي"
+  },
+  "sidebar": {
+    "dashboard": "لوحة التحكم",
+    "orders": "إدارة الطلبات",
+    "clients": "العملاء",
+    "products": "المنتجات",
+    "inventory": "المخزون",
+    "workers": "العمال",
+    "attendance": "الحضور",
+    "payroll": "الرواتب",
+    "reports": "التقارير",
+    "settings": "الإعدادات",
+    "users": "إدارة المستخدمين",
+    "roles": "إدارة الأدوار",
+    "permissions": "الصلاحيات",
+    "loyalty": "نظام الولاء",
+    "loyaltyCustomers": "عملاء الولاء",
+    "loyaltyReports": "تقارير الولاء",
+    "workflow": "تطوير سير العمل",
+    "workerIpad": "واجهة العمال - iPad",
+    "managerDashboard": "لوحة مراقبة المدير",
+    "productionTracking": "تتبع الإنتاج",
+    "barcodeQR": "الباركود و QR",
+    "production": "عمليات الإنتاج",
+    "workshop": "إدارة الورشة",
+    "systemManagement": "نظام إدارة الموارد",
+    "userSettings": "إعدادات المستخدم"
+  },
+  "page": {
+    "dashboard": {
+      "title": "لوحة التحكم",
+      "subtitle": "مرحباً بك في نظام إدارة الورشة"
+    },
+    "orders": {
+      "title": "إدارة الطلبات",
+      "subtitle": "إدارة وتتبع جميع طلبات وخدمات الورشة"
+    },
+    "clients": {
+      "title": "إدارة العملاء",
+      "subtitle": "إدارة عملائك ومعلوماتهم"
+    },
+    "products": {
+      "title": "إدارة المنتجات",
+      "subtitle": "إدارة منتجاتك وخدماتك"
+    },
+    "inventory": {
+      "title": "إدارة المخزون",
+      "subtitle": "تتبع وإدارة مخزونك"
+    },
+    "workers": {
+      "title": "إدارة العمال",
+      "subtitle": "إدارة عمالك ومعلوماتهم"
+    },
+    "attendance": {
+      "title": "إدارة الحضور",
+      "subtitle": "تتبع حضور العمال والوقت"
+    },
+    "payroll": {
+      "title": "إدارة الرواتب",
+      "subtitle": "إدارة رواتب العمال والمدفوعات"
+    },
+    "reports": {
+      "title": "التقارير والتحليلات",
+      "subtitle": "عرض التقارير والتحليلات التفصيلية"
+    },
+    "settings": {
+      "title": "الإعدادات",
+      "subtitle": "تكوين إعدادات التطبيق"
+    },
+    "users": {
+      "title": "إدارة المستخدمين",
+      "subtitle": "إدارة مستخدمي النظام وأدوارهم"
+    },
+    "roles": {
+      "title": "إدارة الأدوار",
+      "subtitle": "إدارة أدوار المستخدمين والصلاحيات"
+    },
+    "permissions": {
+      "title": "إدارة الصلاحيات",
+      "subtitle": "تكوين صلاحيات النظام"
+    },
+    "loyalty": {
+      "title": "نظام الولاء",
+      "subtitle": "إدارة ولاء العملاء والمكافآت"
+    },
+    "loyaltyCustomers": {
+      "title": "عملاء الولاء",
+      "subtitle": "إدارة عملاء برنامج الولاء"
+    },
+    "loyaltyReports": {
+      "title": "تقارير الولاء",
+      "subtitle": "عرض تقارير برنامج الولاء"
+    },
+    "workflow": {
+      "title": "تطوير سير العمل",
+      "subtitle": "إدارة سير عمل الإنتاج"
+    },
+    "workerIpad": {
+      "title": "واجهة العمال - iPad",
+      "subtitle": "لوحة تحكم العمال لإدارة المهام"
+    },
+    "managerDashboard": {
+      "title": "لوحة مراقبة المدير",
+      "subtitle": "نظرة شاملة للإدارة"
+    },
+    "productionTracking": {
+      "title": "تتبع الإنتاج",
+      "subtitle": "تتبع تقدم الإنتاج وحالته"
+    },
+    "barcodeQR": {
+      "title": "إدارة الباركود و QR",
+      "subtitle": "إدارة الباركود و QR Code"
+    }
+  },
+  "pos": {
+    "title": "نظام نقاط البيع",
+    "cart": "سلة التسوق",
+    "subtotal": "المجموع الفرعي",
+    "total": "المجموع",
+    "quantity": "الكمية",
+    "emptyCart": "السلة فارغة",
+    "addProductsToStart": "أضف منتجات لبدء البيع",
+    "clearCart": "تفريغ السلة",
+    "addToCart": "إضافة للسلة",
+    "removeFromCart": "إزالة من السلة",
+    "totalItems": "إجمالي العناصر",
+    "processSale": "إتمام البيع",
+    "processing": "جاري المعالجة...",
+    "saleCompleted": "تم إتمام البيع بنجاح!",
+    "saleError": "خطأ في معالجة البيع",
+    "searchProducts": "البحث في المنتجات بالاسم أو الرمز...",
+    "noProductsFound": "لم يتم العثور على منتجات",
+    "tryDifferentSearch": "جرب مصطلح بحث مختلف",
+    "searching": "جاري البحث في المنتجات...",
+    "startTyping": "ابدأ الكتابة للبحث في المنتجات",
+    "inStock": "متوفر في المخزون",
+    "outOfStock": "نفذ من المخزون",
+    "unlimitedStock": "مخزون غير محدود",
+    "insufficientStock": "المخزون المتوفر غير كافي",
+    "noPermission": "تم رفض الوصول لنظام نقاط البيع",
+    "accessDenied": "تم رفض الوصول",
+    "contactManager": "تواصل مع مديرك للحصول على الوصول"
+  },
+  "loyalty": {
+    "customerSearch": "البحث عن العميل",
+    "searchPlaceholder": "البحث بالاسم، البريد الإلكتروني، الهاتف، أو رقم العضوية...",
+    "noCustomersFound": "لم يتم العثور على عملاء",
+    "clearCustomer": "مسح العميل",
+    "continueWithoutCustomer": "المتابعة بدون عميل",
+    "points": "النقاط",
+    "available": "المتاحة",
+    "totalPoints": "إجمالي النقاط",
+    "multiplier": "المضاعف",
+    "usePoints": "استخدام النقاط",
+    "enterPoints": "أدخل النقاط المراد استخدامها",
+    "conversionRate": "معدل التحويل",
+    "pointsDiscount": "خصم النقاط",
+    "pointsUsed": "النقاط المستخدمة",
+    "discount": "خصم الولاء"
+  },
+  "payment": {
+    "title": "الدفع",
+    "cash": "نقداً",
+    "card": "بطاقة",
+    "knet": "كي نت",
+    "applePay": "Apple Pay",
+    "cashDescription": "دفع نقدي",
+    "cardDescription": "بطاقة ائتمان/مدى",
+    "knetDescription": "دفع كي نت الكويتي",
+    "applePayDescription": "Apple Pay بدون تلامس",
+    "selectMethod": "اختر طريقة الدفع",
+    "totalAmount": "المبلغ الإجمالي",
+    "paidAmount": "المبلغ المدفوع",
+    "change": "المتبقي",
+    "processing": "جاري المعالجة...",
+    "confirmPayment": "تأكيد الدفع",
+    "insufficientAmount": "المبلغ المدفوع أقل من الإجمالي"
+  },
+  "receipt": {
+    "title": "الإيصال",
+    "invoice": "فاتورة",
+    "cashier": "الكاشير",
+    "customer": "العميل",
+    "membership": "العضوية",
+    "tier": "المستوى",
+    "items": "العناصر",
+    "subtotal": "المجموع الفرعي",
+    "discount": "الخصم",
+    "loyaltyDiscount": "خصم الولاء",
+    "tax": "الضريبة",
+    "total": "المجموع",
+    "paymentMethod": "طريقة الدفع",
+    "paid": "المدفوع",
+    "change": "المتبقي",
+    "pointsUsed": "النقاط المستخدمة",
+    "pointsEarned": "النقاط المكتسبة",
+    "thankYou": "شكراً لك!",
+    "visitAgain": "يرجى زيارتنا مرة أخرى",
+    "actions": "إجراءات الإيصال",
+    "print": "طباعة",
+    "download": "تحميل",
+    "share": "مشاركة",
+    "preview": "معاينة",
+    "copiedToClipboard": "تم نسخ الإيصال للحافظة"
+  },
+  "inventory": {
+    "monitor": "مراقب المخزون",
+    "available": "متاح",
+    "remaining": "المتبقي",
+    "lowStockAlert": "تنبيه مخزون منخفض",
+    "outOfStockAlert": "تنبيه نفاد المخزون",
+    "lastUpdated": "آخر تحديث",
+    "andMore": "و {count} أكثر"
+  },
+  "barcodeQR": {
+    "title": "إدارة الباركود و QR",
+    "subtitle": "إنشاء وإدارة الباركود و QR Code"
+  },
+  "ecommerce": {
+    "homepage": {
+      "title": "متجر الورشة",
+      "hero": {
+        "title": "أزياء مخصصة بجودة عالية",
+        "subtitle": "اكتشف مجموعتنا المتنوعة من الملابس المخصصة والجاهزة",
+        "cta": "تسوق الآن"
+      },
+      "featured": "المنتجات المميزة",
+      "categories": "تصفح الفئات",
+      "menClothing": "ملابس رجالية",
+      "womenClothing": "ملابس نسائية",
+      "kidsClothing": "ملابس أطفال",
+      "customDesign": "تخصيص مخصص"
+    },
+    "navigation": {
+      "home": "الرئيسية",
+      "products": "المنتجات",
+      "custom": "التخصيص",
+      "contact": "اتصل بنا",
+      "searchPlaceholder": "ابحث عن المنتجات..."
+    },
+    "catalog": {
+      "title": "كتالوج المنتجات",
+      "productsFound": "منتج تم العثور عليه",
+      "filters": "الفلترة",
+      "clearAll": "مسح الكل",
+      "category": "الفئة",
+      "allCategories": "جميع الفئات",
+      "priceRange": "نطاق السعر",
+      "colors": "الألوان",
+      "sizes": "المقاسات",
+      "inStockOnly": "متوفر في المخزون فقط",
+      "sortBy": "ترتيب حسب",
+      "name": "الاسم",
+      "priceLowToHigh": "السعر: من الأقل",
+      "priceHighToLow": "السعر: من الأعلى",
+      "rating": "التقييم",
+      "newest": "الأحدث",
+      "noProductsFound": "لم يتم العثور على منتجات تطابق معايير البحث",
+      "addToCart": "أضف للسلة",
+      "outOfStock": "غير متوفر"
+    },
+    "footer": {
+      "quickLinks": "روابط سريعة",
+      "customerService": "خدمة العملاء",
+      "contactUs": "تواصل معنا",
+      "returnPolicy": "سياسة الإرجاع",
+      "shipping": "الشحن والتوصيل",
+      "faq": "الأسئلة الشائعة",
+      "support": "الدعم",
+      "phone": "الهاتف: +965 1234 5678",
+      "email": "البريد الإلكتروني: info@workshop.com",
+      "address": "العنوان: الكويت",
+      "allRightsReserved": "جميع الحقوق محفوظة"
+    }
+  }
+}

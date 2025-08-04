@@ -19,5 +19,8 @@ export default defineConfig({
         manualChunks: undefined
       }
     }
+  },
+  json: {
+    stringify: true
   }
 });

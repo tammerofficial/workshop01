@@ -1,0 +1,310 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "export": "Export",
+    "import": "Import",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "reset": "Reset",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "new": "NEW",
+    "hot": "HOT",
+    "urgent": "Urgent",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "available": "Available",
+    "notAvailable": "Not Available",
+    "actual": "Actual"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "orders": "Orders Management",
+    "clients": "Clients",
+    "products": "Products",
+    "inventory": "Inventory",
+    "workers": "Workers",
+    "attendance": "Attendance",
+    "payroll": "Payroll",
+    "reports": "Reports",
+    "settings": "Settings",
+    "users": "Users Management",
+    "roles": "Roles Management",
+    "permissions": "Permissions",
+    "loyalty": "Loyalty System",
+    "loyaltyCustomers": "Loyalty Customers",
+    "loyaltyReports": "Loyalty Reports",
+    "workflow": "Workflow Automation",
+    "workerIpad": "Worker iPad Interface",
+    "managerDashboard": "Manager Dashboard",
+    "productionTracking": "Production Tracking",
+    "barcodeQR": "Barcode & QR",
+    "production": "Production Operations",
+    "workshop": "Workshop Management",
+    "systemManagement": "ERP System",
+    "userSettings": "User Settings"
+  },
+  "page": {
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Welcome to your workshop management system"
+    },
+    "orders": {
+      "title": "Orders Management",
+      "subtitle": "Manage and track all workshop orders and services"
+    },
+    "clients": {
+      "title": "Clients Management",
+      "subtitle": "Manage your clients and their information"
+    },
+    "products": {
+      "title": "Products Management",
+      "subtitle": "Manage your products and services"
+    },
+    "inventory": {
+      "title": "Inventory Management",
+      "subtitle": "Track and manage your inventory"
+    },
+    "workers": {
+      "title": "Workers Management",
+      "subtitle": "Manage your workers and their information"
+    },
+    "attendance": {
+      "title": "Attendance Management",
+      "subtitle": "Track worker attendance and time"
+    },
+    "payroll": {
+      "title": "Payroll Management",
+      "subtitle": "Manage worker salaries and payments"
+    },
+    "reports": {
+      "title": "Reports & Analytics",
+      "subtitle": "View detailed reports and analytics"
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Configure your application settings"
+    },
+    "users": {
+      "title": "Users Management",
+      "subtitle": "Manage system users and their roles"
+    },
+    "roles": {
+      "title": "Roles Management",
+      "subtitle": "Manage user roles and permissions"
+    },
+    "permissions": {
+      "title": "Permissions Management",
+      "subtitle": "Configure system permissions"
+    },
+    "loyalty": {
+      "title": "Loyalty System",
+      "subtitle": "Manage customer loyalty and rewards"
+    },
+    "loyaltyCustomers": {
+      "title": "Loyalty Customers",
+      "subtitle": "Manage loyalty program customers"
+    },
+    "loyaltyReports": {
+      "title": "Loyalty Reports",
+      "subtitle": "View loyalty program reports"
+    },
+    "workflow": {
+      "title": "Workflow Automation",
+      "subtitle": "Manage production workflows"
+    },
+    "workerIpad": {
+      "title": "Worker iPad Interface",
+      "subtitle": "Worker dashboard for task management"
+    },
+    "managerDashboard": {
+      "title": "Manager Dashboard",
+      "subtitle": "Comprehensive management overview"
+    },
+    "productionTracking": {
+      "title": "Production Tracking",
+      "subtitle": "Track production progress and status"
+    },
+    "barcodeQR": {
+      "title": "Barcode & QR Management",
+      "subtitle": "Manage barcodes and QR codes"
+    }
+  },
+  "pos": {
+    "title": "Point of Sale System",
+    "cart": "Shopping Cart",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "quantity": "Qty",
+    "emptyCart": "Cart is empty",
+    "addProductsToStart": "Add products to start selling",
+    "clearCart": "Clear Cart",
+    "addToCart": "Add to Cart",
+    "removeFromCart": "Remove from cart",
+    "totalItems": "Total items",
+    "processSale": "Process Sale",
+    "processing": "Processing...",
+    "saleCompleted": "Sale completed successfully!",
+    "saleError": "Error processing sale",
+    "searchProducts": "Search products by name or SKU...",
+    "noProductsFound": "No products found",
+    "tryDifferentSearch": "Try a different search term",
+    "searching": "Searching products...",
+    "startTyping": "Start typing to search products",
+    "inStock": "In Stock",
+    "outOfStock": "Out of Stock",
+    "unlimitedStock": "Unlimited Stock",
+    "insufficientStock": "Insufficient stock available",
+    "noPermission": "Access denied to POS system",
+    "accessDenied": "Access Denied",
+    "contactManager": "Contact your manager for access"
+  },
+  "loyalty": {
+    "customerSearch": "Customer Search",
+    "searchPlaceholder": "Search by name, email, phone, or membership number...",
+    "noCustomersFound": "No customers found",
+    "clearCustomer": "Clear customer",
+    "continueWithoutCustomer": "Continue without customer",
+    "points": "Points",
+    "available": "Available",
+    "totalPoints": "Total Points",
+    "multiplier": "Multiplier",
+    "usePoints": "Use Points",
+    "enterPoints": "Enter points to use",
+    "conversionRate": "Conversion Rate",
+    "pointsDiscount": "Points Discount",
+    "pointsUsed": "Points Used",
+    "discount": "Loyalty Discount"
+  },
+  "payment": {
+    "title": "Payment",
+    "cash": "Cash",
+    "card": "Card",
+    "knet": "K-Net",
+    "applePay": "Apple Pay",
+    "cashDescription": "Cash payment",
+    "cardDescription": "Credit/Debit card",
+    "knetDescription": "Kuwait NET payment",
+    "applePayDescription": "Apple Pay contactless",
+    "selectMethod": "Select payment method",
+    "totalAmount": "Total Amount",
+    "paidAmount": "Paid Amount",
+    "change": "Change",
+    "processing": "Processing...",
+    "confirmPayment": "Confirm Payment",
+    "insufficientAmount": "Paid amount is less than total"
+  },
+  "receipt": {
+    "title": "Receipt",
+    "invoice": "Invoice",
+    "cashier": "Cashier",
+    "customer": "Customer",
+    "membership": "Membership",
+    "tier": "Tier",
+    "items": "Items",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "loyaltyDiscount": "Loyalty Discount",
+    "tax": "Tax",
+    "total": "Total",
+    "paymentMethod": "Payment Method",
+    "paid": "Paid",
+    "change": "Change",
+    "pointsUsed": "Points Used",
+    "pointsEarned": "Points Earned",
+    "thankYou": "Thank You!",
+    "visitAgain": "Please visit us again",
+    "actions": "Receipt Actions",
+    "print": "Print",
+    "download": "Download",
+    "share": "Share",
+    "preview": "Preview",
+    "copiedToClipboard": "Receipt copied to clipboard"
+  },
+  "inventory": {
+    "monitor": "Inventory Monitor",
+    "available": "Available",
+    "remaining": "Remaining",
+    "lowStockAlert": "Low Stock Alert",
+    "outOfStockAlert": "Out of Stock Alert",
+    "lastUpdated": "Last Updated",
+    "andMore": "and {count} more"
+  },
+  "barcodeQR": {
+    "title": "Barcode & QR Management",
+    "subtitle": "Generate and manage barcodes and QR codes"
+  },
+  "ecommerce": {
+    "homepage": {
+      "title": "Workshop Store",
+      "hero": {
+        "title": "Custom Fashion with Premium Quality",
+        "subtitle": "Discover our diverse collection of custom and ready-made clothing",
+        "cta": "Shop Now"
+      },
+      "featured": "Featured Products",
+      "categories": "Browse Categories",
+      "menClothing": "Men's Clothing",
+      "womenClothing": "Women's Clothing",
+      "kidsClothing": "Kids' Clothing",
+      "customDesign": "Custom Design"
+    },
+    "navigation": {
+      "home": "Home",
+      "products": "Products",
+      "custom": "Custom",
+      "contact": "Contact",
+      "searchPlaceholder": "Search products..."
+    },
+    "catalog": {
+      "title": "Product Catalog",
+      "productsFound": "products found",
+      "filters": "Filters",
+      "clearAll": "Clear All",
+      "category": "Category",
+      "allCategories": "All Categories",
+      "priceRange": "Price Range",
+      "colors": "Colors",
+      "sizes": "Sizes",
+      "inStockOnly": "In Stock Only",
+      "sortBy": "Sort By",
+      "name": "Name",
+      "priceLowToHigh": "Price: Low to High",
+      "priceHighToLow": "Price: High to Low",
+      "rating": "Rating",
+      "newest": "Newest",
+      "noProductsFound": "No products found matching your criteria",
+      "addToCart": "Add to Cart",
+      "outOfStock": "Out of Stock"
+    },
+    "footer": {
+      "quickLinks": "Quick Links",
+      "customerService": "Customer Service",
+      "contactUs": "Contact Us",
+      "returnPolicy": "Return Policy",
+      "shipping": "Shipping",
+      "faq": "FAQ",
+      "support": "Support",
+      "phone": "Phone: +965 1234 5678",
+      "email": "Email: info@workshop.com",
+      "address": "Address: Kuwait",
+      "allRightsReserved": "All rights reserved"
+    }
+  }
+}
