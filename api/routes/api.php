@@ -26,6 +26,9 @@ use App\Http\Controllers\Api\HumanResources\WorkerSyncController;
 use App\Http\Controllers\Api\Production\ProductionTrackingController;
 use App\Http\Controllers\Api\Production\ProductionFlowController;
 use App\Http\Controllers\Api\Production\BarcodeQRController;
+use App\Http\Controllers\Api\Production\WorkerIpadController;
+use App\Http\Controllers\Api\Core\RealTimeNotificationController;
+use App\Http\Controllers\Api\Management\ManagerDashboardController;
 use App\Http\Controllers\Api\Core\StationController;
 use App\Http\Controllers\Api\Core\NotificationController;
 use App\Http\Controllers\Api\Authentication\AuthController;
@@ -374,6 +377,37 @@ Route::prefix('barcode-qr')->group(function () {
     // Analytics
     Route::get('/scan-history', [BarcodeQRController::class, 'getScanHistory']);
     Route::get('/scan-statistics', [BarcodeQRController::class, 'getScanStatistics']);
+});
+
+// 📱 iPad Worker Interface Routes
+Route::prefix('ipad')->group(function () {
+    // Worker Dashboard
+    Route::get('/dashboard', [WorkerIpadController::class, 'workerDashboard']);
+    
+    // Task Management
+    Route::post('/tasks/start', [WorkerIpadController::class, 'startTask']);
+    Route::post('/tasks/complete', [WorkerIpadController::class, 'completeTask']);
+    Route::post('/tasks/pause', [WorkerIpadController::class, 'pauseTask']);
+    Route::post('/tasks/resume', [WorkerIpadController::class, 'resumeTask']);
+    
+    // Worker Stats & Availability
+    Route::get('/stats/daily', [WorkerIpadController::class, 'getDailyStats']);
+    Route::post('/availability/update', [WorkerIpadController::class, 'updateAvailability']);
+    Route::get('/tasks/available', [WorkerIpadController::class, 'getAvailableTasks']);
+});
+
+// 🔔 Real-time Notifications Routes
+Route::prefix('notifications')->group(function () {
+    Route::get('/', [RealTimeNotificationController::class, 'index']);
+    Route::post('/mark-read/{id}', [RealTimeNotificationController::class, 'markAsRead']);
+    Route::get('/stats', [RealTimeNotificationController::class, 'stats']);
+    Route::post('/send', [RealTimeNotificationController::class, 'send']);
+});
+
+// 📊 Manager Dashboard Routes
+Route::prefix('manager')->group(function () {
+    Route::get('/dashboard', [ManagerDashboardController::class, 'index']);
+    Route::post('/execute-action', [ManagerDashboardController::class, 'executeAction']);
 });
 
 // Notifications Routes
