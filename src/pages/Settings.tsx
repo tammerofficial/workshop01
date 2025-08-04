@@ -21,6 +21,7 @@ interface ColorPickerProps {
   color: string;
   setColor: (color: string) => void;
   label: string;
+  t: (key: string, fallback: string) => string;
 }
 
 interface SliderControlProps {
@@ -111,7 +112,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ label, enabled, setEnabled,
   );
 };
 
-const ColorPicker: React.FC<ColorPickerProps> = ({ color, setColor, label }) => {
+const ColorPicker: React.FC<ColorPickerProps> = ({ color, setColor, label, t }) => {
   const predefinedColors = [
     '#3b82f6', '#ef4444', '#22c55e', '#f59e0b', 
     '#8b5cf6', '#06b6d4', '#ec4899', '#10b981',
@@ -143,7 +144,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ color, setColor, label }) => 
           title="Custom color picker"
         />
         <div>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Custom</span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('settings.appearance.colors.custom', 'مخصص')}</span>
           <div className="text-xs text-gray-500 dark:text-gray-400">{color}</div>
         </div>
       </div>
@@ -207,44 +208,117 @@ const Settings: React.FC = () => {
   const tabs: SettingsTab[] = [
     {
       id: 'appearance',
-      label: 'settings.appearance.title',
+      label: t('settings.appearance.title', 'المظهر'),
       icon: <Palette size={20} />,
-      description: 'settings.appearance.description',
+      description: t('settings.appearance.description', 'تخصيص الشكل والمظهر'),
     },
     {
       id: 'advanced-appearance',
-      label: 'إعدادات المظهر المتقدمة',
+      label: t('settings.advancedAppearance.title', 'إعدادات المظهر المتقدمة'),
       icon: <Sliders size={20} />,
-      description: 'تحكم شامل في جميع عناصر المظهر',
+      description: t('settings.advancedAppearance.description', 'تحكم شامل في جميع عناصر المظهر'),
     },
     {
       id: 'notifications',
-      label: 'settings.notifications.title',
+      label: t('settings.notifications.title', 'الإشعارات'),
       icon: <Bell size={20} />,
-      description: 'settings.notifications.description',
+      description: t('settings.notifications.description', 'تكوين كيفية تلقي الإشعارات'),
     },
     {
       id: 'general',
-      label: 'settings.general.title',
+      label: t('settings.general.title', 'الإعدادات العامة'),
       icon: <SettingsIcon size={20} />,
-      description: 'settings.general.description',
+      description: t('settings.general.description', 'تكوين تفضيلات التطبيق'),
     },
     {
       id: 'security',
-      label: 'settings.security.title',
+      label: t('settings.security.title', 'الأمان والخصوصية'),
       icon: <Shield size={20} />,
-      description: 'settings.security.description',
+      description: t('settings.security.description', 'إدارة إعدادات أمان حسابك'),
     },
     {
       id: 'woocommerce',
-      label: 'settings.woocommerce.title',
+      label: t('settings.woocommerce.title', 'تكامل ووكومرس'),
       icon: <Globe size={20} />,
-      description: 'settings.woocommerce.description',
+      description: t('settings.woocommerce.description', 'الاتصال والمزامنة مع متجر ووكومرس'),
     },
   ];
 
   const renderAdvancedAppearanceTab = () => (
     <div className="space-y-8">
+      {/* Theme Mode Selector */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
+          <Palette size={24} className={isRTL ? 'ml-3' : 'mr-3'} />
+          {t('settings.appearance.themeMode', 'وضع المظهر')}
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <button
+            onClick={() => setTheme('light')}
+            className={`p-6 rounded-lg border-2 transition-all ${
+              theme === 'light' 
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+            }`}
+          >
+            <div className="flex items-center justify-center mb-3">
+              <Sun size={32} className="text-yellow-500" />
+            </div>
+            <div className="text-center">
+              <div className="font-medium text-gray-900 dark:text-gray-100">
+                {t('settings.theme.light', 'الوضع النهاري')}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {t('settings.theme.lightDesc', 'مشرق ونظيف')}
+              </div>
+            </div>
+          </button>
+          
+          <button
+            onClick={() => setTheme('dark')}
+            className={`p-6 rounded-lg border-2 transition-all ${
+              theme === 'dark' 
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+            }`}
+          >
+            <div className="flex items-center justify-center mb-3">
+              <Moon size={32} className="text-blue-400" />
+            </div>
+            <div className="text-center">
+              <div className="font-medium text-gray-900 dark:text-gray-100">
+                {t('settings.theme.dark', 'الوضع الليلي')}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {t('settings.theme.darkDesc', 'مريح للعينين')}
+              </div>
+            </div>
+          </button>
+          
+          <button
+            onClick={() => setTheme('auto')}
+            className={`p-6 rounded-lg border-2 transition-all ${
+              theme === 'auto' 
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+            }`}
+          >
+            <div className="flex items-center justify-center mb-3">
+              <Monitor size={32} className="text-gray-500" />
+            </div>
+            <div className="text-center">
+              <div className="font-medium text-gray-900 dark:text-gray-100">
+                {t('settings.theme.auto', 'تلقائي')}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {t('settings.theme.autoDesc', 'حسب النظام')}
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+      
       {/* Color System */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <h3 
@@ -257,7 +331,7 @@ const Settings: React.FC = () => {
           }}
         >
           <Brush size={24} className={isRTL ? 'ml-3' : 'mr-3'} />
-          إعدادات المظهر المتقدمة
+          {t('settings.advancedAppearance.title', 'إعدادات المظهر المتقدمة')}
         </h3>
         <p 
           className="text-gray-600 dark:text-gray-400 mb-6"
@@ -268,40 +342,48 @@ const Settings: React.FC = () => {
             lineHeight: 'var(--line-height)'
           }}
         >
-          تحكم شامل في جميع عناصر المظهر
+          {t('settings.advancedAppearance.description', 'تحكم شامل في جميع عناصر المظهر للوضع الحالي')}: {
+            theme === 'light' ? t('settings.theme.light', 'النهاري') : 
+            theme === 'dark' ? t('settings.theme.dark', 'الليلي') : 
+            t('settings.theme.auto', 'تلقائي')
+          }
         </p>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <ColorPicker 
-            label="اللون الأساسي"
+            label={t('settings.colors.primary', 'اللون الأساسي')}
             color={advancedSettings.colors.primary}
             setColor={(color) => updateAdvancedSettings({
               colors: { ...advancedSettings.colors, primary: color }
             })}
+            t={t}
           />
           
           <ColorPicker 
-            label="اللون الثانوي"
+            label={t('settings.colors.secondary', 'اللون الثانوي')}
             color={advancedSettings.colors.secondary}
             setColor={(color) => updateAdvancedSettings({
               colors: { ...advancedSettings.colors, secondary: color }
             })}
+            t={t}
           />
           
           <ColorPicker 
-            label="لون التمييز"
+            label={t('settings.colors.accent', 'لون التمييز')}
             color={advancedSettings.colors.accent}
             setColor={(color) => updateAdvancedSettings({
               colors: { ...advancedSettings.colors, accent: color }
             })}
+            t={t}
           />
           
           <ColorPicker 
-            label="لون الخلفية"
+            label={t('settings.colors.background', 'لون الخلفية')}
             color={advancedSettings.colors.background}
             setColor={(color) => updateAdvancedSettings({
               colors: { ...advancedSettings.colors, background: color }
             })}
+            t={t}
           />
         </div>
       </div>
@@ -310,14 +392,14 @@ const Settings: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
           <Type size={24} className={isRTL ? 'ml-3' : 'mr-3'} />
-          إعدادات الخطوط
+          {t('settings.typography.title', 'إعدادات الخطوط')}
         </h3>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                عائلة الخط
+                {t('settings.typography.fontFamily', 'عائلة الخط')}
               </label>
               <select 
                 value={advancedSettings.typography.fontFamily}
@@ -333,7 +415,7 @@ const Settings: React.FC = () => {
             </div>
             
             <SliderControl
-              label="حجم الخط الأساسي"
+                                label={t('settings.typography.fontSize', 'حجم الخط الأساسي')}
               value={advancedSettings.typography.fontSize}
               setValue={(value) => updateAdvancedSettings({ typography: { ...advancedSettings.typography, fontSize: value } })}
               min={12}
@@ -345,7 +427,7 @@ const Settings: React.FC = () => {
           
           <div className="space-y-4">
             <SliderControl
-              label="وزن الخط"
+                                label={t('settings.typography.fontWeight', 'وزن الخط')}
               value={advancedSettings.typography.fontWeight}
               setValue={(value) => updateAdvancedSettings({ typography: { ...advancedSettings.typography, fontWeight: value } })}
               min={100}
@@ -354,7 +436,7 @@ const Settings: React.FC = () => {
             />
             
             <SliderControl
-              label="ارتفاع السطر"
+                                label={t('settings.typography.lineHeight', 'ارتفاع السطر')}
               value={advancedSettings.typography.lineHeight}
               setValue={(value) => updateAdvancedSettings({ typography: { ...advancedSettings.typography, lineHeight: value } })}
               min={1}
@@ -375,7 +457,7 @@ const Settings: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-4">
             <SliderControl
-              label="الحشو الداخلي"
+                                label={t('settings.spacing.padding', 'الحشو الداخلي')}
               value={advancedSettings.spacing.padding}
               setValue={(value) => updateAdvancedSettings({ spacing: { ...advancedSettings.spacing, padding: value } })}
               min={4}
@@ -385,7 +467,7 @@ const Settings: React.FC = () => {
             />
             
             <SliderControl
-              label="الهامش الخارجي"
+                                label={t('settings.spacing.margin', 'الهامش الخارجي')}
               value={advancedSettings.spacing.margin}
               setValue={(value) => updateAdvancedSettings({ spacing: { ...advancedSettings.spacing, margin: value } })}
               min={0}
@@ -397,7 +479,7 @@ const Settings: React.FC = () => {
           
           <div className="space-y-4">
             <SliderControl
-              label="استدارة الحواف"
+                                label={t('settings.spacing.borderRadius', 'استدارة الحواف')}
               value={advancedSettings.spacing.borderRadius}
               setValue={(value) => updateAdvancedSettings({ spacing: { ...advancedSettings.spacing, borderRadius: value } })}
               min={0}
@@ -407,7 +489,7 @@ const Settings: React.FC = () => {
             />
             
             <SliderControl
-              label="المسافة بين العناصر"
+                                label={t('settings.spacing.gap', 'المسافة بين العناصر')}
               value={advancedSettings.spacing.gap}
               setValue={(value) => updateAdvancedSettings({ spacing: { ...advancedSettings.spacing, gap: value } })}
               min={4}
@@ -428,7 +510,7 @@ const Settings: React.FC = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <SliderControl
-            label="حجم الظل"
+                              label={t('settings.shadows.size', 'حجم الظل')}
             value={advancedSettings.shadows.shadowSize}
             setValue={(value) => updateAdvancedSettings({ shadows: { ...advancedSettings.shadows, shadowSize: value } })}
             min={0}
@@ -438,7 +520,7 @@ const Settings: React.FC = () => {
           />
           
           <SliderControl
-            label="ضبابية الظل"
+                              label={t('settings.shadows.blur', 'ضبابية الظل')}
             value={advancedSettings.shadows.shadowBlur}
             setValue={(value) => updateAdvancedSettings({ shadows: { ...advancedSettings.shadows, shadowBlur: value } })}
             min={0}
@@ -448,7 +530,7 @@ const Settings: React.FC = () => {
           />
           
           <SliderControl
-            label="شفافية الظل"
+                              label={t('settings.shadows.opacity', 'شفافية الظل')}
             value={advancedSettings.shadows.shadowOpacity}
             setValue={(value) => updateAdvancedSettings({ shadows: { ...advancedSettings.shadows, shadowOpacity: value } })}
             min={0}
@@ -467,7 +549,7 @@ const Settings: React.FC = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SliderControl
-            label="مدة الانتقال"
+                              label={t('settings.animations.duration', 'مدة الانتقال')}
             value={advancedSettings.animations.duration}
             setValue={(value) => updateAdvancedSettings({ animations: { ...advancedSettings.animations, duration: value } })}
             min={50}
@@ -478,7 +560,7 @@ const Settings: React.FC = () => {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              نوع الانتقال
+              {t('settings.animations.easing', 'نوع الانتقال')}
             </label>
             <select 
               value={advancedSettings.animations.easing}
@@ -499,7 +581,7 @@ const Settings: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
           <Eye size={24} className={isRTL ? 'ml-3' : 'mr-3'} />
-          معاينة مباشرة
+          {t('settings.appearance.preview.live', 'معاينة مباشرة')}
         </h3>
         
         <div 
@@ -523,10 +605,10 @@ const Settings: React.FC = () => {
             className="font-bold mb-4"
             style={{ color: advancedSettings.colors.primary }}
           >
-            عنوان تجريبي
+            {t('settings.appearance.preview.sampleTitle', 'عنوان تجريبي')}
           </h4>
           <p style={{ color: advancedSettings.colors.secondary }}>
-            هذا نص تجريبي لمعاينة التغييرات التي تم تطبيقها على المظهر. يمكنك رؤية تأثير الألوان والخطوط والمساحات والظلال في الوقت الفعلي.
+            {t('settings.appearance.preview.sampleText', 'هذا نص تجريبي لمعاينة التغييرات التي تم تطبيقها على المظهر. يمكنك رؤية تأثير الألوان والخطوط والمساحات والظلال في الوقت الفعلي.')}
           </p>
           <button
             className="mt-4 px-6 py-2 rounded transition-all hover:opacity-90"
@@ -539,7 +621,7 @@ const Settings: React.FC = () => {
               transitionTimingFunction: advancedSettings.animations.easing
             }}
           >
-            زر تجريبي
+            {t('settings.appearance.preview.sampleButton', 'زر تجريبي')}
           </button>
         </div>
       </div>
@@ -549,20 +631,26 @@ const Settings: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
-              تطبيق التغييرات
+              {t('settings.actions.applyChanges', 'تطبيق التغييرات')}
             </h3>
             <p className="text-blue-700 dark:text-blue-300">
-              اضغط لتطبيق جميع التخصيصات على النظام
+              {t('settings.actions.applyDescription', 'اضغط لتطبيق جميع التخصيصات على النظام')}
             </p>
           </div>
           <button
             onClick={() => {
+              // Update the theme context with new settings
+              setAdvancedSettings(advancedSettings);
               setPrimaryColor(advancedSettings.colors.primary);
-              // Apply other settings to CSS variables
-              const root = document.documentElement;
-              root.style.setProperty('--primary-color', advancedSettings.colors.primary);
-              root.style.setProperty('--secondary-color', advancedSettings.colors.secondary);
-              root.style.setProperty('--accent-color', advancedSettings.colors.accent);
+              
+              // Force immediate application
+              const { applyAdvancedSettings } = require('../contexts/ThemeContext');
+              if (applyAdvancedSettings) {
+                applyAdvancedSettings();
+              }
+              
+              // Show success message
+              alert(t('settings.actions.successMessage', 'تم تطبيق التغييرات بنجاح!'));
             }}
             className="btn-primary text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center"
             style={{
@@ -660,7 +748,7 @@ const Settings: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               {t('settings.appearance.primaryColor.title')}
             </label>
-            <ColorPicker color={tempColor} setColor={setTempColor} label={t('settings.appearance.primaryColor.title')} />
+            <ColorPicker color={tempColor} setColor={setTempColor} label={t('settings.appearance.primaryColor.title')} t={t} />
           </div>
           
           <button
@@ -689,7 +777,7 @@ const Settings: React.FC = () => {
                 : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
-            <div className="font-medium text-gray-900 dark:text-gray-100">🇺🇸 English</div>
+            <div className="font-medium text-gray-900 dark:text-gray-100">🇺🇸 {t('language.english', 'English')}</div>
             <div className="text-sm text-gray-500 dark:text-gray-400">{t('settings.general.language.ltr')}</div>
           </button>
 
@@ -701,7 +789,7 @@ const Settings: React.FC = () => {
                 : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
-            <div className="font-medium text-gray-900 dark:text-gray-100">🇸🇦 العربية</div>
+            <div className="font-medium text-gray-900 dark:text-gray-100">🇸🇦 {t('language.arabic', 'العربية')}</div>
             <div className="text-sm text-gray-500 dark:text-gray-400">{t('settings.general.language.rtl')}</div>
           </button>
         </div>
@@ -944,7 +1032,7 @@ const Settings: React.FC = () => {
             }}
           >
             <SettingsIcon size={32} className={isRTL ? 'ml-3' : 'mr-3'} />
-            Settings ⚙️
+            {t('settings.title', 'الإعدادات')} ⚙️
           </h1>
           <p 
             className="text-lg text-gray-600 dark:text-gray-400 mt-2"
@@ -955,7 +1043,7 @@ const Settings: React.FC = () => {
               lineHeight: 'var(--line-height)'
             }}
           >
-            Customize the look and feel
+            {t('settings.subtitle', 'تخصيص شكل ومظهر التطبيق')}
           </p>
         </div>
 

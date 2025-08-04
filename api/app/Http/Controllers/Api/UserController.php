@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use Spatie\Activitylog\Facades\LogActivity;
 
 class UserController extends Controller
 {
@@ -452,6 +453,51 @@ class UserController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'حدث خطأ في تصدير البيانات: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * تغيير كلمة مرور المستخدم
+     */
+    public function changePassword(Request $request, User $user): JsonResponse
+    {
+        try {
+            // التحقق من صحة البيانات
+            $validator = Validator::make($request->all(), [
+                'password' => 'required|string|min:6',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'بيانات غير صحيحة',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // تحديث كلمة المرور
+            $user->update([
+                'password' => Hash::make($request->password)
+            ]);
+
+            // تسجيل النشاط - مؤقتاً معطل
+            // activity log will be added later when properly configured
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم تغيير كلمة المرور بنجاح',
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ في تغيير كلمة المرور: ' . $e->getMessage()
             ], 500);
         }
     }

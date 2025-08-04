@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\HumanResources;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\BiometricService;
+use App\Services\BiometricAutoRegistrationService;
 use App\Models\Worker;
 use App\Models\Attendance;
 use Carbon\Carbon;
@@ -386,10 +387,42 @@ class BiometricController extends Controller
             $employeeResponse = $this->biometricService->getEmployees($pageSize);
             
             if (empty($employeeResponse) || empty($employeeResponse['data'])) {
+                // Fallback to local workers if biometric system is not available
+                $localWorkers = Worker::where('is_active', true)
+                    ->select(['id', 'name', 'email', 'phone', 'role', 'department', 'employee_code', 'biometric_id', 'created_at', 'updated_at'])
+                    ->take($pageSize)
+                    ->get()
+                    ->map(function($worker) {
+                        return [
+                            'id' => $worker->id,
+                            'name' => $worker->name,
+                            'email' => $worker->email,
+                            'phone' => $worker->phone,
+                            'role' => $worker->role,
+                            'department' => $worker->department,
+                            'employee_code' => $worker->employee_code,
+                            'biometric_id' => $worker->biometric_id,
+                            'created_at' => $worker->created_at,
+                            'updated_at' => $worker->updated_at,
+                            'biometric_enabled' => !is_null($worker->biometric_id),
+                            'source' => 'local_database',
+                            'fingerprint' => null,
+                            'face' => null,
+                            'palm' => null,
+                            'vl_face' => null,
+                            'tasks' => [],
+                            'orders' => []
+                        ];
+                    });
+
                 return response()->json([
-                    'success' => false,
-                    'message' => 'No employees found in biometric system'
-                ], 404);
+                    'success' => true,
+                    'message' => 'Using local workers (biometric system unavailable)',
+                    'data' => $localWorkers,
+                    'next' => null,
+                    'previous' => null,
+                    'count' => $localWorkers->count(),
+                ], 200);
             }
 
             // Transform biometric employees to our worker format
@@ -413,6 +446,7 @@ class BiometricController extends Controller
             }
             
             return response()->json([
+                'success' => true,
                 'data' => $workers,
                 'next' => $employeeResponse['next'],
                 'previous' => $employeeResponse['previous'],
@@ -422,6 +456,394 @@ class BiometricController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error getting biometric workers: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Auto-register all biometric employees as users with worker role
+     */
+    public function autoRegisterAllEmployees()
+    {
+        try {
+            $autoRegistrationService = new BiometricAutoRegistrationService();
+            $result = $autoRegistrationService->registerAllBiometricEmployees();
+            
+            return response()->json([
+                'success' => $result['success'],
+                'message' => $result['message'],
+                'data' => [
+                    'registered' => $result['registered'],
+                    'updated' => $result['updated'],
+                    'skipped' => $result['skipped'],
+                    'total_processed' => $result['total_processed'] ?? 0,
+                    'errors' => $result['errors'] ?? []
+                ]
+            ], $result['success'] ? 200 : 500);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error in auto-registration: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get biometric workers that are connected to user accounts with 'worker' role
+     */
+    public function getConnectedBiometricWorkers(Request $request)
+    {
+        try {
+            $page = (int) $request->input('page', 1);
+            $pageSize = (int) $request->input('page_size', 10);
+            
+            // Get ALL workers from local database (they are synced automatically)
+            // نعرض جميع العمال من قاعدة البيانات المحلية المزامنة مع API الخارجي
+            $allWorkersQuery = Worker::where('is_active', true)
+                ->with(['user.role'])
+                ->orderBy('created_at', 'desc');
+            
+            // Get total count for pagination
+            $totalCount = $allWorkersQuery->count();
+            
+            // Apply pagination
+            $offset = ($page - 1) * $pageSize;
+            $workers = $allWorkersQuery
+                ->skip($offset)
+                ->take($pageSize)
+                ->get()
+                ->map(function($worker) {
+                    return [
+                        // Basic Information
+                        'id' => $worker->id,
+                        'name' => $worker->name,
+                        'email' => $worker->email,
+                        'phone' => $worker->phone,
+                        'role' => $worker->role,
+                        'department' => $worker->department,
+                        'employee_code' => $worker->employee_code,
+                        'biometric_id' => $worker->biometric_id,
+                        'created_at' => $worker->created_at,
+                        'updated_at' => $worker->updated_at,
+                        'biometric_enabled' => !is_null($worker->biometric_id),
+                        'source' => $worker->biometric_id ? 'biometric_synced' : 'local_only',
+                        
+                        // User Information
+                        'user_id' => $worker->user_id,
+                        'user_role' => $worker->user->role->name ?? null,
+                        'user_role_display' => $worker->user->role->display_name ?? null,
+                        'is_connected' => !is_null($worker->user_id),
+                        
+                        // Personal Information
+                        'first_name' => $worker->first_name,
+                        'last_name' => $worker->last_name,
+                        'birth_date' => $worker->birth_date,
+                        'gender' => $worker->gender,
+                        'nationality' => $worker->nationality,
+                        
+                        // Employment Details
+                        'position_name' => $worker->position_name,
+                        'area_name' => $worker->area_name,
+                        'hire_date' => $worker->hire_date,
+                        'employment_type' => $worker->employment_type,
+                        'contract_type' => $worker->contract_type,
+                        
+                        // Salary Information
+                        'basic_salary' => $worker->basic_salary,
+                        'hourly_rate' => $worker->hourly_rate,
+                        'overtime_hourly_rate' => $worker->overtime_hourly_rate,
+                        'salary_currency' => $worker->salary_currency,
+                        
+                        // Performance Data
+                        'attendance_percentage' => $worker->attendance_percentage,
+                        'performance_rating' => $worker->performance_rating,
+                        'productivity_score' => $worker->productivity_score,
+                        'quality_score' => $worker->quality_score,
+                        'efficiency_rating' => $worker->efficiency_rating,
+                        
+                        // Work Statistics
+                        'total_working_days' => $worker->total_working_days,
+                        'total_absent_days' => $worker->total_absent_days,
+                        'total_late_days' => $worker->total_late_days,
+                        'total_overtime_hours' => $worker->total_overtime_hours,
+                        'total_orders_completed' => $worker->total_orders_completed,
+                        'quality_rejections' => $worker->quality_rejections,
+                        'defect_rate' => $worker->defect_rate,
+                        
+                        // Biometric Data
+                        'fingerprint_enrolled' => $worker->fingerprint_enrolled,
+                        'face_enrolled' => $worker->face_enrolled,
+                        'palm_enrolled' => $worker->palm_enrolled,
+                        'fingerprint' => $worker->fingerprint_templates,
+                        'face' => $worker->face_templates,
+                        'palm' => $worker->palm_templates,
+                        'vl_face' => null,
+                        
+                        // Status and Metadata
+                        'is_active' => (bool) $worker->is_active, // تأكد من إرسال boolean
+                        'payroll_status' => $worker->payroll_status,
+                        'is_probation' => $worker->is_probation,
+                        'last_api_sync' => $worker->last_api_sync,
+                        'preferred_language' => $worker->preferred_language,
+                        
+                        // Legacy fields for compatibility
+                        'tasks' => [],
+                        'orders' => []
+                    ];
+                });
+            
+            // Calculate pagination info
+            $totalPages = ceil($totalCount / $pageSize);
+            $hasNext = $page < $totalPages;
+            $hasPrevious = $page > 1;
+            
+            $connectedCount = Worker::where('is_active', true)->whereNotNull('user_id')->count();
+            $biometricCount = Worker::where('is_active', true)->whereNotNull('biometric_id')->count();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'All workers from local database with pagination',
+                'data' => $workers,
+                'pagination' => [
+                    'current_page' => (int) $page,
+                    'per_page' => (int) $pageSize,
+                    'total' => (int) $totalCount,
+                    'total_pages' => (int) $totalPages,
+                    'has_next' => (bool) $hasNext,
+                    'has_previous' => (bool) $hasPrevious,
+                    'next_page' => $hasNext ? (int) ($page + 1) : null,
+                    'previous_page' => $hasPrevious ? (int) ($page - 1) : null,
+                ],
+                'total_biometric' => $biometricCount,
+                'connected_count' => $connectedCount,
+                'not_connected_count' => $totalCount - $connectedCount,
+                'current_page_count' => $workers->count(),
+            ], 200);
+            
+            // Fallback code below (should not be reached now)
+            if (false) {
+                // Fallback to local workers connected to users with worker role - with comprehensive data and pagination
+                $connectedWorkersQuery = Worker::whereNotNull('user_id')
+                    ->whereHas('user.role', function($query) {
+                        $query->where('name', 'worker');
+                    })
+                    ->where('is_active', true)
+                    ->with(['user.role']);
+                
+                // Get total count for pagination
+                $totalCount = $connectedWorkersQuery->count();
+                
+                // Apply pagination
+                $offset = ($page - 1) * $pageSize;
+                $connectedWorkers = $connectedWorkersQuery
+                    ->skip($offset)
+                    ->take($pageSize)
+                    ->get()
+                    ->map(function($worker) {
+                        return [
+                            // Basic Information
+                            'id' => $worker->id,
+                            'name' => $worker->name,
+                            'email' => $worker->email,
+                            'phone' => $worker->phone,
+                            'role' => $worker->role,
+                            'department' => $worker->department,
+                            'employee_code' => $worker->employee_code,
+                            'biometric_id' => $worker->biometric_id,
+                            'created_at' => $worker->created_at,
+                            'updated_at' => $worker->updated_at,
+                            'biometric_enabled' => !is_null($worker->biometric_id),
+                            'source' => 'connected_user_comprehensive',
+                            
+                            // User Information
+                            'user_id' => $worker->user_id,
+                            'user_role' => $worker->user->role->name ?? null,
+                            'user_role_display' => $worker->user->role->display_name ?? null,
+                            
+                            // Personal Information
+                            'first_name' => $worker->first_name,
+                            'last_name' => $worker->last_name,
+                            'birth_date' => $worker->birth_date,
+                            'gender' => $worker->gender,
+                            'nationality' => $worker->nationality,
+                            
+                            // Employment Details
+                            'position_name' => $worker->position_name,
+                            'area_name' => $worker->area_name,
+                            'hire_date' => $worker->hire_date,
+                            'employment_type' => $worker->employment_type,
+                            'contract_type' => $worker->contract_type,
+                            
+                            // Salary Information
+                            'basic_salary' => $worker->basic_salary,
+                            'hourly_rate' => $worker->hourly_rate,
+                            'overtime_hourly_rate' => $worker->overtime_hourly_rate,
+                            'salary_currency' => $worker->salary_currency,
+                            
+                            // Performance Data
+                            'attendance_percentage' => $worker->attendance_percentage,
+                            'performance_rating' => $worker->performance_rating,
+                            'productivity_score' => $worker->productivity_score,
+                            'quality_score' => $worker->quality_score,
+                            'efficiency_rating' => $worker->efficiency_rating,
+                            
+                            // Work Statistics
+                            'total_working_days' => $worker->total_working_days,
+                            'total_absent_days' => $worker->total_absent_days,
+                            'total_late_days' => $worker->total_late_days,
+                            'total_overtime_hours' => $worker->total_overtime_hours,
+                            'total_orders_completed' => $worker->total_orders_completed,
+                            'quality_rejections' => $worker->quality_rejections,
+                            'defect_rate' => $worker->defect_rate,
+                            
+                            // Biometric Data
+                            'fingerprint_enrolled' => $worker->fingerprint_enrolled,
+                            'face_enrolled' => $worker->face_enrolled,
+                            'palm_enrolled' => $worker->palm_enrolled,
+                            'fingerprint' => $worker->fingerprint_templates,
+                            'face' => $worker->face_templates,
+                            'palm' => $worker->palm_templates,
+                            'vl_face' => null,
+                            
+                            // Status and Metadata
+                            'payroll_status' => $worker->payroll_status,
+                            'is_probation' => $worker->is_probation,
+                            'last_api_sync' => $worker->last_api_sync,
+                            'preferred_language' => $worker->preferred_language,
+                            
+                            // Legacy fields for compatibility
+                            'tasks' => [],
+                            'orders' => []
+                        ];
+                    });
+
+                // Calculate pagination info
+                $totalPages = ceil($totalCount / $pageSize);
+                $hasNext = $page < $totalPages;
+                $hasPrevious = $page > 1;
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Connected workers from local database with pagination',
+                    'data' => $connectedWorkers,
+                    'pagination' => [
+                        'current_page' => (int) $page,
+                        'per_page' => (int) $pageSize,
+                        'total' => (int) $totalCount,
+                        'total_pages' => (int) $totalPages,
+                        'has_next' => (bool) $hasNext,
+                        'has_previous' => (bool) $hasPrevious,
+                        'next_page' => $hasNext ? (int) ($page + 1) : null,
+                        'previous_page' => $hasPrevious ? (int) ($page - 1) : null,
+                    ],
+                    'count' => $connectedWorkers->count(),
+                    'total_count' => $totalCount,
+                ], 200);
+            }
+
+            // Process ALL biometric workers from external API
+            // نجلب جميع العمال من API الخارجي ثم نطبق pagination محلياً
+            $allWorkers = [];
+            foreach ($employeeResponse['data'] as $employee) {
+                // Check if this biometric worker is connected to a user with worker role
+                $localWorker = Worker::where('biometric_id', $employee['id'])
+                    ->whereNotNull('user_id')
+                    ->whereHas('user.role', function($query) {
+                        $query->where('name', 'worker');
+                    })
+                    ->with(['user.role'])
+                    ->first();
+                
+                $workerData = $this->biometricService->mapEmployeeToWorker($employee);
+                
+                // Basic data from external API
+                $workerData['id'] = $employee['id'];
+                $workerData['created_at'] = $employee['update_time'] ?? now();
+                $workerData['updated_at'] = $employee['update_time'] ?? now();
+                $workerData['biometric_enabled'] = true;
+                $workerData['fingerprint'] = $employee['fingerprint'] ?? null;
+                $workerData['face'] = $employee['face'] ?? null;
+                $workerData['palm'] = $employee['palm'] ?? null;
+                $workerData['vl_face'] = $employee['vl_face'] ?? null;
+                $workerData['tasks'] = [];
+                $workerData['orders'] = [];
+                
+                // Add connection status and user data if connected
+                if ($localWorker) {
+                    $workerData['source'] = 'biometric_connected_comprehensive';
+                    $workerData['user_id'] = $localWorker->user_id;
+                    $workerData['user_role'] = $localWorker->user->role->name ?? null;
+                    $workerData['user_role_display'] = $localWorker->user->role->display_name ?? null;
+                    $workerData['is_connected'] = true;
+                    
+                    // Add comprehensive data from local worker
+                    $workerData['attendance_percentage'] = $localWorker->attendance_percentage;
+                    $workerData['performance_rating'] = $localWorker->performance_rating;
+                    $workerData['productivity_score'] = $localWorker->productivity_score;
+                    $workerData['quality_score'] = $localWorker->quality_score;
+                    $workerData['total_working_days'] = $localWorker->total_working_days;
+                    $workerData['total_orders_completed'] = $localWorker->total_orders_completed;
+                    $workerData['basic_salary'] = $localWorker->basic_salary;
+                    $workerData['hourly_rate'] = $localWorker->hourly_rate;
+                } else {
+                    $workerData['source'] = 'biometric_not_connected';
+                    $workerData['user_id'] = null;
+                    $workerData['user_role'] = null;
+                    $workerData['user_role_display'] = null;
+                    $workerData['is_connected'] = false;
+                    
+                    // Default values for non-connected workers
+                    $workerData['attendance_percentage'] = null;
+                    $workerData['performance_rating'] = null;
+                    $workerData['productivity_score'] = null;
+                    $workerData['quality_score'] = null;
+                    $workerData['total_working_days'] = null;
+                    $workerData['total_orders_completed'] = null;
+                    $workerData['basic_salary'] = null;
+                    $workerData['hourly_rate'] = null;
+                }
+                
+                $allWorkers[] = $workerData;
+            }
+            
+            // Apply pagination to ALL biometric workers
+            $totalWorkers = count($allWorkers);
+            $connectedCount = count(array_filter($allWorkers, function($worker) {
+                return $worker['is_connected'] ?? false;
+            }));
+            $offset = ($page - 1) * $pageSize;
+            $paginatedWorkers = array_slice($allWorkers, $offset, $pageSize);
+            
+            // Calculate pagination info
+            $totalPages = ceil($totalWorkers / $pageSize);
+            $hasNext = $page < $totalPages;
+            $hasPrevious = $page > 1;
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'All biometric workers with pagination',
+                'data' => $paginatedWorkers,
+                'pagination' => [
+                    'current_page' => (int) $page,
+                    'per_page' => (int) $pageSize,
+                    'total' => (int) $totalWorkers,
+                    'total_pages' => (int) $totalPages,
+                    'has_next' => (bool) $hasNext,
+                    'has_previous' => (bool) $hasPrevious,
+                    'next_page' => $hasNext ? (int) ($page + 1) : null,
+                    'previous_page' => $hasPrevious ? (int) ($page - 1) : null,
+                ],
+                'total_biometric' => count($employeeResponse['data']),
+                'connected_count' => $connectedCount,
+                'not_connected_count' => $totalWorkers - $connectedCount,
+                'current_page_count' => count($paginatedWorkers),
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error getting connected biometric workers: ' . $e->getMessage()
             ], 500);
         }
     }

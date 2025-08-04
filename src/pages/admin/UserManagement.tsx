@@ -13,7 +13,8 @@ import {
   UserPlus,
   Settings,
   Check,
-  X
+  X,
+  Key
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { rbacApi, userApi, roleApi } from '../../api/laravel';
@@ -54,6 +55,11 @@ const UserManagement: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -67,7 +73,7 @@ const UserManagement: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [searchTerm, selectedRole]);
 
   const loadData = async () => {
     try {
@@ -78,11 +84,13 @@ const UserManagement: React.FC = () => {
       ]);
 
       if (usersResponse.data.success) {
-        setUsers(usersResponse.data.data.data || []);
+        const userData = usersResponse.data.data.data || [];
+        setUsers(userData);
       }
       
       if (rolesResponse.data.success) {
-        setRoles(rolesResponse.data.data || []);
+        const roleData = rolesResponse.data.data || [];
+        setRoles(roleData);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -113,6 +121,7 @@ const UserManagement: React.FC = () => {
   const handleCreateUser = async () => {
     try {
       const response = await userApi.createUser(formData);
+      
       if (response.data.success) {
         await loadData(); // Reload data
         setShowCreateModal(false);
@@ -176,6 +185,30 @@ const UserManagement: React.FC = () => {
     });
   };
 
+  const handleChangePassword = async () => {
+    try {
+      if (selectedUser && passwordData.newPassword && passwordData.newPassword === passwordData.confirmPassword) {
+        const response = await userApi.changePassword(selectedUser.id, {
+          password: passwordData.newPassword
+        });
+        if (response.data.success) {
+          setShowPasswordModal(false);
+          setSelectedUser(null);
+          setPasswordData({ newPassword: '', confirmPassword: '' });
+          // Show success message
+        }
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+    }
+  };
+
+  const openPasswordModal = (user: User) => {
+    setSelectedUser(user);
+    setPasswordData({ newPassword: '', confirmPassword: '' });
+    setShowPasswordModal(true);
+  };
+
   const openEditModal = (user: User) => {
     setSelectedUser(user);
     setFormData({
@@ -213,7 +246,7 @@ const UserManagement: React.FC = () => {
             <Users className="w-6 h-6 mr-2" />
             {t('users.title')}
           </h1>
-          <p className="text-gray-600 mt-1">إدارة المستخدمين وصلاحياتهم</p>
+          <p className="text-gray-600 mt-1">{t('users.subtitle')}</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -234,7 +267,7 @@ const UserManagement: React.FC = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="البحث بالاسم أو البريد الإلكتروني..."
+                placeholder={t('users.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -247,7 +280,7 @@ const UserManagement: React.FC = () => {
               onChange={(e) => setSelectedRole(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="all">جميع الأدوار</option>
+              <option value="all">{t('users.allRoles')}</option>
               {roles.map(role => (
                 <option key={role.id} value={role.name}>
                   {role.display_name}
@@ -265,22 +298,22 @@ const UserManagement: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  المستخدم
+                  {t('users.table.user')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  الدور
+                  {t('users.table.role')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  القسم
+                  {t('users.table.department')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  الحالة
+                  {t('users.table.status')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  آخر نشاط
+                  {t('users.table.lastActivity')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  الإجراءات
+                  {t('users.table.actions')}
                 </th>
               </tr>
             </thead>
@@ -311,7 +344,7 @@ const UserManagement: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.department || 'غير محدد'}
+                    {user.department || t('users.department.notSpecified')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
@@ -325,12 +358,12 @@ const UserManagement: React.FC = () => {
                       {user.is_active ? (
                         <>
                           <Check className="w-3 h-3 mr-1" />
-                          نشط
+                          {t('users.status.active')}
                         </>
                       ) : (
                         <>
                           <X className="w-3 h-3 mr-1" />
-                          غير نشط
+                          {t('users.status.inactive')}
                         </>
                       )}
                     </button>
@@ -343,8 +376,16 @@ const UserManagement: React.FC = () => {
                       <button
                         onClick={() => openEditModal(user)}
                         className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                        title={t('users.actions.edit')}
                       >
                         <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => openPasswordModal(user)}
+                        className="text-green-600 hover:text-green-900 p-1 rounded"
+                        title={t('users.actions.changePassword')}
+                      >
+                        <Key className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => {
@@ -352,6 +393,7 @@ const UserManagement: React.FC = () => {
                           setShowDeleteConfirm(true);
                         }}
                         className="text-red-600 hover:text-red-900 p-1 rounded"
+                        title={t('users.actions.delete')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -375,7 +417,7 @@ const UserManagement: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    الاسم
+                    {t('users.form.name')}
                   </label>
                   <input
                     type="text"
@@ -386,7 +428,7 @@ const UserManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    البريد الإلكتروني
+                    {t('users.form.email')}
                   </label>
                   <input
                     type="email"
@@ -397,7 +439,7 @@ const UserManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    كلمة المرور
+                    {t('users.form.password')}
                   </label>
                   <input
                     type="password"
@@ -408,14 +450,14 @@ const UserManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    الدور
+                    {t('users.form.role')}
                   </label>
                   <select
                     value={formData.role_id}
                     onChange={(e) => setFormData({...formData, role_id: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">اختر دور</option>
+                    <option value="">{t('users.form.selectRole')}</option>
                     {roles.map(role => (
                       <option key={role.id} value={role.id}>
                         {role.display_name}
@@ -425,7 +467,7 @@ const UserManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    القسم
+                    {t('users.form.department')}
                   </label>
                   <input
                     type="text"
@@ -443,7 +485,7 @@ const UserManagement: React.FC = () => {
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <label htmlFor="is_active" className="mr-2 block text-sm text-gray-900">
-                    حساب نشط
+                    {t('users.form.isActive')}
                   </label>
                 </div>
               </div>
@@ -455,13 +497,13 @@ const UserManagement: React.FC = () => {
                   }}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                 >
-                  إلغاء
+                  {t('users.buttons.cancel')}
                 </button>
                 <button
                   onClick={handleCreateUser}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  إنشاء
+                  {t('users.buttons.create')}
                 </button>
               </div>
             </div>
@@ -480,7 +522,7 @@ const UserManagement: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    الاسم
+                    {t('users.form.name')}
                   </label>
                   <input
                     type="text"
@@ -491,7 +533,7 @@ const UserManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    البريد الإلكتروني
+                    {t('users.form.email')}
                   </label>
                   <input
                     type="email"
@@ -502,7 +544,7 @@ const UserManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    الدور
+                    {t('users.form.role')}
                   </label>
                   <select
                     value={formData.role_id}
@@ -518,7 +560,7 @@ const UserManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    القسم
+                    {t('users.form.department')}
                   </label>
                   <input
                     type="text"
@@ -536,7 +578,7 @@ const UserManagement: React.FC = () => {
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <label htmlFor="edit_is_active" className="mr-2 block text-sm text-gray-900">
-                    حساب نشط
+                    {t('users.form.isActive')}
                   </label>
                 </div>
               </div>
@@ -549,13 +591,13 @@ const UserManagement: React.FC = () => {
                   }}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                 >
-                  إلغاء
+                  {t('users.buttons.cancel')}
                 </button>
                 <button
                   onClick={handleUpdateUser}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  حفظ
+                  {t('users.buttons.save')}
                 </button>
               </div>
             </div>
@@ -572,11 +614,11 @@ const UserManagement: React.FC = () => {
                 <Trash2 className="h-6 w-6 text-red-600" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mt-4">
-                حذف المستخدم
+                {t('users.deleteUser')}
               </h3>
               <div className="mt-2 px-7 py-3">
                 <p className="text-sm text-gray-500">
-                  هل أنت متأكد من حذف المستخدم "{selectedUser.name}"؟ لا يمكن التراجع عن هذا الإجراء.
+                  {t('users.deleteConfirm', { name: selectedUser.name })}
                 </p>
               </div>
               <div className="flex justify-center space-x-2 space-x-reverse mt-4">
@@ -587,13 +629,78 @@ const UserManagement: React.FC = () => {
                   }}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                 >
-                  إلغاء
+                  {t('users.buttons.cancel')}
                 </button>
                 <button
                   onClick={handleDeleteUser}
                   className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                 >
-                  حذف
+                  {t('users.buttons.delete')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Password Modal */}
+      {showPasswordModal && selectedUser && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 text-center mb-4">
+                {t('users.changePassword')}
+              </h3>
+              <p className="text-sm text-gray-600 text-center mb-4">
+                {selectedUser.name}
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('users.form.password')}
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                    placeholder={t('users.form.newPasswordPlaceholder')}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('users.form.confirmPassword')}
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                    placeholder={t('users.form.confirmPasswordPlaceholder')}
+                  />
+                </div>
+                {passwordData.newPassword && passwordData.confirmPassword && 
+                 passwordData.newPassword !== passwordData.confirmPassword && (
+                  <p className="text-red-500 text-sm">{t('users.passwordMismatch')}</p>
+                )}
+              </div>
+              <div className="flex justify-end space-x-2 space-x-reverse mt-6">
+                <button
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setSelectedUser(null);
+                    setPasswordData({ newPassword: '', confirmPassword: '' });
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                >
+                  {t('users.buttons.cancel')}
+                </button>
+                <button
+                  onClick={handleChangePassword}
+                  disabled={!passwordData.newPassword || passwordData.newPassword !== passwordData.confirmPassword}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {t('users.changePassword')}
                 </button>
               </div>
             </div>

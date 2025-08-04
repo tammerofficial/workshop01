@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { DepartmentProvider } from './contexts/DepartmentContext';
@@ -6,7 +6,9 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { CacheProvider } from './contexts/CacheContext';
+
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
@@ -43,7 +45,7 @@ import ProductionTracking from './pages/ProductionTracking';
 import Profile from './pages/admin/Profile';
 import UserManagement from './pages/admin/UserManagement';
 import RolesManagement from './pages/admin/RolesManagement';
-import AdminSettings from './pages/admin/AdminSettings';
+
 import Permissions from './pages/admin/Permissions';
 import SecurityLogs from './pages/admin/SecurityLogs';
 import SystemSettings from './pages/admin/SystemSettings';
@@ -56,7 +58,7 @@ import Unauthorized from './pages/auth/Unauthorized';
 
 // ERP pages
 import ERPManagement from './pages/ERPManagement';
-import OrdersNew from './pages/OrdersNew';
+import OrdersManagement from './pages/OrdersManagement';
 
 // Plugin Management
 import PluginManagement from './pages/PluginManagement';
@@ -64,13 +66,14 @@ import RBACDashboard from './pages/RBACDashboard';
 
 function App() {
   return (
-    <ThemeProvider>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <LanguageProvider>
-          <CacheProvider>
-            <AuthProvider>
-              <DepartmentProvider>
-              <Toaster position="top-right" />
+    <ErrorBoundary>
+      <ThemeProvider>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <LanguageProvider>
+            <CacheProvider>
+              <AuthProvider>
+                <DepartmentProvider>
+                <Toaster position="top-right" />
               <Routes>
                 {/* Auth Routes */}
                 <Route path="/login" element={<Login />} />
@@ -83,23 +86,91 @@ function App() {
                     <Layout />
                   </ProtectedRoute>
                 }>
-                  <Route index element={<Dashboard />} />
-                  <Route path="orders" element={<Orders />} />
-                  <Route path="orders-management" element={<OrdersNew />} />
-                  <Route path="products" element={<Products />} />
-                  <Route path="orders/create" element={<CreateOrder />} />
-                  <Route path="orders/:id" element={<OrderDetails />} />
-                  <Route path="orders/:id/schedule-fitting" element={<ScheduleFitting />} />
-                  <Route path="inventory" element={<Inventory />} />
-                  <Route path="inventory/add" element={<AddInventoryItem />} />
-                  <Route path="inventory/:id/barcode" element={<ViewBarcode />} />
-                  <Route path="inventory/:id/edit" element={<EditInventoryItem />} />
-                  <Route path="inventory/:id/order" element={<OrderMoreInventory />} />
-                  <Route path="clients" element={<Clients />} />
-                  <Route path="workers" element={<Workers />} />
-                  <Route path="workers/add" element={<AddWorker />} />
-                  <Route path="workers/:id/edit" element={<EditWorker />} />
-                  <Route path="workers/:id" element={<WorkerDetails />} />
+                  <Route index element={
+                    <ProtectedRoute requiredPermissions={['dashboard.view']}>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="orders" element={
+                    <ProtectedRoute requiredPermissions={['orders.view']}>
+                      <Orders />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="orders-management" element={
+                    <ProtectedRoute requiredPermissions={['orders.view']}>
+                      <OrdersManagement />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="products" element={
+                    <ProtectedRoute requiredPermissions={['products.view']}>
+                      <Products />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="orders/create" element={
+                    <ProtectedRoute requiredPermissions={['orders.create']}>
+                      <CreateOrder />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="orders/:id" element={
+                    <ProtectedRoute requiredPermissions={['orders.view']}>
+                      <OrderDetails />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="orders/:id/schedule-fitting" element={
+                    <ProtectedRoute requiredPermissions={['orders.edit']}>
+                      <ScheduleFitting />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="inventory" element={
+                    <ProtectedRoute requiredPermissions={['inventory.view']}>
+                      <Inventory />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="inventory/add" element={
+                    <ProtectedRoute requiredPermissions={['inventory.create']}>
+                      <AddInventoryItem />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="inventory/:id/barcode" element={
+                    <ProtectedRoute requiredPermissions={['inventory.view']}>
+                      <ViewBarcode />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="inventory/:id/edit" element={
+                    <ProtectedRoute requiredPermissions={['inventory.edit']}>
+                      <EditInventoryItem />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="inventory/:id/order" element={
+                    <ProtectedRoute requiredPermissions={['inventory.create']}>
+                      <OrderMoreInventory />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="clients" element={
+                    <ProtectedRoute requiredPermissions={['clients.view']}>
+                      <Clients />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="workers" element={
+                    <ProtectedRoute requiredPermissions={['workers.view']}>
+                      <Workers />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="workers/add" element={
+                    <ProtectedRoute requiredPermissions={['workers.create']}>
+                      <AddWorker />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="workers/:id/edit" element={
+                    <ProtectedRoute requiredPermissions={['workers.edit']}>
+                      <EditWorker />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="workers/:id" element={
+                    <ProtectedRoute requiredPermissions={['workers.view']}>
+                      <WorkerDetails />
+                    </ProtectedRoute>
+                  } />
                   <Route path="calendar" element={<Calendar />} />
                   <Route path="suit-production" element={<SuitProductionFlow />} />
                   <Route path="assign-task" element={<AssignTask />} />
@@ -107,7 +178,7 @@ function App() {
                   <Route path="analytics" element={<Analytics />} />
                   <Route path="advanced-features" element={<AdvancedFeatures />} />
                   <Route path="notifications" element={<Notifications />} />
-                  <Route path="settings" element={<AdminSettings />} />
+                  <Route path="settings" element={<Settings />} />
                   <Route path="invoices" element={<Invoices />} />
                   <Route path="invoices/create" element={<CreateInvoice />} />
                   <Route path="sales" element={<Sales />} />
@@ -118,53 +189,53 @@ function App() {
                   {/* Admin Routes - with role-based protection */}
                   <Route path="admin/profile" element={<Profile />} />
                   <Route path="admin/users" element={
-                    <ProtectedRoute requiredRoles={['admin']}>
+                    <ProtectedRoute requiredRoles={['admin', 'super_admin']}>
                       <UserManagement />
                     </ProtectedRoute>
                   } />
                   <Route path="admin/roles" element={
-                    <ProtectedRoute requiredRoles={['admin']}>
+                    <ProtectedRoute requiredRoles={['admin', 'super_admin']}>
                       <RolesManagement />
                     </ProtectedRoute>
                   } />
                   <Route path="admin/permissions" element={
-                    <ProtectedRoute requiredRoles={['admin']}>
+                    <ProtectedRoute requiredRoles={['admin', 'super_admin']}>
                       <Permissions />
                     </ProtectedRoute>
                   } />
                   <Route path="admin/security-logs" element={
-                    <ProtectedRoute requiredRoles={['admin']}>
+                    <ProtectedRoute requiredRoles={['admin', 'super_admin']}>
                       <SecurityLogs />
                     </ProtectedRoute>
                   } />
                   <Route path="admin/system-settings" element={
-                    <ProtectedRoute requiredRoles={['admin']}>
+                    <ProtectedRoute requiredRoles={['admin', 'super_admin']}>
                       <SystemSettings />
                     </ProtectedRoute>
                   } />
                   <Route path="admin/backup" element={
-                    <ProtectedRoute requiredRoles={['admin']}>
+                    <ProtectedRoute requiredRoles={['admin', 'super_admin']}>
                       <Backup />
                     </ProtectedRoute>
                   } />
                   
                   {/* ERP Management */}
                   <Route path="erp" element={
-                    <ProtectedRoute allowedRoles={['system_super_admin', 'system_admin']}>
+                    <ProtectedRoute allowedRoles={['system_super_admin', 'system_admin', 'super_admin']}>
                       <ERPManagement />
                     </ProtectedRoute>
                   } />
                   
                   {/* Plugin Management */}
                   <Route path="plugins" element={
-                    <ProtectedRoute requiredRoles={['admin']}>
+                    <ProtectedRoute requiredRoles={['admin', 'super_admin']}>
                       <PluginManagement />
                     </ProtectedRoute>
                   } />
                   
                   {/* RBAC Dashboard */}
                   <Route path="rbac-dashboard" element={
-                    <ProtectedRoute requiredRoles={['admin', 'system_administrator']}>
+                    <ProtectedRoute requiredRoles={['admin', 'system_administrator', 'super_admin']}>
                       <RBACDashboard />
                     </ProtectedRoute>
                   } />
@@ -179,6 +250,7 @@ function App() {
         </LanguageProvider>
       </Router>
     </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

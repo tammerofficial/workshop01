@@ -23,6 +23,20 @@ const laravelApi = axios.create({
   },
 });
 
+// Add request interceptor to include auth token
+laravelApi.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Add response interceptor for error handling
 laravelApi.interceptors.response.use(
   (response) => response,
@@ -30,11 +44,33 @@ laravelApi.interceptors.response.use(
     if (error.response?.status === 404) {
       console.warn('API endpoint not found:', error.config?.url);
     }
+    if (error.response?.status === 401) {
+      // Unauthorized - clear token and redirect to login
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
     return Promise.reject(error);
   }
 );
 
 // API Services
+// Authentication API
+export const authApi = {
+  login: (data: { email: string; password: string }) => laravelApi.post('/auth/login', data),
+  logout: () => laravelApi.post('/auth/logout'),
+  me: () => laravelApi.get('/auth/me'),
+  refresh: () => laravelApi.post('/auth/refresh'),
+};
+
+// System Settings API
+export const systemSettingsApi = {
+  getThemeSettings: () => laravelApi.get('/system-settings/theme'),
+  updateThemeSettings: (settings: any) => laravelApi.post('/system-settings/theme', settings),
+  resetThemeSettings: () => laravelApi.post('/system-settings/theme/reset')
+};
+
 export const workerService = {
   getAll: () => laravelApi.get('/workers'),
   getById: (id: number) => laravelApi.get(`/workers/${id}`),
@@ -156,6 +192,7 @@ export const biometricService = {
   getWorkerAttendance: (id: number, params?: Record<string, unknown>) => laravelApi.get(`/biometric/worker/${id}/attendance`, { params }),
   getTokenInfo: () => laravelApi.get('/biometric/token-info'),
   getBiometricWorkers: (pageSize = 50) => laravelApi.get(`/biometric/workers?page_size=${pageSize}`),
+  getConnectedBiometricWorkers: (pageSize = 10, page = 1) => laravelApi.get(`/biometric/connected-workers?page_size=${pageSize}&page=${page}`),
   getBiometricAttendance: (params?: Record<string, unknown>) => laravelApi.get('/biometric/attendance', { params }),
   
   // CRUD Operations for Employees
@@ -261,6 +298,7 @@ export const userApi = {
   // User Actions
   toggleUserStatus: (id: number) => laravelApi.patch(`/users/${id}/toggle-status`),
   assignRole: (id: number, roleId: number) => laravelApi.patch(`/users/${id}/assign-role`, { role_id: roleId }),
+  changePassword: (id: number, data: { password: string }) => laravelApi.patch(`/users/${id}/change-password`, data),
   
   // User Analytics
   getUserStatistics: () => laravelApi.get('/users/statistics'),

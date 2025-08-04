@@ -134,13 +134,22 @@ class ActivityLog extends Model
     /**
      * الحصول على مستوى الخطورة
      */
-    public function getSeverityLevel(): string
+    public function getSeverityLevelAttribute(): string
     {
+        // إذا كان severity موجود في properties
+        if (isset($this->properties['severity'])) {
+            return $this->properties['severity'];
+        }
+
+        // أو بناءً على نوع النشاط
         return match($this->log_name) {
             'authentication' => 'medium',
             'authorization' => 'high',
             'permission_violation' => 'high',
             'security_breach' => 'critical',
+            'security' => 'high',
+            'permission_management' => 'medium',
+            'user_management' => 'medium',
             'data_modification' => 'medium',
             'system_change' => 'high',
             default => 'low'

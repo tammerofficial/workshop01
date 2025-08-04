@@ -1,28 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Dark mode styles */
-.dark {
-  --bg-primary: #121212;
-  --bg-secondary: #1e1e1e;
-  --bg-tertiary: #2d2d2d;
-  --text-primary: #ffffff;
-  --text-secondary: #a0aec0;
-  --border-color: #2d2d2d;
-}
-
-/* Light mode styles */
+/* Light mode styles (Default) */
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #f7fafc;
-  --bg-tertiary: #edf2f7;
-  --text-primary: #1a202c;
-  --text-secondary: #4a5568;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
   --border-color: #e2e8f0;
+  --primary-color: #3b82f6;
+  --secondary-color: #6b7280;
+  --background-color: #ffffff;
+  --surface-color: #ffffff;
+  --logo-bg: #ffffff;
+  --sidebar-bg: #ffffff;
+  --card-bg: #ffffff;
+  --hover-bg: #f8fafc;
+}
+
+/* Dark mode styles */
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --border-color: #334155;
+  --primary-color: #60a5fa;
+  --secondary-color: #94a3b8;
+  --background-color: #0f172a;
+  --surface-color: #1e293b;
+  --logo-bg: #1e293b;
+  --sidebar-bg: #1e293b;
+  --card-bg: #1e293b;
+  --hover-bg: #334155;
 }
 
 /* Apply theme variables */
+body {
+  font-family: 'Tajawal', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Theme-aware utility classes */
+.bg-theme-primary {
+  background-color: var(--bg-primary);
+}
+
+.bg-theme-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.bg-theme-surface {
+  background-color: var(--surface-color);
+}
+
+.bg-theme-sidebar {
+  background-color: var(--sidebar-bg);
+}
+
+.bg-theme-card {
+  background-color: var(--card-bg);
+}
+
+.text-theme-primary {
+  color: var(--text-primary);
+}
+
+.text-theme-secondary {
+  color: var(--text-secondary);
+}
+
+.border-theme {
+  border-color: var(--border-color);
+}
+
+.hover\:bg-theme-hover:hover {
+  background-color: var(--hover-bg);
+}
+
 .dark {
   background-color: var(--bg-primary);
   color: var(--text-primary);

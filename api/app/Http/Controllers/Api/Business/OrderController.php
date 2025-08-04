@@ -203,4 +203,24 @@ class OrderController extends Controller
         
         return $translations[$status] ?? $status;
     }
+
+    /**
+     * Get orders statistics
+     */
+    public function stats(): JsonResponse
+    {
+        $total = Order::count();
+        $pending = Order::where('status', 'pending')->count();
+        $inProgress = Order::where('status', 'in_progress')->count();
+        $completed = Order::where('status', 'completed')->count();
+        $totalRevenue = Order::where('status', 'completed')->sum('total_cost');
+
+        return response()->json([
+            'total' => $total,
+            'pending' => $pending,
+            'inProgress' => $inProgress,
+            'completed' => $completed,
+            'totalRevenue' => $totalRevenue
+        ]);
+    }
 } 

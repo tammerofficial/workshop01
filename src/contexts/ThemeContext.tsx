@@ -47,15 +47,15 @@ interface ThemeContextType {
 
 const defaultAdvancedSettings: AdvancedAppearanceSettings = {
   colors: {
-    primary: '#3b82f6',
-    secondary: '#6b7280',
-    accent: '#8b5cf6',
+    primary: '#000000',
+    secondary: '#8a8a8a',
+    accent: '#858585',
     background: '#ffffff',
     surface: '#f9fafb',
     border: '#e5e7eb'
   },
   typography: {
-    fontFamily: 'SF Pro Display',
+    fontFamily: 'Tajawal',
     fontSize: 16,
     fontWeight: 400,
     lineHeight: 1.5
@@ -85,30 +85,74 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>('auto');
-  const [primaryColor, setPrimaryColorState] = useState<string>('#3b82f6');
+  const [primaryColor, setPrimaryColorState] = useState<string>('#000000');
   const [advancedSettings, setAdvancedSettingsState] = useState<AdvancedAppearanceSettings>(defaultAdvancedSettings);
 
-  // Load saved settings from localStorage on mount
+  // Load saved settings from server and localStorage on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('selectedTheme') as Theme;
-    if (savedTheme && ['light', 'dark', 'auto'].includes(savedTheme)) {
-      setThemeState(savedTheme);
-    }
-
-    const savedColor = localStorage.getItem('primaryColor');
-    if (savedColor) {
-      setPrimaryColorState(savedColor);
-    }
-
-    const savedAdvancedSettings = localStorage.getItem('advancedSettings');
-    if (savedAdvancedSettings) {
+    const loadSettings = async () => {
       try {
-        const parsed = JSON.parse(savedAdvancedSettings);
-        setAdvancedSettingsState({ ...defaultAdvancedSettings, ...parsed });
+        // Try to load global theme settings from server first
+        const { systemSettingsApi } = await import('../api/laravel');
+        const response = await systemSettingsApi.getThemeSettings();
+        const globalSettings = response.data.data;
+        
+        // Apply global settings
+        if (globalSettings.primaryColor) {
+          setPrimaryColorState(globalSettings.primaryColor);
+        }
+        if (globalSettings.theme) {
+          setThemeState(globalSettings.theme);
+        }
+        
+        // Update advanced settings with global values
+        const newAdvancedSettings = {
+          ...defaultAdvancedSettings,
+          colors: {
+            ...defaultAdvancedSettings.colors,
+            primary: globalSettings.primaryColor || defaultAdvancedSettings.colors.primary,
+            secondary: globalSettings.secondaryColor || defaultAdvancedSettings.colors.secondary,
+            background: globalSettings.backgroundColor || defaultAdvancedSettings.colors.background,
+          },
+          typography: {
+            ...defaultAdvancedSettings.typography,
+            fontFamily: globalSettings.fontFamily || defaultAdvancedSettings.typography.fontFamily,
+            fontSize: globalSettings.fontSize || defaultAdvancedSettings.typography.fontSize,
+          },
+          spacing: {
+            ...defaultAdvancedSettings.spacing,
+            borderRadius: globalSettings.borderRadius || defaultAdvancedSettings.spacing.borderRadius,
+          }
+        };
+        setAdvancedSettingsState(newAdvancedSettings);
+        
       } catch (error) {
-        console.warn('Failed to parse advanced settings from localStorage');
+        console.warn('Failed to load global theme settings, using local/defaults');
+        
+        // Fallback to localStorage
+        const savedTheme = localStorage.getItem('selectedTheme') as Theme;
+        if (savedTheme && ['light', 'dark', 'auto'].includes(savedTheme)) {
+          setThemeState(savedTheme);
+        }
+
+        const savedColor = localStorage.getItem('primaryColor');
+        if (savedColor) {
+          setPrimaryColorState(savedColor);
+        }
+
+        const savedAdvancedSettings = localStorage.getItem('advancedSettings');
+        if (savedAdvancedSettings) {
+          try {
+            const parsed = JSON.parse(savedAdvancedSettings);
+            setAdvancedSettingsState({ ...defaultAdvancedSettings, ...parsed });
+          } catch (error) {
+            console.warn('Failed to parse advanced settings from localStorage');
+          }
+        }
       }
-    }
+    };
+    
+    loadSettings();
   }, []);
 
   const isDark =
@@ -120,13 +164,37 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const applyAdvancedSettings = () => {
     const root = document.documentElement;
     
-    // Apply colors
-    root.style.setProperty('--primary-color', advancedSettings.colors.primary);
-    root.style.setProperty('--secondary-color', advancedSettings.colors.secondary);
+    // Apply colors with theme-aware adjustments
+    if (isDark) {
+      // Dark mode colors - use user settings where applicable
+      root.style.setProperty('--primary-color', advancedSettings.colors.primary || '#60a5fa');
+      root.style.setProperty('--secondary-color', advancedSettings.colors.secondary || '#94a3b8');
+      root.style.setProperty('--bg-primary', '#0f172a'); // Very dark blue
+      root.style.setProperty('--bg-secondary', '#1e293b'); // Dark blue
+      root.style.setProperty('--text-primary', '#f8fafc'); // Almost white
+      root.style.setProperty('--text-secondary', '#cbd5e1'); // Light gray
+      root.style.setProperty('--border-color', '#334155'); // Medium gray
+      root.style.setProperty('--sidebar-bg', advancedSettings.colors.background || '#1e293b');
+      root.style.setProperty('--card-bg', '#1e293b');
+      root.style.setProperty('--hover-bg', '#334155');
+      root.style.setProperty('--background-color', advancedSettings.colors.background || '#1e293b');
+    } else {
+      // Light mode colors
+      root.style.setProperty('--primary-color', advancedSettings.colors.primary || '#000000');
+      root.style.setProperty('--secondary-color', advancedSettings.colors.secondary || '#8a8a8a');
+      root.style.setProperty('--bg-primary', '#ffffff');
+      root.style.setProperty('--bg-secondary', '#f8fafc');
+      root.style.setProperty('--text-primary', '#1e293b');
+      root.style.setProperty('--text-secondary', '#64748b');
+      root.style.setProperty('--border-color', '#e2e8f0');
+      root.style.setProperty('--sidebar-bg', advancedSettings.colors.background || '#ffffff');
+      root.style.setProperty('--card-bg', '#ffffff');
+      root.style.setProperty('--hover-bg', '#f8fafc');
+      root.style.setProperty('--background-color', advancedSettings.colors.background || '#ffffff');
+    }
+    
     root.style.setProperty('--accent-color', advancedSettings.colors.accent);
-    root.style.setProperty('--background-color', advancedSettings.colors.background);
     root.style.setProperty('--surface-color', advancedSettings.colors.surface);
-    root.style.setProperty('--border-color', advancedSettings.colors.border);
     
     // Apply typography
     root.style.setProperty('--font-family', advancedSettings.typography.fontFamily);
@@ -172,11 +240,28 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem('selectedTheme', newTheme);
+    
+    // Apply settings immediately after theme change
+    setTimeout(() => {
+      applyAdvancedSettings();
+    }, 0);
   };
 
-  const setPrimaryColor = (newColor: string) => {
+  const setPrimaryColor = async (newColor: string) => {
     setPrimaryColorState(newColor);
     localStorage.setItem('primaryColor', newColor);
+    
+    // Try to save to server for global use
+    try {
+      const { systemSettingsApi } = await import('../api/laravel');
+      await systemSettingsApi.updateThemeSettings({
+        primaryColor: newColor
+      });
+      console.log('Global theme updated successfully');
+    } catch (error) {
+      console.warn('Failed to update global theme, saved locally only');
+    }
+    
     // Also update in advanced settings
     setAdvancedSettingsState(prev => ({
       ...prev,
@@ -187,9 +272,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const setAdvancedSettings = (newSettings: AdvancedAppearanceSettings) => {
     setAdvancedSettingsState(newSettings);
     localStorage.setItem('advancedSettings', JSON.stringify(newSettings));
+    
     // Update primary color state as well
     setPrimaryColorState(newSettings.colors.primary);
     localStorage.setItem('primaryColor', newSettings.colors.primary);
+    
+    // Apply settings immediately
+    setTimeout(() => {
+      applyAdvancedSettings();
+    }, 0);
   };
 
   return (

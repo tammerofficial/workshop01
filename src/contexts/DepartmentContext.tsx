@@ -14,8 +14,8 @@ export interface DepartmentInfo {
 export const departments: DepartmentInfo[] = [
   {
     id: 'general',
-    name: 'General Workshop',
-    description: 'All workshop activities',
+    name: 'ورشة عامة',
+    description: 'جميع أنشطة الورشة',
     color: 'bg-gray-500',
     icon: '🧵'
   }

@@ -10,7 +10,7 @@ class BiometricService
 {
     protected $authUrl = 'https://staff.hudaaljarallah.net/jwt-api-token-auth/';
     protected $transactionsUrl = 'http://staff.hudaaljarallah.net/iclock/api/transactions/';
-    protected $employeesUrl = 'http://staff.hudaaljarallah.net/personnel/api/employees/';
+    protected $employeesUrl = 'https://staff.hudaaljarallah.net/personnel/api/employees/';
     protected $departmentsUrl = 'https://staff.hudaaljarallah.net/personnel/api/departments/';
     protected $areasUrl = 'http://staff.hudaaljarallah.net/personnel/api/areas/';
     protected $positionsUrl = 'http://staff.hudaaljarallah.net/personnel/api/positions/';
@@ -171,15 +171,18 @@ class BiometricService
     /**
      * Get all employees from the biometric system
      */
-    public function getEmployees($pageSize = 50)
+    public function getEmployees($pageSize = null)
     {
         if (!$this->token && !$this->authenticate()) {
             return [];
         }
 
         try {
+            // إذا لم يتم تحديد pageSize، نجلب جميع العمال بدون حد
+            $params = $pageSize ? ['page_size' => $pageSize] : [];
+            
             $response = Http::withToken($this->token)
-                ->get($this->employeesUrl, ['page_size' => $pageSize]);
+                ->get($this->employeesUrl, $params);
 
             if ($response->successful()) {
                 return $response->json();
@@ -192,7 +195,7 @@ class BiometricService
                 
                 if ($this->authenticate()) {
                     $response = Http::withToken($this->token)
-                        ->get($this->employeesUrl, ['page_size' => $pageSize]);
+                        ->get($this->employeesUrl, $params);
                         
                     if ($response->successful()) {
                         return $response->json();

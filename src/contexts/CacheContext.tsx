@@ -50,7 +50,7 @@ interface CacheContextType {
 
 const CacheContext = createContext<CacheContextType | undefined>(undefined);
 
-export function CacheProvider({ children }: { children: React.ReactNode }) {
+export function CacheProvider({ children }: { children: React.ReactNode }): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [cacheHitRate, setCacheHitRate] = useState(0);
   const [stats, setStats] = useState({ hits: 0, misses: 0 });

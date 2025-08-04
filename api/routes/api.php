@@ -101,11 +101,11 @@ Route::apiResource('categories', CategoryController::class);
 Route::apiResource('clients', ClientController::class);
 
 // Orders Routes
+Route::get('orders/stats', [OrderController::class, 'stats']);
+Route::get('orders/client/{client_id}', [OrderController::class, 'getByClient']);
 Route::apiResource('orders', OrderController::class);
 Route::patch('orders/{order}/assign-worker', [OrderController::class, 'assignWorker']);
 Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus']);
-Route::get('orders/client/{client_id}', [OrderController::class, 'getByClient']);
-Route::get('orders/stats', [OrderController::class, 'stats']);
 
 // Tasks Routes
 Route::apiResource('tasks', TaskController::class);
@@ -280,6 +280,8 @@ Route::prefix('biometric')->group(function () {
     Route::get('/worker/{id}/attendance', [BiometricController::class, 'getWorkerAttendance']);
     Route::get('/token-info', [BiometricController::class, 'getTokenInfo']);
     Route::get('/workers', [BiometricController::class, 'getBiometricWorkers']);
+    Route::get('/connected-workers', [BiometricController::class, 'getConnectedBiometricWorkers']);
+    Route::post('/auto-register-all', [BiometricController::class, 'autoRegisterAllEmployees']);
     
     // CRUD Operations for Employees
     Route::post('/employees', [BiometricController::class, 'createEmployee']);
@@ -507,6 +509,7 @@ Route::prefix('users')->group(function () {
     Route::delete('/{user}', [\App\Http\Controllers\Api\UserController::class, 'destroy']);
     Route::patch('/{user}/toggle-status', [\App\Http\Controllers\Api\UserController::class, 'toggleStatus']);
     Route::patch('/{user}/assign-role', [\App\Http\Controllers\Api\UserController::class, 'assignRole']);
+    Route::patch('/{user}/change-password', [\App\Http\Controllers\Api\UserController::class, 'changePassword']);
 });
 
 // Simple Role Management Routes (Non-conflicting)
@@ -660,4 +663,18 @@ Route::prefix('analytics/advanced')->middleware(['auth:sanctum', 'permission:ana
         $analyticsService = app(\App\Services\AdvancedAnalyticsService::class);
         return $analyticsService->generateAIPredictions();
     });
+});
+
+// System Settings Routes (Global theme settings)
+Route::group(['prefix' => 'system-settings'], function () {
+    Route::get('/theme', [\App\Http\Controllers\Api\SystemSettingsController::class, 'getThemeSettings']);
+    Route::post('/theme', [\App\Http\Controllers\Api\SystemSettingsController::class, 'updateThemeSettings'])->middleware('auth:sanctum');
+    Route::post('/theme/reset', [\App\Http\Controllers\Api\SystemSettingsController::class, 'resetThemeSettings'])->middleware('auth:sanctum');
+});
+
+// API Dashboard Routes (JSON endpoints)
+Route::prefix('dashboard')->group(function () {
+    Route::get('/status', [\App\Http\Controllers\Api\ApiDashboardController::class, 'apiStatus']);
+    Route::get('/health', [\App\Http\Controllers\Api\ApiDashboardController::class, 'healthCheck']);
+    Route::get('/health/comprehensive', [\App\Http\Controllers\Api\ApiDashboardController::class, 'comprehensiveHealthCheck']);
 });

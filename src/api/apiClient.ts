@@ -50,7 +50,7 @@ export const materialService = {
   delete: (id: number) => laravelApi.delete(`/materials/${id}`),
   getLowStock: () => laravelApi.get('/materials/low-stock'),
 };
-
+  
 export const orderService = {
   getAll: () => laravelApi.get('/orders'),
   getById: (id: number) => laravelApi.get(`/orders/${id}`),

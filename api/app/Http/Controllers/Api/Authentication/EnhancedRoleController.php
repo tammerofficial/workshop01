@@ -55,7 +55,7 @@ class EnhancedRoleController extends Controller
                 'department' => 'nullable|string|max:255',
                 'priority' => 'nullable|integer|min:1|max:100',
                 'permissions' => 'nullable|array',
-                'permissions.*' => 'string|exists_in_available_permissions',
+                'permissions.*' => 'string',
                 'conditions' => 'nullable|array',
                 'is_inheritable' => 'boolean',
                 'expires_at' => 'nullable|date|after:now'
@@ -141,7 +141,7 @@ class EnhancedRoleController extends Controller
                 'department' => 'nullable|string|max:255',
                 'priority' => 'nullable|integer|min:1|max:100',
                 'permissions' => 'nullable|array',
-                'permissions.*' => 'string|exists_in_available_permissions',
+                'permissions.*' => 'string',
                 'conditions' => 'nullable|array',
                 'is_inheritable' => 'boolean',
                 'expires_at' => 'nullable|date|after:now'
@@ -229,7 +229,7 @@ class EnhancedRoleController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'permission' => 'required|string|exists_in_available_permissions',
+                'permission' => 'required|string',
                 'conditions' => 'nullable|array'
             ]);
 

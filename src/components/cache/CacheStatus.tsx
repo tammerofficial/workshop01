@@ -3,6 +3,7 @@ import { Database, RefreshCw, Trash2, TrendingUp, Clock, CheckCircle } from 'luc
 import { useCache } from '../../contexts/CacheContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import CacheStatusFallback from './CacheStatusFallback';
 
 interface CacheStatusProps {
   className?: string;
@@ -11,7 +12,17 @@ interface CacheStatusProps {
 
 const CacheStatus: React.FC<CacheStatusProps> = ({ className = '', showDetails = false }) => {
   const { t } = useLanguage();
-  const cache = useCache();
+  
+  // Add error handling for useCache
+  let cache;
+  try {
+    cache = useCache();
+  } catch (error) {
+    console.warn('CacheProvider not available, CacheStatus disabled:', error);
+    // Return fallback component if cache is not available
+    return <CacheStatusFallback className={className} />;
+  }
+  
   const [stats, setStats] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);

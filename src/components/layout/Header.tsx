@@ -8,6 +8,7 @@ import CacheStatus from '../cache/CacheStatus';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePermissions } from '../../hooks/usePermissions';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -21,6 +22,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
   const { t, isRTL } = useLanguage();
   const { theme, setTheme, isDark } = useTheme();
   const { user, logout } = useAuth();
+  const { canAccessAdmin, hasPermission, hasAnyRole } = usePermissions();
   
   const unreadNotifications = mockNotifications.filter(n => !n.isRead).length;
 
@@ -69,7 +71,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
         </div>
 
         {/* Cache Status */}
-        <CacheStatus className="hidden md:block" />
+        <div className="hidden md:block">
+          <CacheStatus />
+        </div>
 
         {/* Theme Toggle */}
         <button
@@ -193,63 +197,78 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
                   onClick={() => setShowUserMenu(false)}
                 >
                   <UserCircle size={16} className="mr-3" />
-                  My Profile
+                  {t('header.profile', 'الملف الشخصي')}
                 </Link>
                 
-                <Link 
-                  to="/admin/users" 
-                  className={`flex items-center px-4 py-2 text-sm transition-colors duration-150 ${
-                    isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setShowUserMenu(false)}
-                >
-                  <Users size={16} className="mr-3" />
-                  User Management
-                </Link>
-                
-                <Link 
-                  to="/admin/permissions" 
-                  className={`flex items-center px-4 py-2 text-sm transition-colors duration-150 ${
-                    isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setShowUserMenu(false)}
-                >
-                  <Shield size={16} className="mr-3" />
-                  Roles & Permissions
-                </Link>
-                
-                <Link 
-                  to="/admin/security-logs" 
-                  className={`flex items-center px-4 py-2 text-sm transition-colors duration-150 ${
-                    isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setShowUserMenu(false)}
-                >
-                  <FileText size={16} className="mr-3" />
-                  Security Logs
-                </Link>
-                
-                <Link 
-                  to="/admin/system-settings" 
-                  className={`flex items-center px-4 py-2 text-sm transition-colors duration-150 ${
-                    isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setShowUserMenu(false)}
-                >
-                  <Settings size={16} className="mr-3" />
-                  System Settings
-                </Link>
-                
-                <Link 
-                  to="/admin/backup" 
-                  className={`flex items-center px-4 py-2 text-sm transition-colors duration-150 ${
-                    isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setShowUserMenu(false)}
-                >
-                  <Database size={16} className="mr-3" />
-                  Backup & Restore
-                </Link>
+                {/* Admin Menu Items - Only show if user has admin access */}
+                {canAccessAdmin && (
+                  <>
+                    {hasPermission('users.view') && (
+                      <Link 
+                        to="/admin/users" 
+                        className={`flex items-center px-4 py-2 text-sm transition-colors duration-150 ${
+                          isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <Users size={16} className="mr-3" />
+                        {t('header.userManagement', 'إدارة المستخدمين')}
+                      </Link>
+                    )}
+                    
+                    {hasPermission('roles.manage') && (
+                      <Link 
+                        to="/admin/permissions" 
+                        className={`flex items-center px-4 py-2 text-sm transition-colors duration-150 ${
+                          isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <Shield size={16} className="mr-3" />
+                        {t('header.rolesPermissions', 'الأدوار والصلاحيات')}
+                      </Link>
+                    )}
+                    
+                    {hasPermission('system.logs') && (
+                      <Link 
+                        to="/admin/security-logs" 
+                        className={`flex items-center px-4 py-2 text-sm transition-colors duration-150 ${
+                          isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <FileText size={16} className="mr-3" />
+                        {t('header.securityLogs', 'سجلات الأمان')}
+                      </Link>
+                    )}
+                    
+                    {hasPermission('settings.manage') && (
+                      <Link 
+                        to="/admin/system-settings" 
+                        className={`flex items-center px-4 py-2 text-sm transition-colors duration-150 ${
+                          isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <Settings size={16} className="mr-3" />
+                        {t('header.systemSettings', 'إعدادات النظام')}
+                      </Link>
+                    )}
+                    
+                    {hasPermission('system.backup') && (
+                      <Link 
+                        to="/admin/backup" 
+                        className={`flex items-center px-4 py-2 text-sm transition-colors duration-150 ${
+                          isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <Database size={16} className="mr-3" />
+                        {t('header.backupRestore', 'نسخ احتياطي واستعادة')}
+                      </Link>
+                    )}
+                  </>
+                )}
               </div>
               
               <div className={`border-t transition-colors duration-300 ${
@@ -262,7 +281,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
                   }`}
                 >
                   <LogOut size={16} className="mr-3" />
-                  Logout
+                  {t('header.logout', 'تسجيل خروج')}
                 </button>
               </div>
             </motion.div>

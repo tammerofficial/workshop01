@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Plus, Search, Trash2, User, Phone, Mail, Settings, Grid, List, X, RefreshCw } from 'lucide-react';
 import { biometricService } from '../api/laravel';
-import { cachedWorkerService, cacheWarmup } from '../api/cachedLaravel';
-import { useCache } from '../contexts/CacheContext';
 import toast from 'react-hot-toast';
 import { LanguageContext } from '../contexts/LanguageContext';
 import WorkerCard from '../components/workers/WorkerCard';
@@ -26,7 +24,6 @@ interface Worker {
 
 const Workers = () => {
   const { t } = useContext(LanguageContext)!;
-  const cache = useCache();
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,7 +38,13 @@ const Workers = () => {
   const [departments, setDepartments] = useState<{id: number, dept_name: string, dept_code: string}[]>([]);
   const [positions, setPositions] = useState<{id: number, position_name: string}[]>([]);
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
   const [totalWorkers, setTotalWorkers] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
+  const pageSize = 10;
 
   const [newWorker, setNewWorker] = useState({
     emp_code: '',
@@ -73,40 +76,36 @@ const Workers = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadWorkers = async (forceRefresh = false) => {
+  // Force re-render pagination when totalWorkers changes
+  useEffect(() => {
+    // Update pagination when data changes
+  }, [totalWorkers, totalPages]);
+
+  const loadWorkers = async (page = 1) => {
     try {
       setLoading(true);
+      // استخدام API الجديد للعمال المرتبطين بنظام الصلاحيات مع pagination
+      const response = await biometricService.getConnectedBiometricWorkers(pageSize, page);
       
-      // Try to get from cache first unless force refresh
-      if (!forceRefresh) {
-        const cachedWorkers = cache.getCachedWorkers();
-        if (cachedWorkers) {
-          setWorkers(cachedWorkers);
-          setTotalWorkers(cachedWorkers.length);
-          setLoading(false);
-          return;
-        }
+      setWorkers(response.data.data || response.data);
+      
+      // Update pagination info from API response
+      if (response.data.pagination) {
+        const pagination = response.data.pagination;
+        setCurrentPage(Number(pagination.current_page) || 1);
+        setTotalWorkers(Number(pagination.total) || 0);
+        setTotalPages(Number(pagination.total_pages) || 1);
+        setHasNext(Boolean(pagination.has_next));
+        setHasPrevious(Boolean(pagination.has_previous));
+      } else {
+        // Fallback for backward compatibility
+        setTotalWorkers(response.data.total_count || response.data.connected_count || response.data.count || response.data.length);
+        setTotalPages(Math.ceil((response.data.total_count || response.data.connected_count || 0) / pageSize));
+        setHasNext(page < totalPages);
+        setHasPrevious(page > 1);
       }
-
-      // Fetch from API
-      const response = await cache.fetchWithCache(
-        'biometric_workers', 
-        async () => {
-          const apiResponse = await biometricService.getBiometricWorkers(50);
-          return apiResponse.data.data || apiResponse.data;
-        },
-        forceRefresh ? 0 : 5 * 60 * 1000 // 5 minutes cache, or no cache if force refresh
-      );
-      
-      const workersData = Array.isArray(response) ? response : response.data || response;
-      setWorkers(workersData);
-      setTotalWorkers(workersData.length);
-      
-      // Cache the workers
-      cache.setCachedWorkers(workersData);
-      
     } catch (error) {
-      console.error('Error loading workers:', error);
+      console.error('Error loading connected workers:', error);
       toast.error(t('common.error'));
     } finally {
       setLoading(false);
@@ -115,19 +114,44 @@ const Workers = () => {
 
   const refreshWorkers = async () => {
     try {
+      setLoading(true);
       toast.loading(t('workers.refreshing'));
-      
-      // Invalidate cache and force refresh
-      cache.invalidateWorkers();
-      await loadWorkers(true);
-      
-      toast.dismiss();
+      await loadWorkers(currentPage);
       toast.success(t('workers.refreshed'));
     } catch (error) {
       console.error('Error refreshing workers:', error);
-      toast.dismiss();
       toast.error(t('common.error'));
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Pagination functions
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      loadWorkers(page);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (hasNext) {
+      goToPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (hasPrevious) {
+      goToPage(currentPage - 1);
+    }
+  };
+
+  const goToFirstPage = () => {
+    goToPage(1);
+  };
+
+  const goToLastPage = () => {
+    goToPage(totalPages);
   };
 
   const refreshSupportData = async () => {
@@ -384,18 +408,24 @@ const Workers = () => {
           >
             {t('workers.title')}
           </h1>
-          <p 
-            className="text-gray-600 mt-2"
-            style={{
-              fontFamily: 'var(--font-family)',
-              fontSize: 'calc(var(--font-size) * 1.125)',
-              fontWeight: 'var(--font-weight)',
-              lineHeight: 'var(--line-height)',
-              color: 'var(--secondary-color)'
-            }}
-          >
-            {t('workers.subtitle')}
-          </p>
+                          <p
+                  className="text-gray-600 mt-2"
+                  style={{
+                    fontFamily: 'var(--font-family)',
+                    fontSize: 'calc(var(--font-size) * 1.125)',
+                    fontWeight: 'var(--font-weight)',
+                    lineHeight: 'var(--line-height)',
+                    color: 'var(--secondary-color)'
+                  }}
+                >
+                  عرض العمال المسجلين من النظام البيومتري فقط
+                </p>
+                <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  العمال من البيومترك: {totalWorkers} (مزامنة تلقائية كل ساعة)
+                </div>
         </div>
         <div className="flex gap-3">
           <button
@@ -920,6 +950,108 @@ const Workers = () => {
                   </div>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {(totalPages > 1 || totalWorkers > pageSize) && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>
+                عرض {workers.length} من أصل {totalWorkers} عامل
+              </span>
+              <span>•</span>
+              <span>
+                صفحة {currentPage} من {totalPages}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={goToFirstPage}
+                disabled={!hasPrevious}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                الأولى
+              </button>
+              
+              <button
+                onClick={goToPreviousPage}
+                disabled={!hasPrevious}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                السابقة
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, index) => {
+                  let pageNumber;
+                  if (totalPages <= 5) {
+                    pageNumber = index + 1;
+                  } else if (currentPage <= 3) {
+                    pageNumber = index + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNumber = totalPages - 4 + index;
+                  } else {
+                    pageNumber = currentPage - 2 + index;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => goToPage(pageNumber)}
+                      className={`px-3 py-2 text-sm font-medium rounded-lg ${
+                        pageNumber === currentPage
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              <button
+                onClick={goToNextPage}
+                disabled={!hasNext}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                التالية
+              </button>
+              
+              <button
+                onClick={goToLastPage}
+                disabled={!hasNext}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                الأخيرة
+              </button>
+            </div>
+          </div>
+          
+          {/* Quick page jump */}
+          <div className="flex items-center justify-center mt-3 pt-3 border-t border-gray-200">
+            <div className="flex items-center gap-2 text-sm">
+              <label htmlFor="page-jump" className="text-gray-600">الانتقال إلى الصفحة:</label>
+              <input
+                id="page-jump"
+                type="number"
+                min="1"
+                max={totalPages}
+                value={currentPage}
+                onChange={(e) => {
+                  const page = parseInt(e.target.value);
+                  if (page >= 1 && page <= totalPages) {
+                    goToPage(page);
+                  }
+                }}
+                className="w-16 px-2 py-1 text-center border border-gray-300 rounded-md text-sm"
+              />
+              <span className="text-gray-600">من {totalPages}</span>
             </div>
           </div>
         </div>

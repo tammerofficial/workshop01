@@ -1,10 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { authApi } from '../api/laravel';
 
 interface User {
+  id: number;
   name: string;
   email: string;
-  role: string;
+  role: {
+    id: number;
+    name: string;
+    display_name: string;
+    permissions: string[];
+  };
+  permissions: string[];
+  department?: string;
 }
 
 interface AuthContextType {
@@ -25,7 +33,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Check if user is authenticated on mount
@@ -48,24 +55,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(true);
     
     try {
-      // In a real app, this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await authApi.login({ email, password });
       
-      // Allow any email/password combination
-      const userData = {
-        name: email.split('@')[0],
-        email,
-        role: 'admin'
-      };
-      
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      setIsAuthenticated(true);
-      setUser(userData);
-      setLoading(false);
-      return true;
+      if (response.data.success) {
+        const { user, token } = response.data.data;
+        
+        // Store token for API requests
+        localStorage.setItem('auth_token', token);
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        setIsAuthenticated(true);
+        setUser(user);
+        setLoading(false);
+        return true;
+      } else {
+        setLoading(false);
+        return false;
+      }
     } catch (error) {
+      console.error('Login error:', error);
       setLoading(false);
       return false;
     }
@@ -74,9 +83,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('user');
+    localStorage.removeItem('auth_token');
     setIsAuthenticated(false);
     setUser(null);
-    navigate('/login');
+    // Use window.location instead of navigate to avoid hook dependencies
+    window.location.href = '/login';
   };
 
   return (

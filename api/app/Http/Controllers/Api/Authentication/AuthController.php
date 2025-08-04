@@ -75,10 +75,39 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Load role
+        $user->load(['role']);
+        
+        // Get all user permissions from role (stored as JSON array)
+        $rolePermissions = $user->role?->permissions ?? [];
+        
+        // Make sure permissions is an array (in case casting doesn't work)
+        if (is_string($rolePermissions)) {
+            $rolePermissions = json_decode($rolePermissions, true) ?? [];
+        }
+        
+        $allPermissions = is_array($rolePermissions) ? $rolePermissions : [];
+
         return response()->json([
-            'user' => $user->load('permissions'),
-            'token' => $token,
-            'token_type' => 'Bearer'
+            'success' => true,
+            'message' => 'Login successful',
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'department' => $user->department,
+                    'role' => [
+                        'id' => $user->role?->id,
+                        'name' => $user->role?->name,
+                        'display_name' => $user->role?->display_name,
+                        'permissions' => $allPermissions
+                    ],
+                    'permissions' => $allPermissions
+                ],
+                'token' => $token,
+                'token_type' => 'Bearer'
+            ]
         ]);
     }
 
