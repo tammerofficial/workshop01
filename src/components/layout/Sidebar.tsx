@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { 
   LayoutDashboard, ShoppingBag, Package, Users, Calendar, 
   LineChart, Bell, Settings, Monitor, Workflow, Zap,
-  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2, ShoppingCart, Puzzle, Shield
+  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2, ShoppingCart, Puzzle, Shield, QrCode
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -92,6 +92,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       path: '/production-tracking', 
       label: t('sidebar.productionTracking', 'تتبع الإنتاج'), 
       icon: <Factory size={20} />, 
+      badge: t('common.new', 'جديد'),
+      requiredPermissions: ['production.view'],
+      show: hasPermission('production.view') || hasAnyRole(['super_admin'])
+    },
+    { 
+      path: '/barcode-qr', 
+      label: 'الباركود و QR', 
+      icon: <QrCode size={20} />, 
       badge: t('common.new', 'جديد'),
       requiredPermissions: ['production.view'],
       show: hasPermission('production.view') || hasAnyRole(['super_admin'])

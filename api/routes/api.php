@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\HumanResources\PayrollController;
 use App\Http\Controllers\Api\HumanResources\WorkerSyncController;
 use App\Http\Controllers\Api\Production\ProductionTrackingController;
 use App\Http\Controllers\Api\Production\ProductionFlowController;
+use App\Http\Controllers\Api\Production\BarcodeQRController;
 use App\Http\Controllers\Api\Core\StationController;
 use App\Http\Controllers\Api\Core\NotificationController;
 use App\Http\Controllers\Api\Authentication\AuthController;
@@ -353,6 +354,26 @@ Route::prefix('production-flow')->group(function () {
     Route::post('/orders/{order}/move-next', [ProductionFlowController::class, 'moveToNextStage']);
     Route::post('/orders/{order}/move-to-stage', [ProductionFlowController::class, 'moveToStage']);
     Route::get('/orders/{order}/cost-report', [ProductionFlowController::class, 'generateCostReport']);
+});
+
+// Barcode & QR Code Routes
+Route::prefix('barcode-qr')->group(function () {
+    // Generation
+    Route::post('/products/{productId}/barcode', [BarcodeQRController::class, 'generateProductBarcode']);
+    Route::post('/orders/{orderId}/qrcode', [BarcodeQRController::class, 'generateOrderQRCode']);
+    Route::post('/materials/{materialId}/qrcode', [BarcodeQRController::class, 'generateMaterialQRCode']);
+    Route::post('/production/{trackingId}/qrcode', [BarcodeQRController::class, 'generateProductionStageQRCode']);
+    
+    // Scanning
+    Route::post('/scan', [BarcodeQRController::class, 'processScan']);
+    Route::post('/scan/update-production', [BarcodeQRController::class, 'updateProductionByScan']);
+    
+    // Batch operations
+    Route::post('/generate/batch', [BarcodeQRController::class, 'generateBatch']);
+    
+    // Analytics
+    Route::get('/scan-history', [BarcodeQRController::class, 'getScanHistory']);
+    Route::get('/scan-statistics', [BarcodeQRController::class, 'getScanStatistics']);
 });
 
 // Notifications Routes

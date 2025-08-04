@@ -40,6 +40,7 @@ import Sales from './pages/Sales';
 import Payroll from './pages/Payroll';
 import Attendance from './pages/Attendance';
 import ProductionTracking from './pages/ProductionTracking';
+import BarcodeQRManagement from './pages/BarcodeQRManagement';
 
 // Admin pages
 import Profile from './pages/admin/Profile';
@@ -185,6 +186,7 @@ function App() {
                   <Route path="payroll" element={<Payroll />} />
                   <Route path="attendance" element={<Attendance />} />
                   <Route path="production-tracking" element={<ProductionTracking />} />
+                <Route path="barcode-qr" element={<BarcodeQRManagement />} />
                   
                   {/* Admin Routes - with role-based protection */}
                   <Route path="admin/profile" element={<Profile />} />

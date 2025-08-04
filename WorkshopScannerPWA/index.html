@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workshop Scanner</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="Workshop Scanner">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Workshop Scanner">
+    <meta name="description" content="مسح الباركود و QR Code للورشة">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#3B82F6">
+    
+    <!-- Icons -->
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon-16.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- QR Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        #qr-scanner {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .scan-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            border: 2px solid #3B82F6;
+            border-radius: 12px;
+        }
+        
+        .scan-corners {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #10B981;
+        }
+        
+        .corner-tl { top: 10px; left: 10px; border-bottom: none; border-right: none; }
+        .corner-tr { top: 10px; right: 10px; border-bottom: none; border-left: none; }
+        .corner-bl { bottom: 10px; left: 10px; border-top: none; border-right: none; }
+        .corner-br { bottom: 10px; right: 10px; border-top: none; border-left: none; }
+        
+        .scan-line {
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #10B981, transparent);
+            animation: scan-animation 2s linear infinite;
+        }
+        
+        @keyframes scan-animation {
+            0% { top: 10px; }
+            100% { bottom: 10px; }
+        }
+        
+        .vibrate {
+            animation: vibrate 0.3s;
+        }
+        
+        @keyframes vibrate {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+        
+        .scan-success {
+            animation: flash-green 0.5s;
+        }
+        
+        @keyframes flash-green {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(16, 185, 129, 0.3); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6 max-w-md">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h4.01M12 12v4.01"></path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">مسح الأكواد</h1>
+                <p class="text-gray-600">مسح الباركود و QR Code للورشة</p>
+            </div>
+        </div>
+
+        <!-- Scanner Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="text-center mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">الكاميرا</h2>
+                <p class="text-sm text-gray-600">وجه الكاميرا نحو الكود</p>
+            </div>
+            
+            <div class="scanner-container mb-4">
+                <div id="qr-scanner"></div>
+                <div class="scan-overlay">
+                    <div class="scan-corners corner-tl"></div>
+                    <div class="scan-corners corner-tr"></div>
+                    <div class="scan-corners corner-bl"></div>
+                    <div class="scan-corners corner-br"></div>
+                    <div class="scan-line"></div>
+                </div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="flex justify-center space-x-4 space-x-reverse mb-4">
+                <button id="start-btn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    🎥 بدء المسح
+                </button>
+                <button id="stop-btn" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium hidden">
+                    ⏹️ إيقاف
+                </button>
+            </div>
+            
+            <!-- Manual Input -->
+            <div class="border-t pt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">إدخال يدوي</label>
+                <div class="flex space-x-2 space-x-reverse">
+                    <input 
+                        type="text" 
+                        id="manual-input" 
+                        placeholder="أدخل الكود يدوياً"
+                        class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    >
+                    <button 
+                        id="manual-submit" 
+                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                    >
+                        ✓
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div id="status-card" class="bg-white rounded-lg shadow-md p-4 mb-6 hidden">
+            <div class="flex items-center">
+                <div id="status-icon" class="w-10 h-10 rounded-full flex items-center justify-center mr-3">
+                    <span id="status-emoji">📱</span>
+                </div>
+                <div>
+                    <p id="status-title" class="font-medium text-gray-900">حالة المسح</p>
+                    <p id="status-message" class="text-sm text-gray-600">جاهز للمسح</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Scans -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">المسح الأخير</h3>
+            <div id="recent-scans" class="space-y-3">
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <p class="text-gray-600">لا توجد عمليات مسح بعد</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class WorkshopScanner {
+            constructor() {
+                this.html5QrCode = null;
+                this.isScanning = false;
+                this.recentScans = JSON.parse(localStorage.getItem('recentScans') || '[]');
+                this.apiBaseUrl = 'http://localhost:8000/api';
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.displayRecentScans();
+                this.registerServiceWorker();
+            }
+            
+            initializeElements() {
+                this.startBtn = document.getElementById('start-btn');
+                this.stopBtn = document.getElementById('stop-btn');
+                this.manualInput = document.getElementById('manual-input');
+                this.manualSubmit = document.getElementById('manual-submit');
+                this.statusCard = document.getElementById('status-card');
+                this.statusIcon = document.getElementById('status-icon');
+                this.statusEmoji = document.getElementById('status-emoji');
+                this.statusTitle = document.getElementById('status-title');
+                this.statusMessage = document.getElementById('status-message');
+                this.recentScansContainer = document.getElementById('recent-scans');
+            }
+            
+            bindEvents() {
+                this.startBtn.addEventListener('click', () => this.startScanning());
+                this.stopBtn.addEventListener('click', () => this.stopScanning());
+                this.manualSubmit.addEventListener('click', () => this.processManualInput());
+                this.manualInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.processManualInput();
+                });
+            }
+            
+            async startScanning() {
+                try {
+                    this.html5QrCode = new Html5Qrcode("qr-scanner");
+                    
+                    const config = {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        aspectRatio: 1.0
+                    };
+                    
+                    await this.html5QrCode.start(
+                        { facingMode: "environment" },
+                        config,
+                        (decodedText, decodedResult) => this.onScanSuccess(decodedText, decodedResult),
+                        (errorMessage) => this.onScanError(errorMessage)
+                    );
+                    
+                    this.isScanning = true;
+                    this.updateUI(true);
+                    this.showStatus('success', 'جاري المسح', 'وجه الكاميرا نحو الكود', '📷');
+                    
+                } catch (error) {
+                    console.error('Error starting scanner:', error);
+                    this.showStatus('error', 'خطأ', 'لا يمكن الوصول للكاميرا', '❌');
+                }
+            }
+            
+            async stopScanning() {
+                if (this.html5QrCode && this.isScanning) {
+                    try {
+                        await this.html5QrCode.stop();
+                        this.isScanning = false;
+                        this.updateUI(false);
+                        this.showStatus('info', 'تم الإيقاف', 'المسح متوقف', '⏹️');
+                    } catch (error) {
+                        console.error('Error stopping scanner:', error);
+                    }
+                }
+            }
+            
+            async onScanSuccess(decodedText, decodedResult) {
+                // Stop scanning temporarily to prevent duplicate scans
+                await this.stopScanning();
+                
+                // Visual feedback
+                this.provideFeedback();
+                
+                // Process the scanned data
+                await this.processScanData(decodedText, 'camera');
+                
+                // Auto restart scanning after 2 seconds
+                setTimeout(() => {
+                    if (!this.isScanning) {
+                        this.startScanning();
+                    }
+                }, 2000);
+            }
+            
+            onScanError(errorMessage) {
+                // Ignore frequent error messages to avoid console spam
+                // console.warn('Scan error:', errorMessage);
+            }
+            
+            async processManualInput() {
+                const input = this.manualInput.value.trim();
+                if (input) {
+                    await this.processScanData(input, 'manual');
+                    this.manualInput.value = '';
+                }
+            }
+            
+            async processScanData(scannedData, source) {
+                try {
+                    this.showStatus('info', 'معالجة...', 'جاري معالجة البيانات', '⏳');
+                    
+                    const response = await fetch(`${this.apiBaseUrl}/barcode-qr/scan`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            scanned_data: scannedData,
+                            scanner_type: this.detectScanType(scannedData),
+                            scan_purpose: 'track_production',
+                            device_type: 'mobile',
+                            source: source
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.addToRecentScans({
+                            data: scannedData,
+                            result: result.scan_result,
+                            timestamp: new Date().toISOString(),
+                            success: true,
+                            source: source
+                        });
+                        
+                        this.showStatus('success', 'تم المسح بنجاح', 
+                            `نوع: ${result.scan_result.type === 'barcode' ? 'باركود' : 'QR Code'}`, '✅');
+                        
+                    } else {
+                        this.showStatus('error', 'فشل المسح', result.message || 'خطأ غير معروف', '❌');
+                    }
+                    
+                } catch (error) {
+                    console.error('Processing error:', error);
+                    this.showStatus('error', 'خطأ في الاتصال', 'تعذر الاتصال بالخادم', '🌐');
+                }
+            }
+            
+            detectScanType(data) {
+                try {
+                    JSON.parse(data);
+                    return 'qrcode';
+                } catch {
+                    return 'barcode';
+                }
+            }
+            
+            provideFeedback() {
+                // Vibration
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+                
+                // Visual flash
+                document.body.classList.add('scan-success');
+                setTimeout(() => {
+                    document.body.classList.remove('scan-success');
+                }, 500);
+                
+                // Audio feedback (optional)
+                this.playBeep();
+            }
+            
+            playBeep() {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'square';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            }
+            
+            updateUI(scanning) {
+                if (scanning) {
+                    this.startBtn.classList.add('hidden');
+                    this.stopBtn.classList.remove('hidden');
+                } else {
+                    this.startBtn.classList.remove('hidden');
+                    this.stopBtn.classList.add('hidden');
+                }
+            }
+            
+            showStatus(type, title, message, emoji) {
+                this.statusCard.classList.remove('hidden');
+                this.statusTitle.textContent = title;
+                this.statusMessage.textContent = message;
+                this.statusEmoji.textContent = emoji;
+                
+                // Update colors based on type
+                this.statusIcon.className = 'w-10 h-10 rounded-full flex items-center justify-center mr-3 ';
+                switch (type) {
+                    case 'success':
+                        this.statusIcon.classList.add('bg-green-100');
+                        break;
+                    case 'error':
+                        this.statusIcon.classList.add('bg-red-100');
+                        break;
+                    case 'info':
+                        this.statusIcon.classList.add('bg-blue-100');
+                        break;
+                }
+                
+                // Auto hide after 5 seconds for non-error messages
+                if (type !== 'error') {
+                    setTimeout(() => {
+                        this.statusCard.classList.add('hidden');
+                    }, 5000);
+                }
+            }
+            
+            addToRecentScans(scan) {
+                this.recentScans.unshift(scan);
+                if (this.recentScans.length > 10) {
+                    this.recentScans = this.recentScans.slice(0, 10);
+                }
+                localStorage.setItem('recentScans', JSON.stringify(this.recentScans));
+                this.displayRecentScans();
+            }
+            
+            displayRecentScans() {
+                if (this.recentScans.length === 0) {
+                    this.recentScansContainer.innerHTML = `
+                        <div class="text-center py-8">
+                            <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            <p class="text-gray-600">لا توجد عمليات مسح بعد</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                this.recentScansContainer.innerHTML = this.recentScans.map(scan => `
+                    <div class="p-3 border border-gray-200 rounded-lg ${scan.success ? 'bg-green-50' : 'bg-red-50'}">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <span class="text-lg mr-2">${scan.success ? '✅' : '❌'}</span>
+                                <div>
+                                    <p class="font-medium text-sm">${scan.data.substring(0, 30)}${scan.data.length > 30 ? '...' : ''}</p>
+                                    <p class="text-xs text-gray-600">${new Date(scan.timestamp).toLocaleString('ar-EG')}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs px-2 py-1 rounded ${scan.source === 'camera' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+                                ${scan.source === 'camera' ? '📷' : '⌨️'}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            async registerServiceWorker() {
+                if ('serviceWorker' in navigator) {
+                    try {
+                        await navigator.serviceWorker.register('./sw.js');
+                        console.log('Service Worker registered successfully');
+                    } catch (error) {
+                        console.log('Service Worker registration failed:', error);
+                    }
+                }
+            }
+        }
+        
+        // Initialize the scanner when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new WorkshopScanner();
+        });
+        
+        // Handle PWA install prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install button or banner
+            const installBanner = document.createElement('div');
+            installBanner.innerHTML = `
+                <div class="fixed bottom-4 left-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium">تثبيت التطبيق</p>
+                            <p class="text-sm opacity-90">إضافة للشاشة الرئيسية</p>
+                        </div>
+                        <button onclick="installApp()" class="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium">
+                            تثبيت
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(installBanner);
+        });
+        
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('PWA installed');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <canvas id="canvas" width="512" height="512" style="border: 1px solid #ccc;"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.fillStyle = '#3B82F6';
+        ctx.fillRect(0, 0, 512, 512);
+        
+        // Draw QR code icon
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 8;
+        
+        // Main QR grid
+        const gridSize = 8;
+        const cellSize = 400 / gridSize;
+        const startX = 56;
+        const startY = 56;
+        
+        // Draw QR pattern
+        for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+                const x = startX + i * cellSize;
+                const y = startY + j * cellSize;
+                
+                // Create QR-like pattern
+                if ((i + j) % 2 === 0 || 
+                    (i < 3 && j < 3) || 
+                    (i > 4 && j < 3) || 
+                    (i < 3 && j > 4) ||
+                    (i === 4 && j === 4)) {
+                    ctx.fillRect(x, y, cellSize - 4, cellSize - 4);
+                }
+            }
+        }
+        
+        // Draw corner squares (QR positioning markers)
+        function drawCornerSquare(x, y) {
+            ctx.fillRect(x, y, cellSize * 3, cellSize * 3);
+            ctx.fillStyle = '#3B82F6';
+            ctx.fillRect(x + cellSize/2, y + cellSize/2, cellSize * 2, cellSize * 2);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(x + cellSize, y + cellSize, cellSize, cellSize);
+        }
+        
+        // Top-left corner
+        drawCornerSquare(startX, startY);
+        // Top-right corner  
+        drawCornerSquare(startX + cellSize * 5, startY);
+        // Bottom-left corner
+        drawCornerSquare(startX, startY + cellSize * 5);
+        
+        // Add scan line effect
+        ctx.strokeStyle = '#10B981';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(startX, startY + 200);
+        ctx.lineTo(startX + 400, startY + 200);
+        ctx.stroke();
+        
+        // Convert to different sizes and download
+        function downloadIcon(size, filename) {
+            const newCanvas = document.createElement('canvas');
+            newCanvas.width = size;
+            newCanvas.height = size;
+            const newCtx = newCanvas.getContext('2d');
+            
+            newCtx.drawImage(canvas, 0, 0, size, size);
+            
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = newCanvas.toDataURL();
+            link.click();
+        }
+        
+        // Generate all required icon sizes
+        setTimeout(() => {
+            const sizes = [16, 32, 72, 96, 128, 144, 152, 192, 384, 512];
+            sizes.forEach(size => {
+                downloadIcon(size, `icon-${size}.png`);
+            });
+        }, 1000);
+    </script>
+    
+    <p>الأيقونات سيتم تحميلها تلقائياً خلال ثانية واحدة.</p>
+</body>
+</html>
