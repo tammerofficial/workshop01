@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تثبيت نظام إدارة ورشة الخياطة</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+        }
+        .installer-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 2rem auto;
+            max-width: 900px;
+            overflow: hidden;
+        }
+        .installer-header {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .step {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+        }
+        .step.active {
+            background: #f8f9fa;
+            border-left: 5px solid #007bff;
+        }
+        .step.completed {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+        }
+        .step.error {
+            background: #f8d7da;
+            border-left: 5px solid #dc3545;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #007bff, #28a745);
+            transition: width 0.5s ease;
+        }
+        .btn-custom {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+            color: white;
+        }
+        .log-output {
+            background: #1e1e1e;
+            color: #00ff00;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }
+        .requirement {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        .requirement:last-child {
+            border-bottom: none;
+        }
+        .badge-success {
+            background: #28a745 !important;
+        }
+        .badge-danger {
+            background: #dc3545 !important;
+        }
+        .install-complete {
+            text-align: center;
+            padding: 3rem;
+        }
+        .success-icon {
+            font-size: 5rem;
+            color: #28a745;
+            margin-bottom: 1rem;
+        }
+        .step-item {
+            padding: 8px 0;
+            transition: all 0.3s ease;
+        }
+        .step-item i.fa-check-circle {
+            color: #28a745 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="installer-container">
+            <!-- Header -->
+            <div class="installer-header">
+                <h1><i class="fas fa-cog fa-spin"></i> مثبت نظام إدارة ورشة الخياطة</h1>
+                <p class="mb-0">Tailoring Workshop Management System Installer</p>
+                <div class="progress-bar mt-3">
+                    <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- محتوى المثبت -->
+            <div id="installerContent">
+                
+                <!-- مرحلة الترحيب -->
+                <div id="welcomeStep" class="step active">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h3><i class="fas fa-home text-primary"></i> مرحباً بك في مثبت النظام</h3>
+                            <p class="lead">هذا المثبت سيقوم بتثبيت نظام إدارة ورشة الخياطة المتكامل على خادمك تلقائياً.</p>
+                            
+                            <div class="alert alert-info">
+                                <h5><i class="fas fa-info-circle"></i> ما سيقوم به المثبت:</h5>
+                                <ul class="mb-0">
+                                    <li>فحص متطلبات النظام</li>
+                                    <li>إعداد قاعدة البيانات</li>
+                                    <li>تثبيت مكتبات Laravel</li>
+                                    <li>إعداد ملفات البيئة</li>
+                                    <li>تثبيت Frontend React</li>
+                                    <li>إنشاء المستخدم الإداري</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <i class="fas fa-rocket" style="font-size: 6rem; color: #007bff; opacity: 0.7;"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button class="btn btn-custom btn-lg" onclick="startInstallation()">
+                            <i class="fas fa-play"></i> بدء التثبيت
+                        </button>
+                    </div>
+                </div>
+
+                <!-- فحص المتطلبات -->
+                <div id="requirementsStep" class="step" style="display: none;">
+                    <h3><i class="fas fa-check-circle text-success"></i> فحص متطلبات النظام</h3>
+                    <div id="requirementsList">
+                        <div class="requirement">
+                            <span><i class="fas fa-server"></i> إصدار PHP (8.2+)</span>
+                            <span id="phpCheck" class="badge">جاري الفحص...</span>
+                        </div>
+                        <div class="requirement">
+                            <span><i class="fas fa-database"></i> MySQL/MariaDB</span>
+                            <span id="mysqlCheck" class="badge">جاري الفحص...</span>
+                        </div>
+                        <div class="requirement">
+                            <span><i class="fas fa-puzzle-piece"></i> امتدادات PHP</span>
+                            <span id="extensionsCheck" class="badge">جاري الفحص...</span>
+                        </div>
+                        <div class="requirement">
+                            <span><i class="fas fa-folder"></i> صلاحيات الملفات</span>
+                            <span id="permissionsCheck" class="badge">جاري الفحص...</span>
+                        </div>
+                        <div class="requirement">
+                            <span><i class="fab fa-node-js"></i> Node.js & NPM</span>
+                            <span id="nodeCheck" class="badge">جاري الفحص...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button class="btn btn-custom" onclick="checkRequirements()">
+                            <i class="fas fa-sync fa-spin"></i> إعادة فحص المتطلبات
+                        </button>
+                        <button class="btn btn-success ms-2" id="continueBtn" onclick="nextStep()" disabled>
+                            <i class="fas fa-arrow-right"></i> متابعة
+                        </button>
+                    </div>
+                </div>
+
+                <!-- إعداد قاعدة البيانات -->
+                <div id="databaseStep" class="step" style="display: none;">
+                    <h3><i class="fas fa-database text-info"></i> إعداد قاعدة البيانات</h3>
+                    <form id="databaseForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">اسم قاعدة البيانات</label>
+                                    <input type="text" class="form-control" name="db_name" required 
+                                           placeholder="tailoring_workshop">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">اسم المستخدم</label>
+                                    <input type="text" class="form-control" name="db_user" required 
+                                           placeholder="root">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">كلمة المرور</label>
+                                    <input type="password" class="form-control" name="db_password" 
+                                           placeholder="اختياري">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">خادم قاعدة البيانات</label>
+                                    <input type="text" class="form-control" name="db_host" 
+                                           value="127.0.0.1" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="button" class="btn btn-warning" onclick="testDatabase()">
+                                <i class="fas fa-flask"></i> اختبار الاتصال
+                            </button>
+                            <button type="button" class="btn btn-success ms-2" onclick="setupDatabaseSimple()">
+                                <i class="fas fa-database"></i> تثبيت النظام الآن
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="databaseLog" class="log-output mt-3" style="display: none;"></div>
+                </div>
+
+                <!-- اكتمال التثبيت -->
+                <div id="completeStep" class="step" style="display: none;">
+                    <div class="install-complete">
+                        <div class="success-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h2 class="text-success">تم التثبيت بنجاح! 🎉</h2>
+                        <p class="lead">نظام إدارة ورشة الخياطة جاهز للاستخدام</p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">لوحة التحكم</h5>
+                                        <p class="card-text">ادخل إلى لوحة تحكم النظام</p>
+                                        <a href="../" class="btn btn-primary">
+                                            <i class="fas fa-tachometer-alt"></i> لوحة التحكم
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">دليل الاستخدام</h5>
+                                        <p class="card-text">اقرأ دليل النظام</p>
+                                        <a href="README.md" class="btn btn-info">
+                                            <i class="fas fa-book"></i> دليل الاستخدام
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-success mt-4">
+                            <h5><i class="fas fa-key"></i> بيانات الدخول الافتراضية:</h5>
+                            <p class="mb-0">
+                                <strong>البريد:</strong> admin@workshop.com<br>
+                                <strong>كلمة المرور:</strong> admin123
+                            </p>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button class="btn btn-danger" onclick="removeInstaller()">
+                                <i class="fas fa-trash"></i> حذف ملفات التثبيت (موصى به)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentStep = 0;
+        const steps = ['welcome', 'requirements', 'database', 'complete'];
+        
+        function updateProgress() {
+            const progress = (currentStep / (steps.length - 1)) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+        
+        function showStep(stepName) {
+            // إخفاء جميع الخطوات
+            document.querySelectorAll('.step').forEach(step => {
+                step.style.display = 'none';
+                step.classList.remove('active');
+            });
+            
+            // إظهار الخطوة المطلوبة
+            const stepElement = document.getElementById(stepName + 'Step');
+            if (stepElement) {
+                stepElement.style.display = 'block';
+                stepElement.classList.add('active');
+            }
+            
+            updateProgress();
+        }
+        
+        function nextStep() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                showStep(steps[currentStep]);
+            }
+        }
+        
+        function startInstallation() {
+            currentStep = 1;
+            showStep('requirements');
+            checkRequirements();
+        }
+        
+        async function checkRequirements() {
+            const checks = {
+                php_version: { element: 'phpCheck', status: false },
+                mysql: { element: 'mysqlCheck', status: false },
+                extensions: { element: 'extensionsCheck', status: false },
+                permissions: { element: 'permissionsCheck', status: false },
+                composer: { element: 'nodeCheck', status: false }
+            };
+            
+            try {
+                const response = await fetch('api.php?action=check_requirements');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const requirements = result.data;
+                    let allOk = true;
+                    
+                    for (const [key, check] of Object.entries(checks)) {
+                        const element = document.getElementById(check.element);
+                        element.textContent = 'جاري الفحص...';
+                        element.className = 'badge bg-warning';
+                        
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        
+                        const req = requirements[key];
+                        if (req && req.status) {
+                            element.textContent = '✓ متوفر';
+                            element.className = 'badge badge-success';
+                        } else {
+                            element.textContent = '✗ غير متوفر';
+                            element.className = 'badge badge-danger';
+                            allOk = false;
+                        }
+                    }
+                    
+                    document.getElementById('continueBtn').disabled = !allOk;
+                } else {
+                    alert('فشل في فحص المتطلبات: ' + result.error);
+                }
+            } catch (error) {
+                alert('خطأ في الاتصال: ' + error.message);
+            }
+        }
+        
+        async function testDatabase() {
+            const formData = new FormData(document.getElementById('databaseForm'));
+            const log = document.getElementById('databaseLog');
+            log.style.display = 'block';
+            log.textContent = 'جاري اختبار الاتصال بقاعدة البيانات...\n';
+            
+            try {
+                formData.append('action', 'test_database');
+                const response = await fetch('api.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    log.textContent += '✓ تم الاتصال بقاعدة البيانات بنجاح\n';
+                    log.textContent += '✓ ' + result.data.message + '\n';
+                } else {
+                    log.textContent += '✗ فشل في الاتصال: ' + result.error + '\n';
+                }
+            } catch (error) {
+                log.textContent += '✗ خطأ في الشبكة: ' + error.message + '\n';
+            }
+        }
+        
+        async function setupDatabaseSimple() {
+            const formData = new FormData(document.getElementById('databaseForm'));
+            const log = document.getElementById('databaseLog');
+            log.style.display = 'block';
+            log.textContent = 'جاري تثبيت النظام (مثبت مبسط)...\n';
+            
+            try {
+                formData.append('action', 'setup_complete');
+                const response = await fetch('simple-installer.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    log.textContent += '✓ تم إنشاء قاعدة البيانات\n';
+                    log.textContent += '✓ تم إنشاء جدول المستخدمين\n';
+                    log.textContent += '✓ تم إنشاء المستخدم الإداري\n';
+                    log.textContent += '✓ تم إنشاء ملف .env\n';
+                    log.textContent += '\n🎉 تم إكمال التثبيت بنجاح!\n';
+                    log.textContent += `\n📧 بيانات الدخول:\n`;
+                    log.textContent += `البريد: ${result.data.admin_email}\n`;
+                    log.textContent += `كلمة المرور: ${result.data.admin_password}\n`;
+                    
+                    setTimeout(() => {
+                        currentStep = 3;
+                        showStep('complete');
+                    }, 2000);
+                } else {
+                    log.textContent += '✗ فشل في التثبيت: ' + result.error + '\n';
+                }
+            } catch (error) {
+                log.textContent += '✗ خطأ في الشبكة: ' + error.message + '\n';
+            }
+        }
+
+        async function setupDatabase() {
+            const formData = new FormData(document.getElementById('databaseForm'));
+            const log = document.getElementById('databaseLog');
+            log.style.display = 'block';
+            log.textContent = 'جاري إعداد قاعدة البيانات...\n';
+            
+            try {
+                // Step 1: Setup database
+                formData.append('action', 'setup_database');
+                let response = await fetch('api.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                let result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+                log.textContent += '✓ تم إعداد قاعدة البيانات وملف .env\n';
+                
+                // Step 2: Install system
+                const installData = new FormData();
+                installData.append('action', 'install_system');
+                response = await fetch('api.php', {
+                    method: 'POST',
+                    body: installData
+                });
+                result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+                log.textContent += '✓ تم تثبيت Laravel والمكتبات\n';
+                log.textContent += '✓ تم تشغيل migrations\n';
+                log.textContent += '✓ تم إدخال البيانات التجريبية\n';
+                
+                // Step 3: Create admin
+                const adminData = new FormData();
+                adminData.append('action', 'create_admin');
+                adminData.append('admin_name', 'System Admin');
+                adminData.append('admin_email', 'admin@workshop.com');
+                adminData.append('admin_password', 'admin123');
+                
+                response = await fetch('api.php', {
+                    method: 'POST',
+                    body: adminData
+                });
+                result = await response.json();
+                
+                if (result.success) {
+                    log.textContent += '✓ تم إنشاء المستخدم الإداري\n';
+                } else {
+                    log.textContent += '⚠ تحذير: ' + result.error + '\n';
+                }
+                
+                log.textContent += '\n🎉 تم إكمال التثبيت بنجاح!\n';
+                
+                setTimeout(() => {
+                    currentStep = 3;
+                    showStep('complete');
+                }, 1000);
+                
+            } catch (error) {
+                log.textContent += '✗ فشل في التثبيت: ' + error.message + '\n';
+            }
+        }
+        
+        async function removeInstaller() {
+            if (confirm('هل أنت متأكد من حذف ملفات التثبيت؟ لن تتمكن من تشغيل المثبت مرة أخرى.')) {
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'remove_installer');
+                    const response = await fetch('api.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('تم حذف ملفات التثبيت بنجاح. سيتم إعادة توجيهك إلى النظام.');
+                        window.location.href = '../';
+                    } else {
+                        alert('فشل في حذف ملفات التثبيت: ' + result.error);
+                    }
+                } catch (error) {
+                    alert('خطأ: ' + error.message);
+                }
+            }
+        }
+        
+        // بدء المثبت
+        document.addEventListener('DOMContentLoaded', function() {
+            showStep('welcome');
+        });
+    </script>
+</body>
+</html>

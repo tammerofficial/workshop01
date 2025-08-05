@@ -24,8 +24,8 @@ class WorkerStatusService
         $now = Carbon::now();
         
         // Find the last attendance record for today
-        $lastAttendance = Attendance::where('worker_id', $worker->id)
-            ->whereDate('attendance_date', $now->toDateString())
+        $lastAttendance = Attendance::where('worker_code', $worker->employee_code)
+            ->whereDate('date', $now->toDateString())
             ->latest('check_in')
             ->first();
 
@@ -43,8 +43,8 @@ class WorkerStatusService
         // This logic assumes a break is recorded by clocking out and then back in.
         // A more sophisticated system might have a dedicated break start/end time.
         // Let's check for a recent clock-out within the day.
-        $lastCheckOutToday = Attendance::where('worker_id', $worker->id)
-            ->whereDate('attendance_date', $now->toDateString())
+        $lastCheckOutToday = Attendance::where('worker_code', $worker->employee_code)
+            ->whereDate('date', $now->toDateString())
             ->whereNotNull('check_out')
             ->latest('check_out')
             ->first();
