@@ -5,7 +5,8 @@ import classNames from 'classnames';
 import { 
   LayoutDashboard, ShoppingBag, Package, Users, Calendar, 
   LineChart, Bell, Settings, Monitor, Workflow, Zap,
-  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2, ShoppingCart, Puzzle, Shield, QrCode, Boxes, CreditCard
+  FileText, DollarSign, Clock, Factory, TrendingUp, UserCheck, Building2, ShoppingCart, Puzzle, Shield, QrCode, Boxes,
+  HardDrive, Activity, Fingerprint, Gift, Award, Eye, Calculator
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -19,7 +20,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const { isRTL, t } = useLanguage();
   const { isDark } = useTheme();
-  const { hasPermission, hasAnyRole, canAccessAdmin } = usePermissions();
+  const { hasPermission, hasAnyRole } = usePermissions();
   
   // قسم عمليات الإنتاج - تدفق منطقي مع صلاحيات محددة ومتدرجة
   const productionItems = [
@@ -63,7 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     { 
       path: '/pos-system', 
       label: t('sidebar.pos'), 
-      icon: <CreditCard size={20} />, 
+      icon: <Calculator size={20} />, 
       badge: t('common.new'),
       requiredPermissions: ['pos.operate'],
       show: hasPermission('pos.operate') || hasAnyRole(['super_admin', 'boutique_cashier', 'boutique_sales_agent', 'boutique_supervisor', 'boutique_manager'])
@@ -245,6 +246,67 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       requiredPermissions: ['system.security'],
       show: hasPermission('system.security') || hasAnyRole(['super_admin', 'security_admin'])
     },
+    // مميزات إضافية للسوبر ادمن
+    { 
+      path: '/reports', 
+      label: t('sidebar.reports'), 
+      icon: <FileText size={20} />, 
+      badge: t('common.hot'),
+      requiredPermissions: ['reports.manage'],
+      show: hasPermission('reports.manage') || hasAnyRole(['super_admin'])
+    },
+    { 
+      path: '/backup-management', 
+      label: t('sidebar.backupManagement'), 
+      icon: <HardDrive size={20} />, 
+      badge: t('common.new'),
+      requiredPermissions: ['backup.manage'],
+      show: hasPermission('backup.manage') || hasAnyRole(['super_admin'])
+    },
+    { 
+      path: '/system-logs', 
+      label: t('sidebar.systemLogs'), 
+      icon: <Activity size={20} />, 
+      requiredPermissions: ['logs.view'],
+      show: hasPermission('logs.view') || hasAnyRole(['super_admin'])
+    },
+    { 
+      path: '/user-management', 
+      label: t('sidebar.userManagement'), 
+      icon: <Users size={20} />, 
+      requiredPermissions: ['users.manage'],
+      show: hasPermission('users.manage') || hasAnyRole(['super_admin'])
+    },
+    { 
+      path: '/biometric-system', 
+      label: t('sidebar.biometricSystem'), 
+      icon: <Fingerprint size={20} />, 
+      badge: t('common.new'),
+      requiredPermissions: ['biometric.manage'],
+      show: hasPermission('biometric.manage') || hasAnyRole(['super_admin'])
+    },
+    { 
+      path: '/loyalty-program', 
+      label: t('sidebar.loyaltyProgram'), 
+      icon: <Gift size={20} />, 
+      requiredPermissions: ['loyalty.manage'],
+      show: hasPermission('loyalty.manage') || hasAnyRole(['super_admin'])
+    },
+    { 
+      path: '/quality-control', 
+      label: t('sidebar.qualityControl'), 
+      icon: <Award size={20} />, 
+      requiredPermissions: ['production.manage'],
+      show: hasPermission('production.manage') || hasAnyRole(['super_admin'])
+    },
+    { 
+      path: '/system-monitoring', 
+      label: t('sidebar.systemMonitoring'), 
+      icon: <Eye size={20} />, 
+      badge: t('common.new'),
+      requiredPermissions: ['system.manage'],
+      show: hasPermission('system.manage') || hasAnyRole(['super_admin'])
+    },
   ].filter(item => item.show);
 
   // قسم الإعدادات الشخصية - مرن لجميع المستخدمين
@@ -391,7 +453,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                   {/* Badge */}
                   {isOpen && item.badge && (
                     <span className={`inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white rounded-full ${
-                      item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                      String(item.badge) === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
                     }`}>
                       {item.badge}
                     </span>
@@ -410,7 +472,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       {item.label}
                       {item.badge && (
                         <span className={`ml-1 inline-flex items-center justify-center px-1 py-0.5 text-xs font-bold leading-none text-white rounded-full ${
-                          item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                          String(item.badge) === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
                         }`}>
                           {item.badge}
                         </span>
@@ -501,7 +563,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                   {/* Badge */}
                   {isOpen && item.badge && (
                     <span className={`inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white rounded-full ${
-                      item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                      String(item.badge) === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
                     }`}>
                       {item.badge}
                     </span>
@@ -520,7 +582,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       {item.label}
                       {item.badge && (
                         <span className={`ml-1 inline-flex items-center justify-center px-1 py-0.5 text-xs font-bold leading-none text-white rounded-full ${
-                          item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                          String(item.badge) === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
                         }`}>
                           {item.badge}
                         </span>
@@ -611,7 +673,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                   {/* Badge */}
                   {isOpen && item.badge && (
                     <span className={`inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white rounded-full ${
-                      item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                      String(item.badge) === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
                     }`}>
                       {item.badge}
                     </span>
@@ -630,7 +692,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       {item.label}
                       {item.badge && (
                         <span className={`ml-1 inline-flex items-center justify-center px-1 py-0.5 text-xs font-bold leading-none text-white rounded-full ${
-                          item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                          String(item.badge) === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
                         }`}>
                           {item.badge}
                         </span>
@@ -721,7 +783,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                   {/* Badge */}
                   {isOpen && item.badge && (
                     <span className={`inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white rounded-full ${
-                      item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                      String(item.badge) === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
                     }`}>
                       {item.badge}
                     </span>
@@ -740,7 +802,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       {item.label}
                       {item.badge && (
                         <span className={`ml-1 inline-flex items-center justify-center px-1 py-0.5 text-xs font-bold leading-none text-white rounded-full ${
-                          item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                          String(item.badge) === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
                         }`}>
                           {item.badge}
                         </span>
@@ -831,7 +893,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                   {/* Badge */}
                   {isOpen && item.badge && (
                     <span className={`inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white rounded-full ${
-                      item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                      String(item.badge) === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
                     }`}>
                       {item.badge}
                     </span>
@@ -850,7 +912,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                       {item.label}
                       {item.badge && (
                         <span className={`ml-1 inline-flex items-center justify-center px-1 py-0.5 text-xs font-bold leading-none text-white rounded-full ${
-                          item.badge === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
+                          String(item.badge) === 'NEW' ? 'bg-blue-500' : 'bg-red-500'
                         }`}>
                           {item.badge}
                         </span>
