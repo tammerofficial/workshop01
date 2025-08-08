@@ -11,20 +11,12 @@ export interface DepartmentInfo {
   icon: string;
 }
 
-export const departments: DepartmentInfo[] = [
-  {
-    id: 'general',
-    name: 'ورشة عامة',
-    description: 'جميع أنشطة الورشة',
-    color: 'bg-gray-500',
-    icon: '🧵'
-  }
-];
+export const departments: DepartmentInfo[] = [];
 
 interface DepartmentContextType {
-  currentDepartment: Department;
+  currentDepartment: Department | null;
   setCurrentDepartment: (department: Department) => void;
-  departmentInfo: DepartmentInfo;
+  departmentInfo: DepartmentInfo | null;
   isLoading: boolean;
 }
 
@@ -35,14 +27,18 @@ interface DepartmentProviderProps {
 }
 
 export const DepartmentProvider: React.FC<DepartmentProviderProps> = ({ children }) => {
-  const [currentDepartment, setCurrentDepartmentState] = useState<Department>('general');
+  const [currentDepartment, setCurrentDepartmentState] = useState<Department | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Load saved department from localStorage on mount
   useEffect(() => {
-    const savedDepartment = localStorage.getItem('selectedDepartment') as Department;
-    if (savedDepartment && departments.find(d => d.id === savedDepartment)) {
-      setCurrentDepartmentState(savedDepartment);
+    if (departments.length > 0) {
+      const savedDepartment = localStorage.getItem('selectedDepartment') as Department;
+      if (savedDepartment && departments.find(d => d.id === savedDepartment)) {
+        setCurrentDepartmentState(savedDepartment);
+      } else {
+        setCurrentDepartmentState(departments[0].id);
+      }
     }
   }, []);
 
@@ -60,10 +56,12 @@ export const DepartmentProvider: React.FC<DepartmentProviderProps> = ({ children
       
       // Show notification
       const deptInfo = departments.find(d => d.id === department);
-      toast.success(`Switched to ${deptInfo?.name}`, {
-        icon: deptInfo?.icon,
-        duration: 2000
-      });
+      if (deptInfo) {
+        toast.success(`Switched to ${deptInfo.name}`, {
+          icon: deptInfo.icon,
+          duration: 2000
+        });
+      }
       
       // Simulate data loading delay for smooth transition
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -76,7 +74,7 @@ export const DepartmentProvider: React.FC<DepartmentProviderProps> = ({ children
     }
   };
 
-  const departmentInfo = departments.find(d => d.id === currentDepartment) || departments[0];
+  const departmentInfo = currentDepartment ? departments.find(d => d.id === currentDepartment) || null : null;
 
   return (
     <DepartmentContext.Provider value={{

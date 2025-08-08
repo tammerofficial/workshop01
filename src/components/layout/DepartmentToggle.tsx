@@ -13,6 +13,11 @@ const DepartmentToggle: React.FC = () => {
     }
   };
 
+  // If no departments or no current department, don't render anything
+  if (departments.length === 0 || !currentDepartment) {
+    return null;
+  }
+
   return (
     <div className={`flex items-center space-x-1 rounded-xl p-1 ${
       isDark ? 'bg-gray-700' : 'bg-gray-100'

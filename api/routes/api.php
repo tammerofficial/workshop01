@@ -25,10 +25,6 @@ use App\Http\Controllers\Api\HumanResources\PayrollController;
 use App\Http\Controllers\Api\HumanResources\WorkerSyncController;
 use App\Http\Controllers\Api\Production\ProductionTrackingController;
 use App\Http\Controllers\Api\Production\ProductionFlowController;
-use App\Http\Controllers\Api\Production\BarcodeQRController;
-use App\Http\Controllers\Api\Production\WorkerIpadController;
-use App\Http\Controllers\Api\Core\RealTimeNotificationController;
-use App\Http\Controllers\Api\Management\ManagerDashboardController;
 use App\Http\Controllers\Api\Core\StationController;
 use App\Http\Controllers\Api\Core\NotificationController;
 use App\Http\Controllers\Api\Authentication\AuthController;
@@ -40,11 +36,7 @@ use App\Http\Controllers\Api\Business\WooCommerceOrderController;
 use App\Http\Controllers\Api\Business\WorkshopOrderController;
 use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\AppleWalletWorkshopController;
-use App\Http\Controllers\Api\Production\WorkflowController;
 use App\Http\Controllers\Api\LoyaltyReportsController;
-use App\Http\Controllers\Api\Boutique\BoutiqueController;
-use App\Http\Controllers\Api\Boutique\PosController;
-use App\Http\Controllers\Api\Boutique\LoyaltyIntegrationController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -109,11 +101,11 @@ Route::apiResource('categories', CategoryController::class);
 Route::apiResource('clients', ClientController::class);
 
 // Orders Routes
-Route::get('orders/stats', [OrderController::class, 'stats']);
-Route::get('orders/client/{client_id}', [OrderController::class, 'getByClient']);
 Route::apiResource('orders', OrderController::class);
 Route::patch('orders/{order}/assign-worker', [OrderController::class, 'assignWorker']);
 Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus']);
+Route::get('orders/client/{client_id}', [OrderController::class, 'getByClient']);
+Route::get('orders/stats', [OrderController::class, 'stats']);
 
 // Tasks Routes
 Route::apiResource('tasks', TaskController::class);
@@ -288,8 +280,6 @@ Route::prefix('biometric')->group(function () {
     Route::get('/worker/{id}/attendance', [BiometricController::class, 'getWorkerAttendance']);
     Route::get('/token-info', [BiometricController::class, 'getTokenInfo']);
     Route::get('/workers', [BiometricController::class, 'getBiometricWorkers']);
-    Route::get('/connected-workers', [BiometricController::class, 'getConnectedBiometricWorkers']);
-    Route::post('/auto-register-all', [BiometricController::class, 'autoRegisterAllEmployees']);
     
     // CRUD Operations for Employees
     Route::post('/employees', [BiometricController::class, 'createEmployee']);
@@ -361,57 +351,6 @@ Route::prefix('production-flow')->group(function () {
     Route::post('/orders/{order}/move-next', [ProductionFlowController::class, 'moveToNextStage']);
     Route::post('/orders/{order}/move-to-stage', [ProductionFlowController::class, 'moveToStage']);
     Route::get('/orders/{order}/cost-report', [ProductionFlowController::class, 'generateCostReport']);
-});
-
-// Barcode & QR Code Routes
-Route::prefix('barcode-qr')->group(function () {
-    // Generation
-    Route::post('/products/{productId}/barcode', [BarcodeQRController::class, 'generateProductBarcode']);
-    Route::post('/orders/{orderId}/qrcode', [BarcodeQRController::class, 'generateOrderQRCode']);
-    Route::post('/materials/{materialId}/qrcode', [BarcodeQRController::class, 'generateMaterialQRCode']);
-    Route::post('/production/{trackingId}/qrcode', [BarcodeQRController::class, 'generateProductionStageQRCode']);
-    
-    // Scanning
-    Route::post('/scan', [BarcodeQRController::class, 'processScan']);
-    Route::post('/scan/update-production', [BarcodeQRController::class, 'updateProductionByScan']);
-    
-    // Batch operations
-    Route::post('/generate/batch', [BarcodeQRController::class, 'generateBatch']);
-    
-    // Analytics
-    Route::get('/scan-history', [BarcodeQRController::class, 'getScanHistory']);
-    Route::get('/scan-statistics', [BarcodeQRController::class, 'getScanStatistics']);
-});
-
-// 📱 iPad Worker Interface Routes
-Route::prefix('ipad')->group(function () {
-    // Worker Dashboard
-    Route::get('/dashboard', [WorkerIpadController::class, 'workerDashboard']);
-    
-    // Task Management
-    Route::post('/tasks/start', [WorkerIpadController::class, 'startTask']);
-    Route::post('/tasks/complete', [WorkerIpadController::class, 'completeTask']);
-    Route::post('/tasks/pause', [WorkerIpadController::class, 'pauseTask']);
-    Route::post('/tasks/resume', [WorkerIpadController::class, 'resumeTask']);
-    
-    // Worker Stats & Availability
-    Route::get('/stats/daily', [WorkerIpadController::class, 'getDailyStats']);
-    Route::post('/availability/update', [WorkerIpadController::class, 'updateAvailability']);
-    Route::get('/tasks/available', [WorkerIpadController::class, 'getAvailableTasks']);
-});
-
-// 🔔 Real-time Notifications Routes
-Route::prefix('notifications')->group(function () {
-    Route::get('/', [RealTimeNotificationController::class, 'index']);
-    Route::post('/mark-read/{id}', [RealTimeNotificationController::class, 'markAsRead']);
-    Route::get('/stats', [RealTimeNotificationController::class, 'stats']);
-    Route::post('/send', [RealTimeNotificationController::class, 'send']);
-});
-
-// 📊 Manager Dashboard Routes
-Route::prefix('manager')->group(function () {
-    Route::get('/dashboard', [ManagerDashboardController::class, 'index']);
-    Route::post('/execute-action', [ManagerDashboardController::class, 'executeAction']);
 });
 
 // Notifications Routes
@@ -568,7 +507,6 @@ Route::prefix('users')->group(function () {
     Route::delete('/{user}', [\App\Http\Controllers\Api\UserController::class, 'destroy']);
     Route::patch('/{user}/toggle-status', [\App\Http\Controllers\Api\UserController::class, 'toggleStatus']);
     Route::patch('/{user}/assign-role', [\App\Http\Controllers\Api\UserController::class, 'assignRole']);
-    Route::patch('/{user}/change-password', [\App\Http\Controllers\Api\UserController::class, 'changePassword']);
 });
 
 // Simple Role Management Routes (Non-conflicting)
@@ -729,31 +667,6 @@ Route::group(['prefix' => 'system-settings'], function () {
     Route::get('/theme', [\App\Http\Controllers\Api\SystemSettingsController::class, 'getThemeSettings']);
     Route::post('/theme', [\App\Http\Controllers\Api\SystemSettingsController::class, 'updateThemeSettings'])->middleware('auth:sanctum');
     Route::post('/theme/reset', [\App\Http\Controllers\Api\SystemSettingsController::class, 'resetThemeSettings'])->middleware('auth:sanctum');
-});
-
-// Workflow & Worker Status Routes
-Route::prefix('workflow')->group(function () {
-    Route::get('/worker-status-summary', [WorkflowController::class, 'getWorkerStatusSummary']);
-});
-
-// Boutique System Routes 🏪
-Route::prefix('boutique')->middleware('auth:sanctum')->group(function () {
-    // إدارة البوتيكات
-    Route::apiResource('manage', BoutiqueController::class);
-    
-    // نقاط البيع (POS)
-    Route::prefix('pos')->group(function () {
-        Route::post('/search-products', [PosController::class, 'searchProducts']);
-        Route::post('/create-sale', [PosController::class, 'createSale']);
-        Route::get('/sales', [PosController::class, 'getSales']);
-    });
-    
-    // تكامل نظام الولاء
-    Route::prefix('loyalty')->group(function () {
-        Route::post('/search-customer', [LoyaltyIntegrationController::class, 'searchCustomer']);
-        Route::post('/calculate-points', [LoyaltyIntegrationController::class, 'calculatePoints']);
-        Route::get('/customer/{id}', [LoyaltyIntegrationController::class, 'getCustomerDetails']);
-    });
 });
 
 // API Dashboard Routes (JSON endpoints)

@@ -58,13 +58,8 @@ class WorkerStatusService
         }
 
 
-        // Worker is clocked in and not on a break. Check if they have an active task.
-        $hasActiveTask = $worker->tasks()->where('status', 'in_progress')->exists();
-
-        if ($hasActiveTask) {
-            return self::STATUS_BUSY;
-        }
-
+        // Worker is clocked in and not on a break. 
+        // For now, we'll assume they are available (no tasks system implemented yet)
         return self::STATUS_AVAILABLE;
     }
 
@@ -75,7 +70,7 @@ class WorkerStatusService
      */
     public function getStatusSummary(): array
     {
-        $activeWorkers = Worker::where('is_active', true)->get();
+        $activeWorkers = Worker::where('status', 'active')->get();
         
         $summary = [
             'total_active' => $activeWorkers->count(),

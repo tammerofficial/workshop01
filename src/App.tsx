@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { DepartmentProvider } from './contexts/DepartmentContext';
@@ -6,9 +6,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { CacheProvider } from './contexts/CacheContext';
-
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import ErrorBoundary from './components/common/ErrorBoundary';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
@@ -40,27 +38,12 @@ import Sales from './pages/Sales';
 import Payroll from './pages/Payroll';
 import Attendance from './pages/Attendance';
 import ProductionTracking from './pages/ProductionTracking';
-import BarcodeQRManagement from './pages/BarcodeQRManagement';
-import WorkerIpadDashboard from './pages/WorkerIpadDashboard';
-import ManagerDashboard from './pages/ManagerDashboard';
-import WorkflowDashboard from './pages/WorkflowDashboard';
-
-// Boutique pages
-import POSSystem from './pages/boutique/POSSystem';
-
-// E-commerce pages
-import HomePage from './pages/ecommerce/HomePage';
-import ProductCatalog from './pages/ecommerce/ProductCatalog';
-import ProductDetail from './pages/ecommerce/ProductDetail';
-import CustomerAuth from './pages/ecommerce/CustomerAuth';
-import CustomerDashboard from './pages/ecommerce/CustomerDashboard';
-import Checkout from './pages/ecommerce/Checkout';
 
 // Admin pages
 import Profile from './pages/admin/Profile';
 import UserManagement from './pages/admin/UserManagement';
 import RolesManagement from './pages/admin/RolesManagement';
-
+import AdminSettings from './pages/admin/AdminSettings';
 import Permissions from './pages/admin/Permissions';
 import SecurityLogs from './pages/admin/SecurityLogs';
 import SystemSettings from './pages/admin/SystemSettings';
@@ -81,18 +64,16 @@ import RBACDashboard from './pages/RBACDashboard';
 
 function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <LanguageProvider>
-            <CacheProvider>
-              <AuthProvider>
-                <DepartmentProvider>
-                <Toaster position="top-right" />
+    <ThemeProvider>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <LanguageProvider>
+          <CacheProvider>
+            <AuthProvider>
+              <DepartmentProvider>
+              <Toaster position="top-right" />
               <Routes>
                 {/* Auth Routes */}
                 <Route path="/login" element={<Login />} />
-                <Route path="/customer/auth" element={<CustomerAuth />} />
                 <Route path="/logout" element={<Logout />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 
@@ -200,19 +181,7 @@ function App() {
                   <Route path="sales" element={<Sales />} />
                   <Route path="payroll" element={<Payroll />} />
                   <Route path="attendance" element={<Attendance />} />
-                                    <Route path="production-tracking" element={<ProductionTracking />} />
-                  <Route path="barcode-qr" element={<BarcodeQRManagement />} />
-                  <Route path="worker-ipad" element={<WorkerIpadDashboard workerId={1} />} />
-                                      <Route path="workflow-dashboard" element={<WorkflowDashboard />} />
-                    <Route path="pos-system" element={<POSSystem />} />
-        
-        {/* E-commerce Routes */}
-        <Route path="ecommerce" element={<HomePage />} />
-        <Route path="ecommerce/catalog" element={<ProductCatalog />} />
-        <Route path="ecommerce/product/:id" element={<ProductDetail />} />
-        <Route path="ecommerce/checkout" element={<Checkout />} />
-        <Route path="ecommerce/dashboard" element={<CustomerDashboard />} />
-                  <Route path="manager-dashboard" element={<ManagerDashboard />} />
+                  <Route path="production-tracking" element={<ProductionTracking />} />
                   
                   {/* Admin Routes - with role-based protection */}
                   <Route path="admin/profile" element={<Profile />} />
@@ -278,7 +247,6 @@ function App() {
         </LanguageProvider>
       </Router>
     </ThemeProvider>
-    </ErrorBoundary>
   );
 }
 

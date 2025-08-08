@@ -23,5 +23,23 @@ return Application::configure(basePath: dirname(__DIR__))
         // Enable CORS for API routes - Laravel 11 has built-in CORS support
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Global Exception Handler
+        $exceptions->render(function (Throwable $e, $request) {
+            // إذا كان API request
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return app(\App\Services\ErrorResponseService::class)->handle($e, $request);
+            }
+            
+            return null; // يرجع للمعالجة الافتراضية للـ web routes
+        });
+        
+        // تسجيل الأخطاء في نظام المراقبة
+        $exceptions->reportable(function (Throwable $e) {
+            try {
+                app(\App\Services\ErrorMonitoringService::class)->logError($e);
+            } catch (\Exception $loggingError) {
+                // Prevent infinite loops - just log to Laravel's default logger
+                \Log::error('Failed to log error to monitoring system', ['original_error' => $e->getMessage(), 'logging_error' => $loggingError->getMessage()]);
+            }
+        });
     })->create();
