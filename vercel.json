@@ -1,0 +1,21 @@
+{
+  "functions": {
+    "app/api/**/*.php": {
+      "runtime": "vercel-php@0.6.0"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ],
+  "build": {
+    "env": {
+      "ESBUILD_BINARY_PATH": "./node_modules/esbuild/bin/esbuild"
+    }
+  },
+  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
+}
