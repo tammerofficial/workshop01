@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -15,166 +15,82 @@ import {
   TrendingUp,
   Download,
   RefreshCw,
-  Filter,
-  Calendar,
-  Phone,
-  Mail,
-  Car,
-  Tool,
-  Star,
-  MoreVertical,
-  Wrench,
-  FileText,
-  Settings,
-  Activity
+  Loader
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { orderService } from '../api/laravel';
 
 // Types
 interface Order {
   id: number;
-  orderNumber: string;
-  customerName: string;
-  customerPhone: string;
-  customerEmail: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'quality_check';
+  order_number: string;
+  client: {
+    name: string;
+    phone: string;
+    email?: string;
+  };
+  status: string;
   priority: 'high' | 'medium' | 'low';
-  totalAmount: number;
-  createdAt: string;
-  dueDate: string;
+  total_cost: number;
+  created_at: string;
+  due_date: string;
   description: string;
-  vehicle: string;
-  services: string[];
-  assignedTechnician: string;
-  progress: number;
-  estimatedDuration: string;
-  parts: string[];
-  customerRating?: number;
+  vehicle_details?: string;
+  services?: { name: string }[];
+  assigned_worker?: { name: string };
+  progress?: number;
 }
 
 // Real workshop data based on your dashboard
-const realOrders: Order[] = [
-  {
-    id: 1,
-    orderNumber: 'ORD-2025-0147',
-    customerName: 'محمد أحمد العلي',
-    customerPhone: '+966501234567',
-    customerEmail: 'mohammed.ali@workshop.com',
-    status: 'in_progress',
-    priority: 'high',
-    totalAmount: 2850.00,
-    createdAt: '2025-08-03',
-    dueDate: '2025-08-05',
-    description: 'صيانة شاملة وتغيير زيت المحرك',
-    vehicle: 'تويوتا كامري 2020 - أبيض',
-    services: ['تغيير زيت المحرك', 'فحص شامل للمحرك', 'تنظيف الفلاتر', 'فحص الفرامل'],
-    assignedTechnician: 'خالد محمد الأحمدي',
-    progress: 65,
-    estimatedDuration: '3 ساعات',
-    parts: ['زيت محرك 5W-30', 'فلتر زيت', 'فلتر هواء'],
-    customerRating: 5
-  },
-  {
-    id: 2,
-    orderNumber: 'ORD-2025-0148',
-    customerName: 'سارة عبدالله المطيري',
-    customerPhone: '+966507654321',
-    customerEmail: 'sara.almutairi@email.com',
-    status: 'pending',
-    priority: 'medium',
-    totalAmount: 1950.00,
-    createdAt: '2025-08-03',
-    dueDate: '2025-08-04',
-    description: 'إصلاح نظام التكييف وتعبئة فريون',
-    vehicle: 'هوندا أكورد 2019 - فضي',
-    services: ['فحص نظام التكييف', 'تعبئة فريون R134a', 'تنظيف المبخر', 'فحص الضاغط'],
-    assignedTechnician: 'أحمد سالم القحطاني',
-    progress: 15,
-    estimatedDuration: '4 ساعات',
-    parts: ['فريون R134a', 'فلتر المقصورة', 'زيت ضاغط'],
-    customerRating: 4
-  },
-  {
-    id: 3,
-    orderNumber: 'ORD-2025-0149',
-    customerName: 'عبدالرحمن خالد الدوسري',
-    customerPhone: '+966502345678',
-    customerEmail: 'abdulrahman.k@gmail.com',
-    status: 'completed',
-    priority: 'low',
-    totalAmount: 1200.00,
-    createdAt: '2025-08-02',
-    dueDate: '2025-08-03',
-    description: 'تركيب إطارات جديدة وضبط الزوايا',
-    vehicle: 'نيسان التيما 2021 - أسود',
-    services: ['تركيب إطارات جديدة', 'فحص الجنوط', 'ضبط زوايا العجلات', 'فحص التعليق'],
-    assignedTechnician: 'محمود علي الغامدي',
-    progress: 100,
-    estimatedDuration: '2 ساعة',
-    parts: ['إطارات ميشلان 215/60R16', 'بلف هواء', 'أوزان عجل'],
-    customerRating: 5
-  },
-  {
-    id: 4,
-    orderNumber: 'ORD-2025-0150',
-    customerName: 'فاطمة أحمد النعيمي',
-    customerPhone: '+966508765432',
-    customerEmail: 'fatima.alnaimi@outlook.com',
-    status: 'quality_check',
-    priority: 'high',
-    totalAmount: 3200.00,
-    createdAt: '2025-08-01',
-    dueDate: '2025-08-03',
-    description: 'إصلاح شامل للمحرك وتشخيص الكمبيوتر',
-    vehicle: 'مازدا 6 2018 - أحمر',
-    services: ['تشخيص المحرك', 'فحص الكمبيوتر', 'اختبار الضغط', 'تنظيف البخاخات'],
-    assignedTechnician: 'يوسف محمد العتيبي',
-    progress: 90,
-    estimatedDuration: '6 ساعات',
-    parts: ['شمعات إشعال', 'فلتر بنزين', 'سوائل متنوعة'],
-    customerRating: 4
-  },
-  {
-    id: 5,
-    orderNumber: 'ORD-2025-0151',
-    customerName: 'أحمد يوسف الشهري',
-    customerPhone: '+966509876543',
-    customerEmail: 'ahmed.alshehri@company.com',
-    status: 'in_progress',
-    priority: 'medium',
-    totalAmount: 2100.00,
-    createdAt: '2025-08-03',
-    dueDate: '2025-08-04',
-    description: 'صيانة دورية وفحص شامل',
-    vehicle: 'لكزس ES350 2020 - ذهبي',
-    services: ['صيانة دورية 20000 كم', 'فحص السوائل', 'فحص البطارية', 'فحص الإطارات'],
-    assignedTechnician: 'سعد إبراهيم الحربي',
-    progress: 40,
-    estimatedDuration: '5 ساعات',
-    parts: ['زيت محرك صناعي', 'فلتر زيت أصلي', 'سائل فرامل'],
-    customerRating: 5
-  },
-  {
-    id: 6,
-    orderNumber: 'ORD-2025-0152',
-    customerName: 'نورا سلطان الفيصل',
-    customerPhone: '+966506789012',
-    customerEmail: 'nora.alfaisal@university.edu.sa',
-    status: 'cancelled',
-    priority: 'low',
-    totalAmount: 850.00,
-    createdAt: '2025-08-01',
-    dueDate: '2025-08-02',
-    description: 'فحص عام وتشخيص أعطال',
-    vehicle: 'كيا سيراتو 2017 - أبيض',
-    services: ['فحص عام', 'تشخيص الأعطال', 'اختبار البطارية'],
-    assignedTechnician: 'عبدالله صالح المالكي',
-    progress: 0,
-    estimatedDuration: '2 ساعة',
-    parts: [],
-    customerRating: 0
-  }
-];
+const OrdersManagement: React.FC = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchOrders = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await orderService.getAll();
+      // Handle different response structures
+      const ordersData = response.data.data || response.data || [];
+      setOrders(ordersData);
+    } catch (error) {
+      toast.error('فشل في جلب الطلبات');
+      console.error("Error fetching orders:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Filter orders based on search and filters
+  useEffect(() => {
+    let filtered = orders;
+
+    if (searchTerm) {
+      filtered = filtered.filter(order =>
+        (order.order_number && order.order_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (order.client && order.client.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (order.client && order.client.phone.includes(searchTerm)) ||
+        (order.vehicle_details && order.vehicle_details.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(order => order.status === statusFilter);
+    }
+
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(order => order.priority === priorityFilter);
+    }
+
+    setFilteredOrders(filtered);
+  }, [orders, searchTerm, statusFilter, priorityFilter]);
 
 const statusConfig = {
   pending: {
