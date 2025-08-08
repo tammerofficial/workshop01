@@ -418,7 +418,7 @@ const Workers = () => {
                     color: 'var(--secondary-color)'
                   }}
                 >
-                  عرض العمال المسجلين من النظام البيومتري فقط
+                  {t('workers.biometricOnlyDescription')}
                 </p>
                 <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
                   <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -584,7 +584,7 @@ const Workers = () => {
                       {worker.name}
                       {worker.biometric_id && (
                         <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
-                          {t('workers.biometric')}
+                          {t('workers.biometric.data')}
                         </span>
                       )}
                     </td>

@@ -71,7 +71,7 @@ const WorkerCard: React.FC<WorkerCardProps> = ({ worker, onEdit, onDelete, t }) 
           </span>
           {worker.biometric_id && (
             <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              {t('workers.biometric')}
+              {t('workers.biometric.data')}
             </span>
           )}
         </div>

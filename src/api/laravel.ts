@@ -37,20 +37,47 @@ laravelApi.interceptors.request.use(
   }
 );
 
-// Add response interceptor for error handling
+// Add response interceptor for enhanced error handling
 laravelApi.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 404) {
-      console.warn('API endpoint not found:', error.config?.url);
-    }
+  async (error) => {
+    // Import ErrorService dynamically to avoid circular dependency
+    const { ErrorService } = await import('../services/ErrorService');
+    
+    // Handle different error types
     if (error.response?.status === 401) {
       // Unauthorized - clear token and redirect to login
       localStorage.removeItem('auth_token');
       localStorage.removeItem('isAuthenticated');
       localStorage.removeItem('user');
+      ErrorService.showError('Session expired. Please login again.');
       window.location.href = '/login';
+    } else if (error.response?.status === 403) {
+      ErrorService.showError('You do not have permission to access this resource.');
+    } else if (error.response?.status === 404) {
+      console.warn('API endpoint not found:', error.config?.url);
+      ErrorService.showError('The requested resource was not found.');
+    } else if (error.response?.status === 422) {
+      // Validation errors - show specific messages
+      const validationErrors = error.response?.data?.details?.validation_errors;
+      if (validationErrors) {
+        Object.values(validationErrors).flat().forEach((message: any) => {
+          ErrorService.showError(message);
+        });
+      } else {
+        ErrorService.showError('Invalid data provided.');
+      }
+    } else if (error.response?.status === 429) {
+      ErrorService.showError('Too many requests. Please try again later.');
+    } else if (error.response?.status >= 500) {
+      ErrorService.showError('Server error occurred. Please try again.');
+    } else if (error.code === 'ERR_NETWORK') {
+      ErrorService.showError('Network error. Please check your connection.');
     }
+    
+    // Log error for monitoring
+    ErrorService.logError(error);
+    
     return Promise.reject(error);
   }
 );
@@ -369,6 +396,21 @@ export const rbacApi = {
   getIntegrityReport: (params?: Record<string, unknown>) => laravelApi.get('/blockchain/integrity-report', { params }),
   searchBlockchain: (data: Record<string, unknown>) => laravelApi.post('/blockchain/search', data),
   generateCertificate: (data: Record<string, unknown>) => laravelApi.post('/blockchain/generate-certificate', data),
+};
+
+// Error Monitoring API
+export const errorMonitoringApi = {
+  getDashboard: () => laravelApi.get('/error-monitoring/dashboard'),
+  getErrorLogs: (params?: Record<string, unknown>) => laravelApi.get('/error-monitoring/logs', { params }),
+  getErrorDetails: (errorId: string) => laravelApi.get(`/error-monitoring/logs/${errorId}`),
+  resolveError: (errorId: string, notes?: string) => laravelApi.patch(`/error-monitoring/logs/${errorId}/resolve`, { resolution_notes: notes }),
+  clearOldLogs: (days: number = 30) => laravelApi.delete('/error-monitoring/logs/cleanup', { data: { days } }),
+  reportClientError: (errorData: Record<string, unknown>) => laravelApi.post('/error-monitoring/client-error', errorData),
+  
+  // System Monitoring endpoints
+  getSystemMetrics: () => laravelApi.get('/system-monitoring/metrics'),
+  getHealthCheck: () => laravelApi.get('/system-monitoring/health-check'),
+  getSystemOverview: () => laravelApi.get('/system-monitoring/overview'),
 };
 
 export default laravelApi; 

@@ -17,9 +17,11 @@ const Layout: React.FC = () => {
 
   return (
     <div 
-      className={`flex h-screen transition-colors duration-300 ${
-        isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'
-      }`} 
+      className={`flex h-screen transition-colors duration-300`}
+      style={{
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--text-primary)'
+      }}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
@@ -36,14 +38,18 @@ const Layout: React.FC = () => {
         }}
       >
         <Header toggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
-        <main className={`flex-1 overflow-y-auto p-6 transition-colors duration-300 ${
-          isDark ? 'bg-gray-900' : 'bg-gray-50'
-        }`}>
+        <main className={`flex-1 overflow-y-auto p-6 transition-colors duration-300`}
+          style={{
+            backgroundColor: 'var(--bg-primary)'
+          }}>
           <Outlet />
         </main>
-        <footer className={`py-4 px-6 text-center border-t transition-colors duration-300 ${
-          isDark ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-600'
-        }`}>
+        <footer className={`py-4 px-6 text-center border-t transition-colors duration-300`}
+          style={{
+            backgroundColor: 'var(--bg-secondary)',
+            borderColor: 'var(--border-color)',
+            color: 'var(--text-secondary)'
+          }}>
           <p className="text-sm">created by tammer <span className="text-red-500">❤</span></p>
         </footer>
       </motion.div>

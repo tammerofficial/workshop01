@@ -171,6 +171,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       root.style.setProperty('--secondary-color', advancedSettings.colors.secondary || '#94a3b8');
       root.style.setProperty('--bg-primary', '#0f172a'); // Very dark blue
       root.style.setProperty('--bg-secondary', '#1e293b'); // Dark blue
+      root.style.setProperty('--bg-tertiary', '#334155'); // Medium gray
       root.style.setProperty('--text-primary', '#f8fafc'); // Almost white
       root.style.setProperty('--text-secondary', '#cbd5e1'); // Light gray
       root.style.setProperty('--border-color', '#334155'); // Medium gray
@@ -179,18 +180,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       root.style.setProperty('--hover-bg', '#334155');
       root.style.setProperty('--background-color', advancedSettings.colors.background || '#1e293b');
     } else {
-      // Light mode colors
-      root.style.setProperty('--primary-color', advancedSettings.colors.primary || '#000000');
-      root.style.setProperty('--secondary-color', advancedSettings.colors.secondary || '#8a8a8a');
-      root.style.setProperty('--bg-primary', '#ffffff');
-      root.style.setProperty('--bg-secondary', '#f8fafc');
-      root.style.setProperty('--text-primary', '#1e293b');
-      root.style.setProperty('--text-secondary', '#64748b');
-      root.style.setProperty('--border-color', '#e2e8f0');
+      // Light mode colors - matching dark mode structure
+      root.style.setProperty('--primary-color', advancedSettings.colors.primary || '#3b82f6');
+      root.style.setProperty('--secondary-color', advancedSettings.colors.secondary || '#6b7280');
+      root.style.setProperty('--bg-primary', '#f8fafc'); // Light gray - main background
+      root.style.setProperty('--bg-secondary', '#ffffff'); // White - cards/panels
+      root.style.setProperty('--bg-tertiary', '#f1f5f9'); // Lighter gray - input fields
+      root.style.setProperty('--text-primary', '#1e293b'); // Dark text
+      root.style.setProperty('--text-secondary', '#64748b'); // Medium gray text
+      root.style.setProperty('--border-color', '#e2e8f0'); // Light gray borders
       root.style.setProperty('--sidebar-bg', advancedSettings.colors.background || '#ffffff');
       root.style.setProperty('--card-bg', '#ffffff');
-      root.style.setProperty('--hover-bg', '#f8fafc');
-      root.style.setProperty('--background-color', advancedSettings.colors.background || '#ffffff');
+      root.style.setProperty('--hover-bg', '#f1f5f9');
+      root.style.setProperty('--background-color', advancedSettings.colors.background || '#f8fafc');
     }
     
     root.style.setProperty('--accent-color', advancedSettings.colors.accent);

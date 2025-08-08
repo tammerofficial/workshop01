@@ -7,6 +7,7 @@ import {
 import { orderService, workerService, materialService } from '../../api/laravel';
 import Chart from 'react-apexcharts';
 import toast from 'react-hot-toast';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ReportData {
   orders: any[];
@@ -15,6 +16,7 @@ interface ReportData {
 }
 
 const AdvancedReports: React.FC = () => {
+  const { t, isRTL } = useLanguage();
   const [selectedReport, setSelectedReport] = useState<'overview' | 'workers' | 'materials'>('overview');
   const [reportData, setReportData] = useState<ReportData>({ orders: [], workers: [], materials: [] });
   const [loading, setLoading] = useState(true);

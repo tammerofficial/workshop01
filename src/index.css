@@ -4,22 +4,22 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light mode styles (Default) */
+/* Light mode styles (Default) - Matching dark mode formatting */
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
   --bg-tertiary: #f1f5f9;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --border-color: #e2e8f0;
   --primary-color: #3b82f6;
   --secondary-color: #6b7280;
-  --background-color: #ffffff;
+  --background-color: #f8fafc;
   --surface-color: #ffffff;
   --logo-bg: #ffffff;
   --sidebar-bg: #ffffff;
   --card-bg: #ffffff;
-  --hover-bg: #f8fafc;
+  --hover-bg: #f1f5f9;
 }
 
 /* Dark mode styles */
@@ -363,4 +363,42 @@ body {
 
 .color-picker-button:hover::before {
   transform: translateX(100%);
+}
+
+/* Sidebar styling enhancements */
+.sidebar-item {
+  color: var(--text-secondary);
+  transition: all 0.2s ease-in-out;
+}
+
+.sidebar-item:hover {
+  color: var(--text-primary);
+  background-color: var(--hover-bg);
+}
+
+.sidebar-item.active {
+  color: var(--primary-color);
+  background-color: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid var(--primary-color);
+}
+
+/* Navigation section headers */
+.nav-section-header {
+  color: var(--text-secondary);
+  background-color: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Card components */
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius, 8px);
+  box-shadow: var(--shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  transition: all 0.2s ease-in-out;
 }

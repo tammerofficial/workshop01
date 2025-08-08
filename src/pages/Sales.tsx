@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign, TrendingUp, ShoppingBag, User, Calendar } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Sale {
   id: number;
@@ -23,6 +24,7 @@ interface Sale {
 
 const Sales: React.FC = () => {
   const { isDark } = useTheme();
+  const { t, isRTL } = useLanguage();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({

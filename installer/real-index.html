@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مثبت نظام إدارة ورشة الخياطة - Tailoring Workshop Management System Installer</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Cairo Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .installer-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .installer-header {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .installer-body {
+            padding: 40px;
+        }
+        
+        .step {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        .step.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+        
+        .progress-step {
+            background: white;
+            border: 3px solid #e2e8f0;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            font-weight: bold;
+            color: #64748b;
+        }
+        
+        .progress-step.completed {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+        
+        .progress-step.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        .step-label {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        
+        .log-output {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #4a5568;
+        }
+        
+        .requirement-item {
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .requirement-ok {
+            background: #ecfdf5;
+            border-color: #10b981;
+            color: #059669;
+        }
+        
+        .requirement-error {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 8px;
+        }
+        
+        .card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .badge {
+            font-size: 0.75em;
+        }
+    </style>
+</head>
+<body>
+    <div class="installer-container">
+        <div class="installer-header">
+            <h1><i class="fas fa-cogs"></i> مثبت نظام إدارة ورشة الخياطة</h1>
+            <p class="mb-0">Tailoring Workshop Management System Installer</p>
+        </div>
+        
+        <div class="installer-body">
+            <!-- Progress Steps -->
+            <div class="progress-steps">
+                <div class="progress-step active" id="step1">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="step-label">فحص المتطلبات</div>
+                </div>
+                <div class="progress-step" id="step2">
+                    <i class="fas fa-database"></i>
+                    <div class="step-label">إعداد قاعدة البيانات</div>
+                </div>
+                <div class="progress-step" id="step3">
+                    <i class="fas fa-download"></i>
+                    <div class="step-label">تثبيت Laravel</div>
+                </div>
+                <div class="progress-step" id="step4">
+                    <i class="fas fa-code"></i>
+                    <div class="step-label">تثبيت Frontend</div>
+                </div>
+                <div class="progress-step" id="step5">
+                    <i class="fas fa-user-shield"></i>
+                    <div class="step-label">المستخدم الإداري</div>
+                </div>
+                <div class="progress-step" id="step6">
+                    <i class="fas fa-rocket"></i>
+                    <div class="step-label">اكتمال التثبيت</div>
+                </div>
+            </div>
+            
+            <!-- Step 1: Requirements Check -->
+            <div class="step active" id="requirements-step">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4><i class="fas fa-check-circle"></i> فحص متطلبات النظام</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>سيتم فحص جميع المتطلبات اللازمة لتشغيل النظام:</p>
+                        
+                        <div class="text-center mb-3">
+                            <button type="button" class="btn btn-primary" onclick="checkRequirements()">
+                                <i class="fas fa-search"></i> بدء فحص المتطلبات
+                            </button>
+                        </div>
+                        
+                        <div id="requirementsResults" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Database Setup -->
+            <div class="step" id="database-step">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h4><i class="fas fa-database"></i> إعداد قاعدة البيانات</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="databaseForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">اسم قاعدة البيانات</label>
+                                        <input type="text" class="form-control" name="db_name" 
+                                               placeholder="tailoring_workshop" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">اسم المستخدم</label>
+                                        <input type="text" class="form-control" name="db_user" 
+                                               value="root" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">كلمة المرور</label>
+                                        <input type="password" class="form-control" name="db_password" 
+                                               placeholder="اختياري">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">خادم قاعدة البيانات</label>
+                                        <input type="text" class="form-control" name="db_host" 
+                                               value="127.0.0.1" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <div class="text-center">
+                            <button type="button" class="btn btn-warning me-2" onclick="testDatabase()">
+                                <i class="fas fa-flask"></i> اختبار الاتصال
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="setupDatabase()">
+                                <i class="fas fa-database"></i> إعداد قاعدة البيانات
+                            </button>
+                        </div>
+                        
+                        <div id="databaseLog" class="log-output mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 3: Laravel Installation -->
+            <div class="step" id="laravel-step">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h4><i class="fas fa-download"></i> تثبيت مكتبات Laravel</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>سيتم تثبيت جميع مكتبات Laravel وإعداد النظام:</p>
+                        <ul>
+                            <li>تثبيت Composer dependencies</li>
+                            <li>توليد مفتاح التطبيق</li>
+                            <li>تشغيل Database migrations</li>
+                            <li>تحميل البيانات التجريبية</li>
+                        </ul>
+                        
+                        <div class="text-center">
+                            <button type="button" class="btn btn-warning" onclick="installLaravel()">
+                                <i class="fas fa-download"></i> بدء تثبيت Laravel
+                            </button>
+                        </div>
+                        
+                        <div id="laravelLog" class="log-output mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 4: Frontend Installation -->
+            <div class="step" id="frontend-step">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h4><i class="fas fa-code"></i> تثبيت Frontend React</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>سيتم تثبيت وبناء واجهة المستخدم React:</p>
+                        <ul>
+                            <li>تثبيت Node.js dependencies</li>
+                            <li>بناء المشروع للإنتاج</li>
+                            <li>تحسين الملفات</li>
+                        </ul>
+                        
+                        <div class="text-center">
+                            <button type="button" class="btn btn-success" onclick="installFrontend()">
+                                <i class="fas fa-code"></i> بدء تثبيت Frontend
+                            </button>
+                        </div>
+                        
+                        <div id="frontendLog" class="log-output mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 5: Admin User -->
+            <div class="step" id="admin-step">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h4><i class="fas fa-user-shield"></i> إنشاء المستخدم الإداري</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="adminForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">اسم المدير</label>
+                                        <input type="text" class="form-control" name="admin_name" 
+                                               value="System Administrator" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">البريد الإلكتروني</label>
+                                        <input type="email" class="form-control" name="admin_email" 
+                                               value="admin@workshop.com" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">كلمة المرور</label>
+                                    <input type="password" class="form-control" name="admin_password" 
+                                           value="admin123" required>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <div class="text-center">
+                            <button type="button" class="btn btn-dark" onclick="createAdmin()">
+                                <i class="fas fa-user-plus"></i> إنشاء المستخدم الإداري
+                            </button>
+                        </div>
+                        
+                        <div id="adminLog" class="log-output mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 6: Complete -->
+            <div class="step" id="complete-step">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h4><i class="fas fa-rocket"></i> اكتمال التثبيت</h4>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="mb-4">
+                            <i class="fas fa-check-circle text-success" style="font-size: 80px;"></i>
+                        </div>
+                        
+                        <h3 class="text-success mb-4">🎉 تم إكمال التثبيت بنجاح!</h3>
+                        
+                        <div class="alert alert-info">
+                            <h5>بيانات الدخول:</h5>
+                            <p class="mb-1"><strong>البريد الإلكتروني:</strong> <span id="finalEmail">admin@workshop.com</span></p>
+                            <p class="mb-1"><strong>كلمة المرور:</strong> <span id="finalPassword">admin123</span></p>
+                        </div>
+                        
+                        <button type="button" class="btn btn-success btn-lg" onclick="completeInstallation()">
+                            <i class="fas fa-rocket"></i> إنهاء التثبيت
+                        </button>
+                        
+                        <div id="completeLog" class="log-output mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-secondary" id="prevBtn" onclick="previousStep()" style="display: none;">
+                    <i class="fas fa-arrow-right"></i> السابق
+                </button>
+                <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()" style="display: none;">
+                    التالي <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let currentStep = 1;
+        const totalSteps = 6;
+        
+        function showStep(stepName) {
+            // Hide all steps
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            
+            // Show current step
+            document.getElementById(stepName + '-step').classList.add('active');
+            
+            // Update progress
+            updateProgress();
+            updateNavigation();
+        }
+        
+        function updateProgress() {
+            document.querySelectorAll('.progress-step').forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index + 1 < currentStep) {
+                    step.classList.add('completed');
+                } else if (index + 1 === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+        }
+        
+        function updateNavigation() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            prevBtn.style.display = currentStep > 1 ? 'block' : 'none';
+            nextBtn.style.display = currentStep < totalSteps ? 'block' : 'none';
+        }
+        
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                const stepNames = ['requirements', 'database', 'laravel', 'frontend', 'admin', 'complete'];
+                showStep(stepNames[currentStep - 1]);
+            }
+        }
+        
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                const stepNames = ['requirements', 'database', 'laravel', 'frontend', 'admin', 'complete'];
+                showStep(stepNames[currentStep - 1]);
+            }
+        }
+        
+        async function checkRequirements() {
+            const resultsDiv = document.getElementById('requirementsResults');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="text-center"><div class="loading-spinner"></div> جاري فحص المتطلبات...</div>';
+            
+            try {
+                const response = await fetch('real-installer.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=check_requirements'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    let html = '';
+                    const req = result.data.requirements;
+                    
+                    // PHP Version
+                    html += `<div class="requirement-item ${req.php.status ? 'requirement-ok' : 'requirement-error'}">
+                        <i class="fas fa-${req.php.status ? 'check' : 'times'}"></i> 
+                        PHP ${req.php.current} (مطلوب: ${req.php.required}+)
+                    </div>`;
+                    
+                    // Extensions
+                    const extensions = ['pdo', 'pdo_mysql', 'mbstring', 'openssl', 'tokenizer', 'xml', 'ctype', 'json', 'curl'];
+                    extensions.forEach(ext => {
+                        const status = req['ext_' + ext];
+                        html += `<div class="requirement-item ${status ? 'requirement-ok' : 'requirement-error'}">
+                            <i class="fas fa-${status ? 'check' : 'times'}"></i> 
+                            PHP Extension: ${ext}
+                        </div>`;
+                    });
+                    
+                    // Tools
+                    ['composer', 'nodejs', 'npm'].forEach(tool => {
+                        const status = req[tool];
+                        html += `<div class="requirement-item ${status ? 'requirement-ok' : 'requirement-error'}">
+                            <i class="fas fa-${status ? 'check' : 'times'}"></i> 
+                            ${tool.charAt(0).toUpperCase() + tool.slice(1)}
+                        </div>`;
+                    });
+                    
+                    // Permissions
+                    ['storage', 'cache'].forEach(dir => {
+                        const status = req['writable_' + dir];
+                        html += `<div class="requirement-item ${status ? 'requirement-ok' : 'requirement-error'}">
+                            <i class="fas fa-${status ? 'check' : 'times'}"></i> 
+                            Writable: api/${dir}/
+                        </div>`;
+                    });
+                    
+                    if (result.data.status) {
+                        html += '<div class="alert alert-success mt-3"><i class="fas fa-check"></i> جميع المتطلبات متوفرة! يمكنك المتابعة للخطوة التالية.</div>';
+                        document.getElementById('nextBtn').style.display = 'block';
+                    } else {
+                        html += '<div class="alert alert-danger mt-3"><i class="fas fa-exclamation-triangle"></i> يجب إصلاح المتطلبات المفقودة قبل المتابعة.</div>';
+                    }
+                    
+                    resultsDiv.innerHTML = html;
+                    
+                } else {
+                    resultsDiv.innerHTML = `<div class="alert alert-danger">خطأ: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="alert alert-danger">خطأ في الشبكة: ${error.message}</div>`;
+            }
+        }
+        
+        async function testDatabase() {
+            const formData = new FormData(document.getElementById('databaseForm'));
+            const log = document.getElementById('databaseLog');
+            log.style.display = 'block';
+            log.textContent = 'جاري اختبار الاتصال بقاعدة البيانات...\n';
+            
+            try {
+                formData.append('action', 'test_database');
+                const response = await fetch('real-installer.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    log.textContent += `✓ تم الاتصال بقاعدة البيانات بنجاح\n`;
+                    log.textContent += `✓ إصدار MySQL: ${result.data.mysql_version}\n`;
+                } else {
+                    log.textContent += `✗ فشل في الاتصال: ${result.error}\n`;
+                }
+            } catch (error) {
+                log.textContent += `✗ خطأ في الشبكة: ${error.message}\n`;
+            }
+        }
+        
+        async function setupDatabase() {
+            const formData = new FormData(document.getElementById('databaseForm'));
+            const log = document.getElementById('databaseLog');
+            log.style.display = 'block';
+            log.textContent = 'جاري إعداد قاعدة البيانات...\n';
+            
+            try {
+                formData.append('action', 'setup_database');
+                const response = await fetch('real-installer.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    log.textContent += '✓ تم إنشاء قاعدة البيانات\n';
+                    log.textContent += '✓ تم إنشاء ملف .env\n';
+                    log.textContent += '\n✅ إعداد قاعدة البيانات مكتمل!\n';
+                    
+                    setTimeout(() => {
+                        currentStep = 3;
+                        showStep('laravel');
+                    }, 1500);
+                } else {
+                    log.textContent += `✗ فشل في الإعداد: ${result.error}\n`;
+                }
+            } catch (error) {
+                log.textContent += `✗ خطأ في الشبكة: ${error.message}\n`;
+            }
+        }
+        
+        async function installLaravel() {
+            const log = document.getElementById('laravelLog');
+            log.style.display = 'block';
+            log.textContent = 'جاري تثبيت Laravel...\n';
+            
+            try {
+                const response = await fetch('real-installer.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=install_laravel'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    log.textContent += '✓ تم تثبيت Composer dependencies\n';
+                    log.textContent += '✓ تم توليد مفتاح التطبيق\n';
+                    log.textContent += '✓ تم تشغيل Database migrations\n';
+                    log.textContent += '✓ تم تحميل البيانات التجريبية\n';
+                    log.textContent += '\n✅ تثبيت Laravel مكتمل!\n';
+                    
+                    setTimeout(() => {
+                        currentStep = 4;
+                        showStep('frontend');
+                    }, 1500);
+                } else {
+                    log.textContent += `✗ فشل في التثبيت: ${result.error}\n`;
+                }
+            } catch (error) {
+                log.textContent += `✗ خطأ في الشبكة: ${error.message}\n`;
+            }
+        }
+        
+        async function installFrontend() {
+            const log = document.getElementById('frontendLog');
+            log.style.display = 'block';
+            log.textContent = 'جاري تثبيت Frontend...\n';
+            
+            try {
+                const response = await fetch('real-installer.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=install_frontend'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    log.textContent += '✓ تم تثبيت Node.js dependencies\n';
+                    log.textContent += '✓ تم بناء React frontend\n';
+                    log.textContent += '\n✅ تثبيت Frontend مكتمل!\n';
+                    
+                    setTimeout(() => {
+                        currentStep = 5;
+                        showStep('admin');
+                    }, 1500);
+                } else {
+                    log.textContent += `✗ فشل في التثبيت: ${result.error}\n`;
+                }
+            } catch (error) {
+                log.textContent += `✗ خطأ في الشبكة: ${error.message}\n`;
+            }
+        }
+        
+        async function createAdmin() {
+            const formData = new FormData(document.getElementById('adminForm'));
+            const log = document.getElementById('adminLog');
+            log.style.display = 'block';
+            log.textContent = 'جاري إنشاء المستخدم الإداري...\n';
+            
+            try {
+                formData.append('action', 'create_admin');
+                const response = await fetch('real-installer.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    log.textContent += '✓ تم إنشاء المستخدم الإداري\n';
+                    log.textContent += `✓ البريد: ${result.data.email}\n`;
+                    log.textContent += `✓ كلمة المرور: ${result.data.password}\n`;
+                    log.textContent += '\n✅ إنشاء المستخدم مكتمل!\n';
+                    
+                    // Update final credentials
+                    document.getElementById('finalEmail').textContent = result.data.email;
+                    document.getElementById('finalPassword').textContent = result.data.password;
+                    
+                    setTimeout(() => {
+                        currentStep = 6;
+                        showStep('complete');
+                    }, 1500);
+                } else {
+                    log.textContent += `✗ فشل في الإنشاء: ${result.error}\n`;
+                }
+            } catch (error) {
+                log.textContent += `✗ خطأ في الشبكة: ${error.message}\n`;
+            }
+        }
+        
+        async function completeInstallation() {
+            const log = document.getElementById('completeLog');
+            log.style.display = 'block';
+            log.textContent = 'جاري إنهاء التثبيت...\n';
+            
+            try {
+                const response = await fetch('real-installer.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=complete_installation'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    log.textContent += '✓ تم إنشاء ملف التثبيت المكتمل\n';
+                    log.textContent += '✓ تم حفظ سجل التثبيت\n';
+                    log.textContent += '\n🎉 التثبيت مكتمل بنجاح!\n';
+                    log.textContent += '\n📝 الخطوات التالية:\n';
+                    log.textContent += '• احذف مجلد installer للأمان\n';
+                    log.textContent += '• غيّر كلمة مرور المدير\n';
+                    log.textContent += '• ابدأ استخدام النظام\n';
+                } else {
+                    log.textContent += `✗ خطأ في الإنهاء: ${result.error}\n`;
+                }
+            } catch (error) {
+                log.textContent += `✗ خطأ في الشبكة: ${error.message}\n`;
+            }
+        }
+        
+        // Initialize
+        updateProgress();
+        updateNavigation();
+    </script>
+</body>
+</html>

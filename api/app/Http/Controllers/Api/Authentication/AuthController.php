@@ -75,18 +75,20 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // Load role
-        $user->load(['role']);
+        // Load roles using Spatie permissions
+        $user->load(['roles']);
         
-        // Get all user permissions from role (stored as JSON array)
-        $rolePermissions = $user->role?->permissions ?? [];
+        // Get the first role (assuming single role per user for simplicity)
+        $primaryRole = $user->roles->first();
         
-        // Make sure permissions is an array (in case casting doesn't work)
-        if (is_string($rolePermissions)) {
-            $rolePermissions = json_decode($rolePermissions, true) ?? [];
+        // Get all user permissions using Spatie methods - handle potential issues
+        try {
+            $permissionsCollection = $user->getAllPermissions();
+            $allPermissions = is_array($permissionsCollection) ? [] : $permissionsCollection->pluck('name')->toArray();
+        } catch (\Exception $e) {
+            // Fallback to empty array if permissions can't be loaded
+            $allPermissions = [];
         }
-        
-        $allPermissions = is_array($rolePermissions) ? $rolePermissions : [];
 
         return response()->json([
             'success' => true,
@@ -98,9 +100,9 @@ class AuthController extends Controller
                     'email' => $user->email,
                     'department' => $user->department,
                     'role' => [
-                        'id' => $user->role?->id,
-                        'name' => $user->role?->name,
-                        'display_name' => $user->role?->display_name,
+                        'id' => $primaryRole?->id,
+                        'name' => $primaryRole?->name,
+                        'display_name' => $primaryRole?->name ?? 'مستخدم',
                         'permissions' => $allPermissions
                     ],
                     'permissions' => $allPermissions

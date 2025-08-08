@@ -1,4 +1,13 @@
 {
+  "header": {
+    "profile": "Profile",
+    "userManagement": "User Management",
+    "systemSettings": "System Settings",
+    "logout": "Logout",
+    "rolesPermissions": "Roles & Permissions",
+    "securityLogs": "Security Logs",
+    "backupRestore": "Backup & Restore"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error occurred",
@@ -66,6 +75,17 @@
     "locale": "en",
     "createdAt": "Created At"
   },
+  "workflow": {
+    "title": "Workflow Management",
+    "subtitle": "Production workflow tracking and optimization",
+    "workers": "workers",
+    "completionRate": "Completion Rate",
+    "completedToday": "completed today",
+    "workersStatus": "Workers Status",
+    "alerts": "Alerts",
+    "pendingTasksAlert": "Pending tasks require attention",
+    "completedTasksToday": "completed tasks today"
+  },
   "sidebar": {
     "dashboard": "Dashboard",
     "orders": "Orders Management",
@@ -101,7 +121,23 @@
     "workshop": "Workshop",
     "products": "Products",
     "erpSystem": "ERP System",
-    "systemManagement": "System Management"
+    "systemManagement": "System Management",
+    "reports": "Reports",
+    "backupManagement": "Backup Management",
+    "systemLogs": "System Logs",
+    "userManagement": "User Management",
+    "roleManagement": "Role Management",
+    "permissionManagement": "Permission Management",
+    "biometricSystem": "Biometric System",
+    "loyaltyProgram": "Loyalty Program",
+    "qualityControl": "Quality Control",
+    "materialManagement": "Material Management",
+    "taskManagement": "Task Management",
+    "workflowAutomation": "Workflow Automation",
+    "apiIntegrations": "API Integrations",
+    "themeCustomization": "Theme Customization",
+    "dataExport": "Data Export",
+    "systemMonitoring": "System Monitoring"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -144,7 +180,21 @@
     "completionRate": "Completion Rate",
     "avgStageTime": "Avg. Stage Time",
     "activeStations": "Active Stations",
-    "orders": "Orders"
+    "orders": "Orders",
+    "stats": {
+      "lastUpdated": "Last Updated",
+      "averageEfficiency": "Average Efficiency",
+      "averageQuality": "Average Quality",
+      "activeWorkers": "Active Workers"
+    },
+    "stages": {
+      "cutting": "Cutting",
+      "sewing": "Sewing",
+      "embroidery": "Embroidery", 
+      "qualityControl": "Quality Control",
+      "packaging": "Packaging",
+      "delivery": "Delivery"
+    }
   },
   "status": {
     "pending": "Pending",
@@ -213,7 +263,26 @@
     "confirmDelete": "Are you sure you want to delete this order?",
     "deleteSuccess": "Order deleted successfully",
     "deleteError": "Failed to delete order",
-    "refreshSuccess": "Orders refreshed successfully"
+    "refreshSuccess": "Orders refreshed successfully",
+    "ordersCount": "orders",
+    "noItemsInStage": "No items in this stage"
+  },
+  "production": {
+    "dragToMove": "Drag to move between stages",
+    "stages": {
+      "design": "Design & Planning",
+      "cutting": "Cutting & Preparation",
+      "sewing": "Basic Sewing",
+      "fitting": "Fitting & Adjustments",
+      "finishing": "Finishing Touches",
+      "quality": "Quality Control",
+      "completed": "Completed"
+    }
+  },
+  "tasks": {
+    "title": "Tasks",
+    "total": "Total Tasks",
+    "tasksCount": "tasks"
   },
   "clients": {
     "title": "Clients",
@@ -334,6 +403,7 @@
       "data": "Biometric Data",
       "lastSync": "Last Sync"
     },
+    "biometricOnlyDescription": "Display workers registered from biometric system only",
     "createSuccess": "Worker created successfully",
     "ipad": {
       "employeeCode": "Employee Code:",
@@ -348,26 +418,54 @@
     }
   },
   "calendar": {
-    "title": "Calendar & Scheduling",
-    "subtitle": "Schedule tasks and track deadlines",
-    "views": {
+    "title": "Calendar",
+    "subtitle": "Schedule appointments and manage events",
+    "loading": "Loading calendar...",
+    "noEvents": "No events scheduled for this day",
+    "view": {
       "month": "Month",
       "week": "Week",
       "day": "Day"
     },
-    "filters": {
-      "all": "All Items",
-      "tasks": "Tasks Only",
-      "orders": "Orders Only"
+    "filter": {
+      "all": "All",
+      "tasks": "Tasks",
+      "orders": "Orders"
     },
+    "refresh": "Refresh",
     "stats": {
-      "upcomingTasks": "Upcoming Tasks",
-      "overdueItems": "Overdue Items",
-      "completedToday": "Completed Today"
+      "title": "Calendar Statistics",
+      "pendingTasks": "Pending Tasks",
+      "completedTasks": "Completed Tasks",
+      "pendingOrders": "Pending Orders",
+      "completedOrders": "Completed Orders"
+    },
+    "dayNames": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
+    "legend": {
+      "title": "Legend",
+      "tasks": "Tasks",
+      "orders": "Orders",
+      "completed": "Completed",
+      "pending": "Pending"
+    },
+    "taskPrefix": "📋",
+    "status": {
+      "pending": "Pending",
+      "inprogress": "In Progress",
+      "completed": "Completed"
     }
   },
   "productionFlow": {
     "title": "Production Flow",
+    "subtitle": "Track orders through production stages",
     "description": "Track orders through production stages"
   },
   "productionTracking": {
@@ -407,6 +505,25 @@
     "workers": "Workers",
     "currentTasks": "Current Tasks",
     "completedToday": "Completed Today",
+    "viewProduction": "View Production",
+    "viewTracking": "View Tracking",
+    "refresh": "Refresh",
+    "integration": "Integration Status",
+    "flowConnection": "Flow Connection",
+    "trackingConnection": "Tracking Connection",
+    "realTimeUpdates": "Real-time Updates",
+    "totalWorkers": "Total Workers",
+    "availableWorkers": "Available Workers",
+    "activeTasks": "Active Tasks",
+    "pendingOrders": "Pending Orders",
+    "allDepartments": "All Departments",
+    "gridView": "Grid View",
+    "listView": "List View",
+    "available": "Available",
+    "completedTasks": "Completed Tasks",
+    "currentTask": "Current Task",
+    "noCurrentTask": "No current task",
+    "startTask": "Start Task",
     "status": {
       "active": "Active",
       "maintenance": "Maintenance",
@@ -661,6 +778,10 @@
     "allRightsReserved": "All rights reserved"
   },
   "page": {
+    "workflow": {
+      "title": "Production Workflow",
+      "subtitle": "Real-time workflow monitoring and management"
+    },
     "managerDashboard": {
       "title": "Manager Dashboard",
       "subtitle": "Real-time production monitoring and management",
@@ -680,6 +801,123 @@
       "connectedWorkers": "Connected Workers",
       "pendingOrders": "Pending Orders",
       "urgentOrders": "Urgent Orders"
+    }
+  },
+  "users": {
+    "title": "User Management",
+    "subtitle": "Manage system users and their access",
+    "createUser": "Create User",
+    "searchPlaceholder": "Search users...",
+    "allRoles": "All Roles",
+    "table": {
+      "user": "User",
+      "role": "Role",
+      "department": "Department",
+      "status": "Status",
+      "lastActivity": "Last Activity",
+      "actions": "Actions"
+    }
+  },
+  "permissions": {
+    "title": "Permissions Management",
+    "subtitle": "Manage roles and their permissions",
+    "refreshData": "Refresh Data",
+    "availableRoles": "Available Roles",
+    "selectRole": "Select a role to view permissions",
+    "selectRoleHint": "Choose a role from the list above to view and edit its permissions",
+    "roles": {
+      "manager": "Manager",
+      "system_admin": "System Administrator",
+      "workshop_manager_updated": "Workshop Manager Updated",
+      "super_admin": "Super Admin",
+      "boutique_cashier": "Boutique Cashier",
+      "system_administrator": "System Administrator",
+      "administrator": "Administrator",
+      "general_manager": "General Manager",
+      "production_manager": "Production Manager",
+      "inventory_manager": "Inventory Manager",
+      "accountant": "Accountant",
+      "boutique_sales_employee": "Boutique Sales Employee",
+      "production_supervisor": "Production Supervisor",
+      "quality_control_supervisor": "Quality Control Supervisor",
+      "boutique_supervisor": "Boutique Supervisor",
+      "senior_worker": "Senior Worker",
+      "boutique_senior_supervisor": "Boutique Senior Supervisor",
+      "worker": "Worker",
+      "boutique_manager": "Boutique Manager",
+      "boutique_regional_manager": "Boutique Regional Manager",
+      "viewer": "Viewer"
+    },
+    "descriptions": {
+      "manager": "Manager",
+      "system_admin": "System Administrator",
+      "workshop_manager_updated": "Updated workshop manager for testing",
+      "super_admin": "Full permissions for all system parts",
+      "boutique_cashier": "Specialized cashier for point of sale",
+      "system_administrator": "Full system access with all permissions and emergency access",
+      "administrator": "General administrative access without emergency permissions",
+      "general_manager": "Cross-department management with limited system access",
+      "production_manager": "Production department management",
+      "inventory_manager": "Inventory and materials management",
+      "accountant": "Financial and accounting access",
+      "boutique_sales_employee": "Sales employee with additional permissions",
+      "production_supervisor": "Production line supervision and task management",
+      "quality_control_supervisor": "Quality control and inspection oversight",
+      "boutique_supervisor": "Sales supervisor with administrative permissions",
+      "senior_worker": "Experienced worker with training and mentoring responsibilities",
+      "boutique_senior_supervisor": "Senior supervisor with advanced permissions",
+      "worker": "Regular worker with access to assigned tasks only",
+      "boutique_manager": "Boutique manager with full management permissions",
+      "boutique_regional_manager": "Regional manager responsible for multiple branches",
+      "viewer": "Read-only access for auditing and monitoring"
+    },
+    "permissionCount": "permissions",
+    "userCount": "users",
+    "roleDisplayNames": {
+      "manager": "Manager",
+      "system_admin": "System Administrator", 
+      "workshop_manager_updated": "Workshop Manager Updated",
+      "super_admin": "Super Admin",
+      "boutique_cashier": "Boutique Cashier",
+      "System Administrator": "System Administrator",
+      "Administrator": "Administrator", 
+      "General Manager": "General Manager",
+      "Production Manager": "Production Manager",
+      "Inventory Manager": "Inventory Manager",
+      "Accountant": "Accountant",
+      "موظف مبيعات البوتيك": "Boutique Sales Employee",
+      "Production Supervisor": "Production Supervisor",
+      "Quality Control Supervisor": "Quality Control Supervisor", 
+      "مشرف البوتيك": "Boutique Supervisor",
+      "Senior Worker": "Senior Worker",
+      "مشرف أول البوتيك": "Boutique Senior Supervisor",
+      "Worker": "Worker",
+      "مدير البوتيك": "Boutique Manager",
+      "مدير إقليمي البوتيك": "Boutique Regional Manager",
+      "Viewer": "Viewer"
+    },
+    "roleDescriptions": {
+      "manager": "Manager", 
+      "system_admin": "System Administrator",
+      "workshop_manager_updated": "Updated workshop manager for testing",
+      "super_admin": "Full permissions for all system parts",
+      "boutique_cashier": "Specialized cashier for point of sale",
+      "System Administrator": "Full system access with all permissions and emergency access",
+      "Administrator": "General administrative access without emergency permissions",
+      "General Manager": "Cross-department management with limited system access", 
+      "Production Manager": "Production department management",
+      "Inventory Manager": "Inventory and materials management",
+      "Accountant": "Financial and accounting access",
+      "موظف مبيعات البوتيك": "Sales employee with additional permissions",
+      "Production Supervisor": "Production line supervision and task management",
+      "Quality Control Supervisor": "Quality control and inspection oversight",
+      "مشرف البوتيك": "Sales supervisor with administrative permissions", 
+      "Senior Worker": "Experienced worker with training and mentoring responsibilities",
+      "مشرف أول البوتيك": "Senior supervisor with advanced permissions",
+      "Worker": "Regular worker with access to assigned tasks only",
+      "مدير البوتيك": "Boutique manager with full management permissions",
+      "مدير إقليمي البوتيك": "Regional manager responsible for multiple branches",
+      "Viewer": "Read-only access for auditing and monitoring"
     }
   }
 }
