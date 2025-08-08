@@ -1,13 +1,13 @@
 {
   "functions": {
-    "app/api/**/*.php": {
+    "api/**/*.php": {
       "runtime": "vercel-php@0.6.0"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "destination": "/api/public/index.php"
     }
   ],
   "build": {
@@ -15,7 +15,13 @@
       "ESBUILD_BINARY_PATH": "./node_modules/esbuild/bin/esbuild"
     }
   },
-  "installCommand": "npm install --legacy-peer-deps",
+  "env": {
+    "APP_ENV": "production",
+    "APP_DEBUG": "false",
+    "DB_CONNECTION": "sqlite",
+    "DB_DATABASE": "/var/task/api/database/database.sqlite"
+  },
+  "installCommand": "npm install --legacy-peer-deps && cd api && composer install --optimize-autoloader --no-dev",
   "buildCommand": "npm run build",
   "outputDirectory": "dist"
 }

@@ -53,6 +53,128 @@ const OrdersManagement: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch orders from API
+  const fetchOrders = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await orderService.getAll();
+      const ordersData = response.data.data || response.data || [];
+      
+      // Transform API data to match our interface
+      const transformedOrders: Order[] = ordersData.map((order: any) => ({
+        id: order.id,
+        order_number: order.order_number || `ORD-${order.id}`,
+        client: {
+          name: order.client?.name || order.client_name || 'غير محدد',
+          phone: order.client?.phone || order.client_phone || '',
+          email: order.client?.email || order.client_email || ''
+        },
+        status: order.status || 'pending',
+        priority: order.priority || 'medium',
+        total_cost: parseFloat(order.total_cost) || 0,
+        created_at: order.created_at || new Date().toISOString(),
+        due_date: order.due_date || new Date().toISOString(),
+        description: order.description || '',
+        vehicle_details: order.vehicle_details || order.vehicle || '',
+        services: order.services || [],
+        assigned_worker: order.worker || order.assigned_worker || null,
+        progress: order.progress || 0
+      }));
+      
+      setOrders(transformedOrders);
+      setFilteredOrders(transformedOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error('فشل في جلب الطلبات من قاعدة البيانات');
+      
+      // Fallback to sample data for demonstration
+      const sampleOrders: Order[] = [
+        {
+          id: 1,
+          order_number: 'ORD-2025-001',
+          client: {
+            name: 'محمد أحمد العلي',
+            phone: '+966501234567',
+            email: 'mohammed.ali@email.com'
+          },
+          status: 'pending',
+          priority: 'high',
+          total_cost: 2500.00,
+          created_at: '2025-08-03T10:00:00Z',
+          due_date: '2025-08-10T10:00:00Z',
+          description: 'صيانة شاملة لسيارة تويوتا كامري',
+          vehicle_details: 'تويوتا كامري 2020',
+          services: [
+            { name: 'تغيير زيت المحرك' },
+            { name: 'فحص الفرامل' },
+            { name: 'تنظيف الفلاتر' }
+          ],
+          assigned_worker: { name: 'خالد محمد' },
+          progress: 25
+        },
+        {
+          id: 2,
+          order_number: 'ORD-2025-002',
+          client: {
+            name: 'سارة عبدالله',
+            phone: '+966507654321',
+            email: 'sara.abdullah@email.com'
+          },
+          status: 'in_progress',
+          priority: 'medium',
+          total_cost: 1800.00,
+          created_at: '2025-08-02T09:00:00Z',
+          due_date: '2025-08-08T09:00:00Z',
+          description: 'إصلاح نظام التكييف',
+          vehicle_details: 'هوندا أكورد 2019',
+          services: [
+            { name: 'فحص نظام التكييف' },
+            { name: 'تعبئة فريون' },
+            { name: 'تنظيف المبخر' }
+          ],
+          assigned_worker: { name: 'أحمد سالم' },
+          progress: 60
+        },
+        {
+          id: 3,
+          order_number: 'ORD-2025-003',
+          client: {
+            name: 'عبدالرحمن خالد',
+            phone: '+966502345678',
+            email: 'abdulrahman.k@email.com'
+          },
+          status: 'completed',
+          priority: 'low',
+          total_cost: 950.00,
+          created_at: '2025-08-01T08:00:00Z',
+          due_date: '2025-08-05T08:00:00Z',
+          description: 'تغيير إطارات السيارة',
+          vehicle_details: 'نيسان التيما 2021',
+          services: [
+            { name: 'تركيب إطارات جديدة' },
+            { name: 'فحص الجنوط' },
+            { name: 'ضبط الزوايا' }
+          ],
+          assigned_worker: { name: 'محمود علي' },
+          progress: 100
+        }
+      ];
+      
+      setOrders(sampleOrders);
+      setFilteredOrders(sampleOrders);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   const fetchOrders = useCallback(async () => {
     setIsLoading(true);
     try {
