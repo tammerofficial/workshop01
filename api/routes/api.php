@@ -675,3 +675,9 @@ Route::prefix('dashboard')->group(function () {
     Route::get('/health', [\App\Http\Controllers\Api\ApiDashboardController::class, 'healthCheck']);
     Route::get('/health/comprehensive', [\App\Http\Controllers\Api\ApiDashboardController::class, 'comprehensiveHealthCheck']);
 });
+
+// UI Dashboard Routes (for Blade/Alpine.js)
+Route::prefix('ui')->group(function () {
+    Route::get('/dashboard-data', [\App\Http\Controllers\Api\UiDashboardController::class, 'getDashboardData'])->name('api.ui.dashboard');
+    Route::get('/dashboard-updates', [\App\Http\Controllers\Api\UiDashboardController::class, 'getRealTimeUpdates'])->name('api.ui.dashboard.updates');
+});

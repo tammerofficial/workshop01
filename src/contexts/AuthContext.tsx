@@ -30,20 +30,43 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  // ⚠️ مؤقت: إلغاء صفحة الدخول - المستخدم معتمد تلقائياً
+  // TEMPORARY: Disable login page - User automatically authenticated
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  const [user, setUser] = useState<User | null>({
+    id: 1,
+    name: 'علي العليوي',
+    email: 'alalawi310@gmail.com',
+    role: {
+      id: 1,
+      name: 'admin',
+      display_name: 'مدير النظام',
+      permissions: ['*']
+    },
+    permissions: ['*'],
+    department: 'الإدارة'
+  });
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check if user is authenticated on mount
+    // ⚠️ مؤقت: تخطي فحص المصادقة
+    // TEMPORARY: Skip authentication check
     const checkAuth = () => {
-      const auth = localStorage.getItem('isAuthenticated');
-      const userData = localStorage.getItem('user');
-      
-      if (auth === 'true' && userData) {
-        setIsAuthenticated(true);
-        setUser(JSON.parse(userData));
-      }
+      // Always set as authenticated temporarily
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('user', JSON.stringify({
+        id: 1,
+        name: 'علي العليوي',
+        email: 'alalawi310@gmail.com',
+        role: {
+          id: 1,
+          name: 'admin',
+          display_name: 'مدير النظام',
+          permissions: ['*']
+        },
+        permissions: ['*'],
+        department: 'الإدارة'
+      }));
       
       setLoading(false);
     };
