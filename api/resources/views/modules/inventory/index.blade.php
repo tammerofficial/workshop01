@@ -1,27 +1,31 @@
 @extends('layouts.app')
-
-@section('title', 'Inventory')
-
+@section('title', __('Inventory'))
 @section('content')
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-  <div class="p-5 bg-white rounded-xl border border-gray-200" x-data="{ qty: 10 }">
-    <div class="text-sm text-gray-500">Fabric Rolls</div>
-    <div class="mt-2 text-3xl font-bold">{{ 42 }}</div>
-    <div class="mt-4 flex items-center gap-2">
-      <button class="px-3 py-1 text-xs rounded border" @click="qty++">+</button>
-      <button class="px-3 py-1 text-xs rounded border" @click="qty = Math.max(0, qty-1)">-</button>
-      <span class="text-sm text-gray-500">Qty: <strong x-text="qty"></strong></span>
+<div class="card">
+  <div class="card-header"><div class="flex items-center justify-between"><h3 class="font-semibold text-gray-900">{{ __('Inventory') }}</h3></div></div>
+  <div class="card-content">
+    @if(($inventoryItems ?? collect())->count() > 0)
+    <div class="table-container">
+      <table class="table">
+        <thead><tr>
+          <th>{{ __('Name') }}</th><th>{{ __('Category') }}</th><th>{{ __('Quantity') }}</th><th>{{ __('Unit') }}</th><th>{{ __('Status') }}</th>
+        </tr></thead>
+        <tbody>
+        @foreach($inventoryItems as $item)
+          <tr>
+            <td><div class="font-medium">{{ $item->name }}</div><div class="text-xs text-gray-500">{{ $item->description ?? __('No Description') }}</div></td>
+            <td><span class="badge badge-info">{{ $item->category->name ?? __('No Category') }}</span></td>
+            <td class="font-semibold">{{ number_format($item->quantity ?? 0) }}</td>
+            <td>{{ $item->unit ?? __('Unit') }}</td>
+            <td><span class="badge {{ $item->quantity <= 0 ? 'badge-danger' : ($item->quantity <= ($item->minimum_quantity ?? 0) ? 'badge-warning' : 'badge-success') }}">{{ $item->quantity <= 0 ? __('Out of Stock') : ($item->quantity <= ($item->minimum_quantity ?? 0) ? __('Low Stock') : __('In Stock')) }}</span></td>
+          </tr>
+        @endforeach
+        </tbody>
+      </table>
     </div>
-  </div>
-  <div class="p-5 bg-white rounded-xl border border-gray-200">
-    <div class="text-sm text-gray-500">Materials</div>
-    <ul class="mt-3 space-y-2 text-sm">
-      <li class="flex items-center justify-between"><span>Buttons</span><span>150</span></li>
-      <li class="flex items-center justify-between"><span>Zippers</span><span>88</span></li>
-      <li class="flex items-center justify-between"><span>Thread</span><span>300</span></li>
-    </ul>
+    @else
+      <div class="empty-state"><p>{{ __('No inventory items found') }}</p></div>
+    @endif
   </div>
 </div>
 @endsection
-
-
